@@ -1,3 +1,4 @@
+// components/sign-up-form-enhanced.tsx
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -73,78 +74,15 @@ export function SignUpFormEnhanced({
               />
             </div>
 
-            {/* Age */}
-            <div className="grid gap-2">
-              <Label htmlFor="age">Age</Label>
-              <Input
-                id="age"
-                name="age"
-                type="number"
-                min={1}
-                max={150}
-                placeholder="18"
-              />
-            </div>
-
-            {/* Community - Using native select */}
-            <div className="grid gap-2">
-              <Label htmlFor="community">Community</Label>
-              <select
-                id="community"
-                name="community"
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">Select your community</option>
-                <option value="college">College</option>
-                <option value="shs">Senior High School</option>
-                <option value="jhs">Junior High School</option>
-                <option value="gs">Grade School</option>
-                <option value="preschool">Preschool</option>
-              </select>
-            </div>
-
-            {/* Contact */}
-            <div className="grid gap-2">
-              <Label htmlFor="contact">Contact Number</Label>
-              <Input
-                id="contact"
-                name="contact"
-                type="tel"
-                placeholder="+63 912 345 6789"
-              />
-            </div>
-
-            {/* Permanent Address */}
-            <div className="grid gap-2">
-              <Label htmlFor="permanent_address">Permanent Address</Label>
-              <Input
-                id="permanent_address"
-                name="permanent_address"
-                type="text"
-                placeholder="123 Main St, Lipa City, Batangas"
-              />
-            </div>
-
-            {/* Current Address */}
-            <div className="grid gap-2">
-              <Label htmlFor="current_address">Current Address</Label>
-              <Input
-                id="current_address"
-                name="current_address"
-                type="text"
-                placeholder="Dormitory/Boarding house address"
-              />
-            </div>
-
-            {/* Error/Success Messages */}
+            {/* Error / Success Messages */}
             {state?.error && (
-              <div className="p-3 rounded bg-destructive/10 border border-destructive">
-                <p className="text-sm text-destructive">{state.error}</p>
+              <div className="p-3 rounded bg-destructive/10 border border-destructive text-sm text-destructive">
+                {state.error}
               </div>
             )}
             {state?.message && (
-              <div className="p-3 rounded bg-green-50 border border-green-200">
-                <p className="text-sm text-green-600">{state.message}</p>
+              <div className="p-3 rounded bg-green-50 border border-green-200 text-sm text-green-600">
+                {state.message}
               </div>
             )}
 
@@ -156,7 +94,7 @@ export function SignUpFormEnhanced({
 
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
-            <Link href="/auth/login" className="underline underline-offset-4">
+            <Link href="/auth/login" className="underline underline-offset-4 hover:text-primary">
               Login
             </Link>
           </div>
