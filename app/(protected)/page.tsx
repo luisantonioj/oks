@@ -1,4 +1,4 @@
-// app/protected/page.tsx
+// app/(protected)/page.tsx
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -11,7 +11,7 @@ async function UserDetails() {
   const { data, error } = await supabase.auth.getClaims();
 
   if (error || !data?.claims) {
-    redirect("/auth/login");
+    redirect("/login");
   }
 
   return JSON.stringify(data.claims, null, 2);

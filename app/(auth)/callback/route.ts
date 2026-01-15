@@ -1,4 +1,4 @@
-// app/auth/callback/route.ts
+// app/(auth)/callback/route.ts
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { NextResponse } from 'next/server';
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   // Basic validation of params
   if (!token_hash || !['signup', 'recovery', 'invite'].includes(type || '')) {
-    const redirectUrl = new URL('/auth/login', request.url);
+    const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('error', 'invalid_link');
     return NextResponse.redirect(redirectUrl);
   }
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('OTP verification failed:', error);
-    const redirectUrl = new URL('/auth/login', request.url);
+    const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('error', 'confirmation_failed');
     redirectUrl.searchParams.set('message', error.message || 'Link expired or invalid');
     return NextResponse.redirect(redirectUrl);

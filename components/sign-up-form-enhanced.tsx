@@ -94,7 +94,7 @@ export function SignUpFormEnhanced({
 
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
-            <Link href="/auth/login" className="underline underline-offset-4 hover:text-primary">
+            <Link href="/login" className="underline underline-offset-4 hover:text-primary">
               Login
             </Link>
           </div>

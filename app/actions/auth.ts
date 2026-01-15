@@ -49,7 +49,7 @@ export async function signUpStakeholder(
       email,
       password,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/callback`,
         data: {
           name, // This goes to user_metadata
         },
@@ -147,11 +147,11 @@ export async function signIn(
   
   switch (profile.role) {
     case 'admin':
-      redirect('/protected/admin/dashboard');
+      redirect('/admin/dashboard');
     case 'office':
-      redirect('/protected/office/dashboard');
+      redirect('/office/dashboard');
     case 'stakeholder':
-      redirect('/protected/stakeholder/dashboard');
+      redirect('/stakeholder/dashboard');
     default:
       await supabase.auth.signOut();
       return { error: 'Unknown role' };
@@ -162,7 +162,7 @@ export async function signIn(
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect('/auth/login');
+  redirect('/login');
 }
 
 // ── CREATE OFFICE (Admin-only) ──

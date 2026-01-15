@@ -12,16 +12,16 @@ export async function GET() {
 
     if (!profile) {
       return NextResponse.json(
-        { error: 'Unauthorized', redirect: '/auth/login' },
+        { error: 'Unauthorized', redirect: '/login' },
         { status: 401 }
       );
     }
 
     // Return role and appropriate redirect path
     const redirectPaths = {
-      admin: '/protected/admin/dashboard',
-      office: '/protected/office/dashboard',
-      stakeholder: '/protected/stakeholder/dashboard',
+      admin: '/admin/dashboard',
+      office: '/office/dashboard',
+      stakeholder: '/stakeholder/dashboard',
     };
 
     return NextResponse.json({
