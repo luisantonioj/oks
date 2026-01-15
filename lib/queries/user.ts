@@ -1,75 +1,145 @@
 // lib/queries/user.ts
-import { createClient } from '@/lib/supabase/server'; // anon/auth client
-import { createAdminClient } from '@/lib/supabase/admin'; // ← NEW: service_role client
-import { Office, Stakeholder } from '@/types/database';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { UserProfile, UserRole } from '@/types/user';
 
-// Helper: Get authenticated Supabase client (for normal queries)
-async function getAuthClient() {
-  return await createClient(); // uses cookies/session
-}
-
-// Helper: Get admin client (service_role) for privileged ops
-async function getAdminClient() {
-  return await createAdminClient(); // implements service_role key
-}
-
-// 1. Fetch current user's unified profile
+// Get current authenticated user with role information
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
-  const supabase = await getAuthClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return null;
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  const role = user.app_metadata?.role as UserRole | undefined;
-  if (!role) return null;
-
-  switch (role) {
-    case 'admin': {
-      return {
-        id: user.id,
-        email: user.email ?? '',
-        role: 'admin',
-        name: 'Admin',
-        created_at: user.created_at ?? new Date().toISOString(),
-        updated_at: user.updated_at ?? new Date().toISOString(),
-      } as UserProfile;
-    }
-
-    case 'office': {
-      const { data, error: err } = await supabase
-        .from('offices')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      if (err || !data) return null;
-      return { ...data, role: 'office' } as UserProfile;
-    }
-
-    case 'stakeholder': {
-      const { data, error: err } = await supabase
-        .from('stakeholders')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      if (err || !data) return null;
-      return { ...data, role: 'stakeholder' } as UserProfile;
-    }
-
-    default:
+    if (userError) {
+      console.error('[getCurrentUserProfile] Auth error:', userError);
       return null;
+    }
+
+    if (!user) {
+      console.log('[getCurrentUserProfile] No authenticated user');
+      return null;
+    }
+
+    console.log('[getCurrentUserProfile] User ID:', user.id);
+    console.log('[getCurrentUserProfile] User email:', user.email);
+    console.log('[getCurrentUserProfile] App metadata:', user.app_metadata);
+
+    // Try to get role from app_metadata first (fast)
+    let role = user.app_metadata?.role as UserRole | undefined;
+
+    // Fallback: query from stakeholder table if metadata missing
+    if (!role) {
+      console.log('[getCurrentUserProfile] Role missing in metadata, checking tables...');
+      
+      // Check stakeholder table
+      const { data: shData, error: shError } = await supabase
+        .from('stakeholder')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!shError && shData?.role) {
+        role = shData.role as UserRole;
+        console.log('[getCurrentUserProfile] Role found in stakeholder table:', role);
+      } else {
+        console.log('[getCurrentUserProfile] Not in stakeholder table, checking office table...');
+        
+        // Check office table
+        const { data: officeData, error: officeError } = await supabase
+          .from('office')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!officeError && officeData?.role) {
+          role = officeData.role as UserRole;
+          console.log('[getCurrentUserProfile] Role found in office table:', role);
+        }
+      }
+    }
+
+    if (!role) {
+      console.error('[getCurrentUserProfile] No role found in metadata or tables');
+      return null;
+    }
+
+    // Now proceed with full profile fetch based on role
+    switch (role) {
+      case 'admin': {
+        console.log('[getCurrentUserProfile] Returning admin profile');
+        return {
+          id: user.id,
+          email: user.email ?? '',
+          role: 'admin',
+          name: 'Administrator',
+          created_at: user.created_at ?? new Date().toISOString(),
+          updated_at: user.updated_at ?? new Date().toISOString(),
+        } as UserProfile;
+      }
+
+      case 'office': {
+        console.log('[getCurrentUserProfile] Fetching office profile');
+        const { data, error } = await supabase
+          .from('office')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('[getCurrentUserProfile] Office profile fetch error:', error);
+          return null;
+        }
+        
+        if (!data) {
+          console.error('[getCurrentUserProfile] Office profile not found');
+          return null;
+        }
+        
+        console.log('[getCurrentUserProfile] Office profile found:', data.office_name);
+        return { ...data, role: 'office' } as UserProfile;
+      }
+
+      case 'stakeholder': {
+        console.log('[getCurrentUserProfile] Fetching stakeholder profile');
+        const { data, error } = await supabase
+          .from('stakeholder')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('[getCurrentUserProfile] Stakeholder profile fetch error:', error);
+          return null;
+        }
+        
+        if (!data) {
+          console.error('[getCurrentUserProfile] Stakeholder profile not found');
+          return null;
+        }
+        
+        console.log('[getCurrentUserProfile] Stakeholder profile found:', data.name);
+        return { ...data, role: 'stakeholder' } as UserProfile;
+      }
+
+      default:
+        console.error('[getCurrentUserProfile] Unknown role:', role);
+        return null;
+    }
+  } catch (error) {
+    console.error('[getCurrentUserProfile] Unexpected error:', error);
+    return null;
   }
 }
 
-// 2. Update own profile (RLS will enforce ownership)
+// Update own profile (RLS will enforce ownership)
 export async function updateCurrentUserProfile(
-  updates: Partial<Omit<UserProfile, 'id' | 'role' | 'email' | 'created_at' | 'updated_at'>>
+  updates: Partial<Omit<UserProfile, 'id' | 'role' | 'email' | 'created_at'>>
 ): Promise<UserProfile | { error: string }> {
   const profile = await getCurrentUserProfile();
   if (!profile) return { error: 'No authenticated user' };
 
-  const supabase = await getAuthClient();
+  const supabase = await createClient();
 
-  let table = profile.role === 'office' ? 'offices' : 'stakeholders';
+  const table = profile.role === 'office' ? 'office' : 'stakeholder';
   if (profile.role === 'admin') return { error: 'Admin profile cannot be updated' };
 
   const { data, error } = await supabase
@@ -83,7 +153,69 @@ export async function updateCurrentUserProfile(
   return { ...data, role: profile.role } as UserProfile;
 }
 
-// 3. Delete user (self-delete for office/stakeholder; admin can delete others)
+// Get stakeholder profile by ID
+export async function getStakeholderProfile(userId: string) {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from('stakeholder')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Get office profile by ID
+export async function getOfficeProfile(userId: string) {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from('office')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Admin-only: Get all offices
+export async function getAllOffices() {
+  const profile = await getCurrentUserProfile();
+  if (!profile || profile.role !== 'admin') {
+    throw new Error('Unauthorized: Admin only');
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('office')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+// Admin-only: Get all stakeholders
+export async function getAllStakeholders() {
+  const profile = await getCurrentUserProfile();
+  if (!profile || profile.role !== 'admin') {
+    throw new Error('Unauthorized: Admin only');
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('stakeholder')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+// Delete user (self-delete for office/stakeholder; admin can delete others)
 export async function deleteUser(targetId?: string): Promise<{ success: boolean; error?: string }> {
   const profile = await getCurrentUserProfile();
   if (!profile) return { success: false, error: 'No authenticated user' };
@@ -96,45 +228,43 @@ export async function deleteUser(targetId?: string): Promise<{ success: boolean;
 
   const idToDelete = isSelf ? profile.id : targetId!;
 
-  // Prevent deleting fixed admin
-  if (idToDelete === 'fixed-admin-id-here' /* or check email */) {
-    return { success: false, error: 'Cannot delete fixed admin' };
+  // Prevent deleting admin
+  if (profile.role === 'admin' && isSelf) {
+    return { success: false, error: 'Cannot delete admin account' };
   }
 
-  const adminSupabase = await getAdminClient(); // service_role required!
+  const adminSupabase = createAdminClient();
 
-  // Optional: Delete related data first (crises, announcements, etc.)
-  // await deleteRelatedData(idToDelete);
-
-  // Delete from profile table
-  let targetTable: 'offices' | 'stakeholders';
+  // Determine which table to delete from
+  let targetTable: 'office' | 'stakeholder';
 
   if (isSelf) {
-    targetTable = profile.role === 'office' ? 'offices' : 'stakeholders';
+    targetTable = profile.role === 'office' ? 'office' : 'stakeholder';
   } else {
-  // Admin delete: determine table by checking existence (simple & safe)
-  const { data: officeData } = await adminSupabase
-      .from('offices')
-      .select('id')
-      .eq('id', idToDelete)
-      .maybeSingle();  // .maybeSingle() returns null if not found, no error
-
-  if (officeData) {
-      targetTable = 'offices';
-  } else {
-      targetTable = 'stakeholders'; // assume or add check
-      // Optional: verify existence
-      const { data: shData } = await adminSupabase
-      .from('stakeholders')
+    // Admin delete: check which table the user is in
+    const { data: officeData } = await adminSupabase
+      .from('office')
       .select('id')
       .eq('id', idToDelete)
       .maybeSingle();
-      if (!shData) {
-      return { success: false, error: 'Target profile not found' };
+
+    if (officeData) {
+      targetTable = 'office';
+    } else {
+      targetTable = 'stakeholder';
+      const { data: stakeholderData } = await adminSupabase
+        .from('stakeholder')
+        .select('id')
+        .eq('id', idToDelete)
+        .maybeSingle();
+      
+      if (!stakeholderData) {
+        return { success: false, error: 'Target profile not found' };
       }
     }
   }
 
+  // Delete from profile table
   await adminSupabase.from(targetTable).delete().eq('id', idToDelete);
 
   // Delete auth user
@@ -144,18 +274,9 @@ export async function deleteUser(targetId?: string): Promise<{ success: boolean;
 
   // If self-delete, sign out
   if (isSelf) {
-    await (await getAuthClient()).auth.signOut();
+    const userSupabase = await createClient();
+    await userSupabase.auth.signOut();
   }
 
   return { success: true };
 }
-
-// 4. Admin-only: Get all offices / stakeholders (RLS can allow if policy exists)
-export async function getAllOffices(): Promise<Office[]> {
-  const supabase = await getAuthClient();
-  const { data, error } = await supabase.from('offices').select('*');
-  if (error) throw error; // or handle
-  return data ?? [];
-}
-
-// Similar for getAllStakeholders, getOfficeById, etc. (add RLS checks implicitly)
