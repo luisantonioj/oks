@@ -5,8 +5,9 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUserProfile } from '@/lib/queries/user';
+import { cookies } from 'next/headers';
 
-// Mock DLSL validation (replace with real DB query or API later)
+// Mock DLSL validation
 function mockDLSLValidation(email: string): boolean {
   return email.endsWith('@dlsl.edu.ph') || email.includes('dlsl');
 }
@@ -17,7 +18,93 @@ type FormState = {
   message?: string;
 };
 
-// ── SIGNUP (Stakeholder self-registration) ──
+// ── ADMIN LOGIN (Hardcoded check with secure cookie - NO SUPABASE) ──
+export async function adminSignIn(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  try {
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    console.log('[adminSignIn] Login attempt for:', email);
+
+    if (!email || !password) {
+      return { error: 'Email and password required' };
+    }
+
+    // Load admin credentials from environment variables
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+    if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+      console.error('[adminSignIn] ADMIN_EMAIL or ADMIN_PASSWORD not set in environment');
+      return { error: 'Server configuration error. Please contact support.' };
+    }
+
+    if (email.toLowerCase().trim() !== ADMIN_EMAIL.toLowerCase() || password !== ADMIN_PASSWORD) {
+      console.log('[adminSignIn] Invalid credentials provided');
+      return { error: 'Invalid admin credentials' };
+    }
+
+    // Set cookie for admin session (NO Supabase involved)
+    const cookieStore = await cookies();
+    cookieStore.set('oks_admin_session', 'authenticated', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 24 hours
+    });
+
+    console.log('[adminSignIn] ✓ Admin authenticated, cookie set, redirecting...');
+
+    // Redirect to admin dashboard
+    redirect('/admin/dashboard');
+  } catch (error) {
+    console.error('[adminSignIn] Error:', error);
+    // Re-throw redirect errors (these are expected)
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+      throw error;
+    }
+    return { error: 'An unexpected error occurred' };
+  }
+}
+
+// ── OFFICE LOGIN ──
+export async function officeSignIn(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
+  if (!email || !password) {
+    return { error: 'Email and password required' };
+  }
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error || !data.user) {
+    return { error: error?.message || 'Invalid credentials' };
+  }
+
+  const profile = await getCurrentUserProfile();
+
+  if (!profile || profile.role !== 'office') {
+    await supabase.auth.signOut();
+    return { error: 'Office account not found' };
+  }
+
+  redirect('/office/dashboard');
+}
+
+// ── STAKEHOLDER SIGNUP (existing) ──
 export async function signUpStakeholder(
   prevState: FormState,
   formData: FormData
@@ -35,7 +122,6 @@ export async function signUpStakeholder(
     return { error: 'Required fields missing' };
   }
 
-  // Mock DLSL check
   if (!mockDLSLValidation(email)) {
     return { error: 'Email must be a valid DLSL address' };
   }
@@ -44,15 +130,12 @@ export async function signUpStakeholder(
   const adminClient = createAdminClient();
 
   try {
-    // 1. Sign up auth user
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/callback`,
-        data: {
-          name, // This goes to user_metadata
-        },
+        data: { name },
       },
     });
 
@@ -62,12 +145,9 @@ export async function signUpStakeholder(
 
     const userId = authData.user.id;
 
-    // 2. Set role in app_metadata (secure, for RLS/JWT)
     const { error: metadataError } = await adminClient.auth.admin.updateUserById(
       userId,
-      {
-        app_metadata: { role: 'stakeholder' },
-      }
+      { app_metadata: { role: 'stakeholder' } }
     );
 
     if (metadataError) {
@@ -75,7 +155,6 @@ export async function signUpStakeholder(
       return { error: 'Failed to set user role' };
     }
 
-    // 3. Insert into stakeholder table
     const { error: insertError } = await adminClient
       .from('stakeholder')
       .insert({
@@ -91,14 +170,13 @@ export async function signUpStakeholder(
       });
 
     if (insertError) {
-      console.error('Insert error:', insertError);
       await adminClient.auth.admin.deleteUser(userId);
       return { error: insertError.message || 'Profile creation failed' };
     }
 
     return { 
       success: true, 
-      message: 'Account created successfully! Please check your email to confirm your account.' 
+      message: 'Account created! Please check your email to confirm.' 
     };
   } catch (error) {
     console.error('Signup error:', error);
@@ -106,7 +184,7 @@ export async function signUpStakeholder(
   }
 }
 
-// ── LOGIN ──
+// ── STAKEHOLDER LOGIN (existing) ──
 export async function signIn(
   prevState: FormState,
   formData: FormData
@@ -120,31 +198,22 @@ export async function signIn(
 
   const supabase = await createClient();
 
-  // Step 1: Attempt sign in
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error || !data.user) {
-    console.error('Sign in error:', error);
     return { error: error?.message || 'Invalid credentials' };
   }
 
-  // Step 2: Fetch profile to determine role
   const profile = await getCurrentUserProfile();
 
   if (!profile) {
-    console.error('No profile found for user:', data.user.id);
     await supabase.auth.signOut();
     return { error: 'Profile not found. Please contact support.' };
   }
 
-  // Step 3: Role-based redirect
-  // IMPORTANT: redirect() must be called OUTSIDE of try-catch
-  // because it throws a NEXT_REDIRECT error internally
-  console.log('Login successful. Redirecting to:', profile.role, 'dashboard');
-  
   switch (profile.role) {
     case 'admin':
       redirect('/admin/dashboard');
@@ -165,14 +234,24 @@ export async function signOut() {
   redirect('/login');
 }
 
+// ── ADMIN SIGN OUT ──
+export async function adminSignOut() {
+  const cookieStore = await cookies();
+  cookieStore.delete('oks_admin_session');
+  redirect('/login-admin');
+}
+
 // ── CREATE OFFICE (Admin-only) ──
 export async function createOffice(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || profile.role !== 'admin') {
+    // Verify admin session via cookie
+    const cookieStore = await cookies();
+    const adminSession = cookieStore.get('oks_admin_session')?.value;
+
+    if (adminSession !== 'authenticated') {
       return { error: 'Unauthorized: Admin only' };
     }
 
@@ -188,20 +267,14 @@ export async function createOffice(
       return { error: 'Required fields missing' };
     }
 
-    const supabase = await createClient();
     const adminClient = createAdminClient();
 
-    // 1. Create auth user
     const { data: authData, error: signUpError } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: {
-        name,
-      },
-      app_metadata: {
-        role: 'office',
-      },
+      user_metadata: { name },
+      app_metadata: { role: 'office' },
     });
 
     if (signUpError || !authData.user) {
@@ -210,8 +283,7 @@ export async function createOffice(
 
     const userId = authData.user.id;
 
-    // 2. Insert office profile
-    const { error: insertError } = await supabase
+    const { error: insertError } = await adminClient
       .from('office')
       .insert({
         id: userId,

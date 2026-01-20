@@ -98,6 +98,11 @@ export function SignUpFormEnhanced({
               Login
             </Link>
           </div>
+          <div className="mt-4 text-center text-sm">
+            <Link href="/" className="underline underline-offset-4">
+              Back to home
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

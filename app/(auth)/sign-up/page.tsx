@@ -1,3 +1,4 @@
+// app/(auth)/sign-up/page.tsx
 import { SignUpFormEnhanced } from "@/components/sign-up-form-enhanced";
 
 export default function Page() {

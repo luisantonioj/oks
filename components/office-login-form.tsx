@@ -1,8 +1,8 @@
-// components/login-form.tsx
+// components/office-login-form.tsx
 "use client";
 
 import { cn } from "@/lib/utils";
-import { signIn } from "@/app/actions/auth";           // ← import server action
+import { officeSignIn } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,21 +14,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useActionState } from "react";               // Next.js 15+ recommended
+import { useActionState } from "react";
 
-export function LoginForm({
+export function OfficeLoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [state, formAction, isPending] = useActionState(signIn, {});
+  const [state, formAction, isPending] = useActionState(officeSignIn, {});
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Office Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Login to your office account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -39,22 +39,14 @@ export function LoginForm({
                 id="email"
                 name="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="office@dlsl.edu.ph"
                 required
                 autoComplete="email"
               />
             </div>
 
             <div className="grid gap-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm underline-offset-4 hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 name="password"
@@ -73,12 +65,6 @@ export function LoginForm({
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/sign-up" className="underline underline-offset-4">
-              Sign up
-            </Link>
-          </div>
           <div className="mt-4 text-center text-sm">
             <Link href="/" className="underline underline-offset-4">
               Back to home

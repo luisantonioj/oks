@@ -1,7 +1,15 @@
+// proxy.ts
 import { updateSession } from "@/lib/supabase/proxy";
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
+  if (
+    request.nextUrl.pathname.startsWith('/admin') ||
+    request.nextUrl.pathname === '/login-admin'
+  ) {
+    return NextResponse.next();  // Allow admin routes to proceed without Supabase auth
+  }
+
   return await updateSession(request);
 }
 

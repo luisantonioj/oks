@@ -1,3 +1,4 @@
+// app/(protected)/stakeholder/dashboard/page.tsx
 import React from 'react'
 
 const page = () => {
