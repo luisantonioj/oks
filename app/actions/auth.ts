@@ -268,7 +268,7 @@ export async function signOut() {
 export async function adminSignOut() {
   const cookieStore = await cookies();
   cookieStore.delete('oks_admin_session');
-  redirect('/');
+  redirect('/login-admin');
 }
 
 // ── CREATE OFFICE (Admin-only) ──
