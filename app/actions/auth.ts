@@ -76,32 +76,62 @@ export async function officeSignIn(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  try {
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
 
-  if (!email || !password) {
-    return { error: 'Email and password required' };
+    console.log('[officeSignIn] Login attempt for:', email);
+
+    if (!email || !password) {
+      return { error: 'Email and password required' };
+    }
+
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error || !data.user) {
+      console.error('[officeSignIn] Auth error:', error);
+      return { error: 'Invalid login credentials' };
+    }
+
+    console.log('[officeSignIn] Auth successful for user:', data.user.id);
+    console.log('[officeSignIn] User app_metadata:', data.user.app_metadata);
+
+    // Check if user exists in office table
+    const { data: officeProfile, error: profileError } = await supabase
+      .from('office')
+      .select('*')
+      .eq('id', data.user.id)
+      .maybeSingle();
+
+    console.log('[officeSignIn] Office profile query result:', officeProfile);
+    console.log('[officeSignIn] Office profile error:', profileError);
+
+    if (profileError) {
+      console.error('[officeSignIn] Database error:', profileError);
+      await supabase.auth.signOut();
+      return { error: 'Error loading office profile. Please contact support.' };
+    }
+
+    if (!officeProfile) {
+      console.error('[officeSignIn] Office profile not found in database');
+      await supabase.auth.signOut();
+      return { error: 'Office account not found. Please contact support.' };
+    }
+
+    console.log('[officeSignIn] ✓ Office authenticated:', officeProfile.office_name);
+    redirect('/office/dashboard');
+  } catch (error) {
+    console.error('[officeSignIn] Error:', error);
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+      throw error;
+    }
+    return { error: 'An unexpected error occurred' };
   }
-
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error || !data.user) {
-    return { error: error?.message || 'Invalid credentials' };
-  }
-
-  const profile = await getCurrentUserProfile();
-
-  if (!profile || profile.role !== 'office') {
-    await supabase.auth.signOut();
-    return { error: 'Office account not found' };
-  }
-
-  redirect('/office/dashboard');
 }
 
 // ── STAKEHOLDER SIGNUP (existing) ──
@@ -247,11 +277,14 @@ export async function createOffice(
   formData: FormData
 ): Promise<FormState> {
   try {
+    console.log('[createOffice] Starting office creation...');
+
     // Verify admin session via cookie
     const cookieStore = await cookies();
     const adminSession = cookieStore.get('oks_admin_session')?.value;
 
     if (adminSession !== 'authenticated') {
+      console.error('[createOffice] Unauthorized access attempt');
       return { error: 'Unauthorized: Admin only' };
     }
 
@@ -259,30 +292,46 @@ export async function createOffice(
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const officeName = formData.get('office_name') as string;
-    const age = formData.get('age') ? Number(formData.get('age')) : null;
-    const gender = formData.get('gender') as string || null;
-    const contact = formData.get('contact') as string || null;
 
+    console.log('[createOffice] Creating office for:', { name, email, officeName });
+
+    // Validate required fields
     if (!email || !password || !officeName || !name) {
-      return { error: 'Required fields missing' };
+      return { error: 'All fields are required: Office Name, Full Name, Email, and Password' };
+    }
+
+    // Validate email format
+    if (!email.includes('@')) {
+      return { error: 'Invalid email format' };
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return { error: 'Password must be at least 6 characters' };
     }
 
     const adminClient = createAdminClient();
 
+    // Create auth user with email confirmation bypassed
+    console.log('[createOffice] Creating auth user...');
     const { data: authData, error: signUpError } = await adminClient.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: true, // Auto-confirm email
       user_metadata: { name },
       app_metadata: { role: 'office' },
     });
 
     if (signUpError || !authData.user) {
-      return { error: signUpError?.message || 'User creation failed' };
+      console.error('[createOffice] Auth creation error:', signUpError);
+      return { error: signUpError?.message || 'Failed to create user account' };
     }
 
     const userId = authData.user.id;
+    console.log('[createOffice] Auth user created with ID:', userId);
 
+    // Insert into office table
+    console.log('[createOffice] Inserting into office table...');
     const { error: insertError } = await adminClient
       .from('office')
       .insert({
@@ -291,22 +340,22 @@ export async function createOffice(
         email,
         role: 'office',
         office_name: officeName,
-        age,
-        gender,
-        contact,
       });
 
     if (insertError) {
+      console.error('[createOffice] Profile insert error:', insertError);
+      // Rollback: delete auth user
       await adminClient.auth.admin.deleteUser(userId);
-      return { error: insertError.message || 'Office profile creation failed' };
+      return { error: insertError.message || 'Failed to create office profile' };
     }
 
+    console.log('[createOffice] ✓ Office account created successfully');
     return { 
       success: true, 
-      message: `Office account created for ${officeName}` 
+      message: `Office account created successfully for ${name} (${officeName})` 
     };
   } catch (error) {
-    console.error('Create office error:', error);
-    return { error: 'An unexpected error occurred' };
+    console.error('[createOffice] Unexpected error:', error);
+    return { error: 'An unexpected error occurred while creating the office account' };
   }
 }

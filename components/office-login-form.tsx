@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
 import { useActionState } from "react";
 
 export function OfficeLoginForm({
@@ -25,14 +24,15 @@ export function OfficeLoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Office Login</CardTitle>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Office Login</CardTitle>
           <CardDescription>
-            Login to your office account
+            Sign in with your office account credentials
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="space-y-6">
+          <form action={formAction} className="space-y-4">
+            {/* Email */}
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -45,6 +45,7 @@ export function OfficeLoginForm({
               />
             </div>
 
+            {/* Password */}
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -56,20 +57,18 @@ export function OfficeLoginForm({
               />
             </div>
 
+            {/* Error Message */}
             {state?.error && (
-              <p className="text-sm text-destructive">{state.error}</p>
+              <div className="p-3 rounded bg-destructive/10 border border-destructive text-sm text-destructive">
+                {state.error}
+              </div>
             )}
 
+            {/* Submit Button */}
             <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Logging in..." : "Login"}
+              {isPending ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-
-          <div className="mt-4 text-center text-sm">
-            <Link href="/" className="underline underline-offset-4">
-              Back to home
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>

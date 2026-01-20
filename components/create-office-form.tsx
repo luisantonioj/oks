@@ -33,9 +33,8 @@ export function CreateOfficeForm({
 
   useEffect(() => {
     if (state?.success) {
-      // Reset form or redirect after success
       const timer = setTimeout(() => {
-        router.push('/admin/dashboard');
+        router.push("/admin/dashboard");
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -45,14 +44,14 @@ export function CreateOfficeForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Office Account Details</CardTitle>
+          <CardTitle>Create Office Staff Account</CardTitle>
           <CardDescription>
-            Create a new office account for crisis management
+            Add a new staff member to manage crisis operations
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-4">
-            {/* Office Name (dropdown) */}
+            {/* Office Name */}
             <div className="grid gap-2">
               <Label htmlFor="office_name">Office Name *</Label>
               <Select name="office_name" required>
@@ -60,35 +59,45 @@ export function CreateOfficeForm({
                   <SelectValue placeholder="Select office" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CIO">Community Involvement Office (CIO)</SelectItem>
-                  <SelectItem value="ISESSO">ISESSO</SelectItem>
-                  <SelectItem value="ICTC">ICTC</SelectItem>
+                  <SelectItem value="CIO">
+                    Community Involvement Office (CIO)
+                  </SelectItem>
+                  <SelectItem value="ISESSO">
+                    Institutional Safety, Security, and Emergency Services Office
+                    (ISESSO)
+                  </SelectItem>
+                  <SelectItem value="ICTC">
+                    Information and Communication Technologies Center (ICTC)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Full Name */}
             <div className="grid gap-2">
-              <Label htmlFor="name">Full Name *</Label>
+              <Label htmlFor="name">Staff Full Name *</Label>
               <Input
                 id="name"
                 name="name"
                 type="text"
                 required
-                placeholder="Juan Dela Cruz"
+                placeholder="e.g., Juan Dela Cruz"
               />
             </div>
 
             {/* Email */}
             <div className="grid gap-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">Email Address *</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="office@dlsl.edu.ph"
                 required
+                placeholder="staff.email@dlsl.edu.ph"
               />
+              <p className="text-xs text-muted-foreground">
+                This will be used for login
+              </p>
             </div>
 
             {/* Password */}
@@ -100,44 +109,7 @@ export function CreateOfficeForm({
                 type="password"
                 required
                 minLength={6}
-              />
-            </div>
-
-            {/* Age */}
-            <div className="grid gap-2">
-              <Label htmlFor="age">Age</Label>
-              <Input
-                id="age"
-                name="age"
-                type="number"
-                min="18"
-                max="100"
-              />
-            </div>
-
-            {/* Gender */}
-            <div className="grid gap-2">
-              <Label htmlFor="gender">Gender</Label>
-              <Select name="gender">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Contact */}
-            <div className="grid gap-2">
-              <Label htmlFor="contact">Contact Number</Label>
-              <Input
-                id="contact"
-                name="contact"
-                type="tel"
-                placeholder="+63 912 345 6789"
+                placeholder="Minimum 6 characters"
               />
             </div>
 
