@@ -2,7 +2,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { signIn } from "@/app/actions/auth";           // ← import server action
+import { signIn } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useActionState } from "react";               // Next.js 15+ recommended
+import { useActionState } from "react";
 
 export function LoginForm({
   className,
@@ -25,32 +25,32 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Welcome Back</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Sign in to your account to continue
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="space-y-6">
-            <div className="grid gap-2">
+          <form action={formAction} className="space-y-4">
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="stakeholder@dlsl.edu.ph"
                 required
                 autoComplete="email"
               />
             </div>
 
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
                 <Link
                   href="/forgot-password"
-                  className="text-sm underline-offset-4 hover:underline"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -65,23 +65,25 @@ export function LoginForm({
             </div>
 
             {state?.error && (
-              <p className="text-sm text-destructive">{state.error}</p>
+              <div className="rounded-md bg-destructive/10 p-3">
+                <p className="text-sm text-destructive text-center">
+                  {state.error}
+                </p>
+              </div>
             )}
 
             <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Logging in..." : "Login"}
+              {isPending ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/sign-up" className="underline underline-offset-4">
+            <Link 
+              href="/sign-up" 
+              className="text-foreground font-medium hover:underline"
+            >
               Sign up
-            </Link>
-          </div>
-          <div className="mt-4 text-center text-sm">
-            <Link href="/" className="underline underline-offset-4">
-              Back to home
             </Link>
           </div>
         </CardContent>
