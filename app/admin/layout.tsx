@@ -1,20 +1,12 @@
 // app/admin/layout.tsx
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { adminSignOut } from '@/app/actions/auth';
 import { Button } from '@/components/ui/button';
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const adminSession = cookieStore.get('oks_admin_session')?.value;
-
-  if (adminSession !== 'authenticated') {
-    redirect('/login-admin?error=unauthorized');
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
