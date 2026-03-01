@@ -64,7 +64,7 @@ export async function updateHelpRequestStatus(id: string, status: 'pending' | 'r
 
     // Refresh dashboards so offices see the updated status
     revalidatePath('/office/dashboard');
-    revalidatePath('/admin/dashboard');
+    revalidatePath('/portal/dashboard');
     return { success: true };
   } catch (error) {
     return { error: 'An unexpected error occurred' };

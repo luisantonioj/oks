@@ -10,9 +10,10 @@ export default async function AdminDashboard() {
 
   // debug
   console.log('Admin session cookie:', adminSession);
+  console.log('[adminSignIn] ✓ Admin authenticated, cookie set, redirecting...');
 
   if (adminSession !== 'authenticated') {
-    redirect('/login-admin');
+    redirect('/login-portal');
   }
 
   const adminName = process.env.ADMIN_NAME || 'Administrator';
@@ -26,7 +27,7 @@ export default async function AdminDashboard() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Link 
-          href="/admin/create-office"
+          href="/portal/create-office"
           className="p-6 border rounded-lg hover:bg-accent transition"
         >
           <h2 className="text-xl font-semibold mb-2">Create Office Account</h2>

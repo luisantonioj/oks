@@ -19,7 +19,7 @@ export async function GET() {
 
     // Return role and appropriate redirect path
     const redirectPaths = {
-      admin: '/admin/dashboard',
+      admin: '/portal/dashboard',
       office: '/office/dashboard',
       stakeholder: '/stakeholder/dashboard',
     };

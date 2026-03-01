@@ -60,7 +60,7 @@ export async function adminSignIn(
     console.log('[adminSignIn] ✓ Admin authenticated, cookie set, redirecting...');
 
     // Redirect to admin dashboard
-    redirect('/admin/dashboard');
+    redirect('/portal/dashboard');
   } catch (error) {
     console.error('[adminSignIn] Error:', error);
     // Re-throw redirect errors (these are expected)
@@ -246,7 +246,7 @@ export async function signIn(
 
   switch (profile.role) {
     case 'admin':
-      redirect('/admin/dashboard');
+      redirect('/portal/dashboard');
     case 'office':
       redirect('/office/dashboard');
     case 'stakeholder':
@@ -268,7 +268,7 @@ export async function signOut() {
 export async function adminSignOut() {
   const cookieStore = await cookies();
   cookieStore.delete('oks_admin_session');
-  redirect('/login-admin');
+  redirect('/login-portal');
 }
 
 // ── CREATE OFFICE (Admin-only) ──

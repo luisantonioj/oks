@@ -8,7 +8,7 @@ export default async function CreateOfficePage() {
   const adminSession = cookieStore.get('oks_admin_session')?.value;
 
   if (adminSession !== 'authenticated') {
-    redirect('/login-admin');
+    redirect('/login-portal');
   }
 
   return (

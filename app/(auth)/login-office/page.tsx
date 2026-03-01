@@ -1,90 +1,73 @@
 // app/(auth)/login-office/page.tsx
 import { OfficeLoginForm } from "@/components/office-login-form";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { hasEnvVars } from "@/lib/utils";
-import { EnvVarWarning } from "@/components/env-var-warning";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";
-import { Suspense } from "react";
 
-export default function OfficeLoginPage() {
+export default async function LoginOfficePage() {
+  // 1. Session Checks (Zero-Flash Redirects)
+  const cookieStore = await cookies();
+  if (cookieStore.get('oks_admin_session')?.value === 'authenticated') {
+    redirect('/portal/dashboard');
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    const profile = await getCurrentUserProfile();
+    if (profile?.role === 'office') redirect('/office/dashboard');
+    if (profile?.role === 'stakeholder') redirect('/stakeholder/dashboard');
+  }
+
+  // 2. Render Split-Screen Login
   return (
-    <main className="min-h-screen flex flex-col">
-      {/* Header */}
-      <nav className="w-full border-b border-b-foreground/10 h-16 flex items-center px-6">
-        <div className="w-full max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex gap-2 items-center font-semibold text-xl">
-            <span>OKS!</span>
+    <div className="min-h-screen flex flex-col lg:flex-row w-full">
+      {/* Left Side - Form Container */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-md flex flex-col gap-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold">Office Portal</h1>
+            <p className="text-sm text-muted-foreground">Sign in to manage operations</p>
           </div>
-          <ThemeSwitcher />
-        </div>
-      </nav>
+          
+          <OfficeLoginForm />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:flex-row">
-        {/* Left - Office Login */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-10">
-          <div className="w-full max-w-md">
-            {!hasEnvVars ? (
-              <EnvVarWarning />
-            ) : (
-              <Suspense>
-                <div className="space-y-6">
-                  <OfficeLoginForm />
-
-                  {/* Navigation Links */}
-                  <div className="flex flex-col gap-2 text-center text-sm">
-                    <Link
-                      href="/"
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Login as Stakeholder
-                    </Link>
-                    <Link
-                      href="/login-admin"
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Admin Access
-                    </Link>
-                  </div>
-                </div>
-              </Suspense>
-            )}
-          </div>
-        </div>
-
-        {/* Right - Branding */}
-        <div className="hidden lg:flex w-full lg:w-1/2 bg-muted items-center justify-center p-10">
-          <div className="max-w-lg text-center space-y-6">
-            <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-              <div className="text-center space-y-4 p-8">
-                <h1 className="text-4xl font-bold tracking-tight">
-                  Office Access
-                </h1>
-                <p className="text-lg text-muted-foreground">
-                  Authorized Responders & Crisis Managers
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold">
-                Respond. Coordinate. Act.
-              </h2>
-              <p className="text-muted-foreground">
-                Manage crisis announcements, monitor safety reports, and
-                coordinate emergency response for the DLSL community.
-              </p>
-            </div>
+          {/* Cleaned up navigation links */}
+          <div className="flex flex-col gap-2 text-center text-sm mt-4">
+            <Link href="/login" className="text-muted-foreground hover:text-foreground transition-colors">
+              Login as Stakeholder (Student/Teacher)
+            </Link>
+            <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
+              ← Back to Home
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="w-full border-t py-4 px-6">
-        <div className="w-full max-w-7xl mx-auto text-center text-xs text-muted-foreground">
-          <p>© 2026 Operation Keep Safe (OKS!) - De La Salle Lipa</p>
+      {/* Right Side - Placeholder for Frontend Developer */}
+      <div className="hidden lg:flex w-full lg:w-1/2 bg-slate-50 dark:bg-slate-900/50 items-center justify-center p-10 border-l border-border/50">
+        <div className="w-full max-w-lg text-center space-y-8">
+          {/* Dashed Placeholder Box (Slightly different style/aspect ratio for variety) */}
+          <div className="relative w-full aspect-[4/3] rounded-2xl bg-background/50 flex flex-col items-center justify-center border-2 border-dashed border-blue-500/30 p-8 shadow-sm">
+            <p className="text-lg font-semibold text-blue-500/60">
+              [ Frontend Dev ]
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Insert Office Command Center Graphic or Dashboard Preview Here
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold">Command Center</h2>
+            <p className="text-muted-foreground">
+              Coordinate rescue efforts, deploy announcements, and manage crisis responses efficiently.
+            </p>
+          </div>
         </div>
-      </footer>
-    </main>
+      </div>
+    </div>
   );
 }

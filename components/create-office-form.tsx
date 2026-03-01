@@ -34,7 +34,7 @@ export function CreateOfficeForm({
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
-        router.push("/admin/dashboard");
+        router.push("/portal/dashboard");
       }, 2000);
       return () => clearTimeout(timer);
     }

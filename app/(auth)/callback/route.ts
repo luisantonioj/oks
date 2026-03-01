@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   if (profile) {
     switch (profile.role) {
       case 'admin':
-        redirectPath = '/protected/admin/dashboard';
+        redirectPath = '/protected/portal/dashboard';
         break;
       case 'office':
         redirectPath = '/protected/office/dashboard';

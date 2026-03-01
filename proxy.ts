@@ -5,40 +5,31 @@ import { type NextRequest, NextResponse } from "next/server";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Handle Admin Route Protection (Replaces your layout.tsx check)
-  if (pathname.startsWith('/admin')) {
+  // 1. Strictly Protect Admin Routes
+  if (pathname.startsWith('/portal')) {
     const adminSession = request.cookies.get('oks_admin_session')?.value;
 
     if (adminSession !== 'authenticated') {
-      // Redirect to login if not authenticated
       const url = request.nextUrl.clone();
-      url.pathname = '/login-admin';
+      url.pathname = '/login-portal';
       url.searchParams.set('error', 'unauthorized');
       return NextResponse.redirect(url);
     }
     
-    // If authenticated, allow the request to proceed without triggering Supabase auth
+    return NextResponse.next(); // Let authenticated admins through
+  }
+
+  // 2. Allow the admin login page to render without Supabase interference
+  if (pathname === '/login-portal') {
     return NextResponse.next();
   }
 
-  // 2. Allow login-admin page to load without Supabase auth interference
-  if (pathname === '/login-admin') {
-    return NextResponse.next();
-  }
-
-  // 3. For all other routes (Offices, Stakeholders), use Supabase session management
+  // 3. Standard Supabase Session Management for Stakeholders and Offices
   return await updateSession(request);
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

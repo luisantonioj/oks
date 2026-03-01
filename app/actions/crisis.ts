@@ -36,7 +36,7 @@ export async function createCrisis(formData: FormData) {
 
     // Refresh dashboards to show the new crisis
     revalidatePath('/office/dashboard');
-    revalidatePath('/admin/dashboard');
+    revalidatePath('/portal/dashboard');
     revalidatePath('/stakeholder/dashboard');
     
     return { success: true, message: 'Crisis created successfully' };
@@ -58,7 +58,7 @@ export async function updateCrisisStatus(id: string, status: 'active' | 'resolve
     if (error) return { error: error.message };
 
     revalidatePath('/office/dashboard');
-    revalidatePath('/admin/dashboard');
+    revalidatePath('/portal/dashboard');
     return { success: true };
   } catch (error) {
     return { error: 'An unexpected error occurred' };
