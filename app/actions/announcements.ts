@@ -64,7 +64,7 @@ export async function deleteAnnouncement(id: string) {
     if (error) return { error: error.message };
 
     revalidatePath('/office/dashboard');
-    revalidatePath('/admin/dashboard');
+    revalidatePath('/portal/dashboard');
     return { success: true };
   } catch (error) {
     return { error: 'An unexpected error occurred' };
