@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export default async function StakeholderDashboard() {
   const profile = await getCurrentUserProfile();
@@ -53,7 +54,7 @@ export default async function StakeholderDashboard() {
             ))}
           </nav>
 
-          {/* Right: Bell + Avatar */}
+          {/* Right: Bell + Avatar + Theme */}
           <div className="flex items-center gap-3">
             <button className="relative w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-accent transition-colors">
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
@@ -62,6 +63,7 @@ export default async function StakeholderDashboard() {
               </svg>
               <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full border-2 border-background" />
             </button>
+            <ThemeSwitcher />
             <Link href="/stakeholder/profile">
               <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-muted-foreground hover:border-muted-foreground/40 transition-colors">
                 {firstName[0]?.toUpperCase()}
