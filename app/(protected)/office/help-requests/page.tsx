@@ -22,7 +22,9 @@ export default async function OfficeHelpRequestsPage() {
           <AlertTriangle className="h-6 w-6 text-red-500" />
           Help Requests
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Monitor and respond to stakeholder emergency requests.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Monitor and respond to stakeholder emergency requests.
+        </p>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
@@ -49,13 +51,16 @@ export default async function OfficeHelpRequestsPage() {
         {pendingRequests.length > 0 && (
           <section>
             <h2 className="text-sm font-semibold uppercase tracking-wide text-orange-600 mb-3 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />Pending Requests
+              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+              Pending Requests
             </h2>
             <HelpRequestTable requests={pendingRequests} viewMode="office" />
           </section>
         )}
         <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">All Requests</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+            All Requests
+          </h2>
           <HelpRequestTable requests={allRequests} viewMode="office" />
         </section>
       </div>
