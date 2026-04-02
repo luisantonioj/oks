@@ -10,12 +10,10 @@ import { EnvVarWarning } from "@/components/env-var-warning";
 import { hasEnvVars } from "@/lib/utils";
 
 export default async function LoginPage() {
-  // Session Checks — UNCHANGED
   const cookieStore = await cookies();
   if (cookieStore.get("oks_admin_session")?.value === "authenticated") {
     redirect("/portal/dashboard");
   }
-
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
@@ -25,72 +23,75 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background relative">
-
-      {/* ── Floating back button (top-left, outside both panels) ── */}
-      <div className="absolute top-5 left-5 z-10">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5 rounded-lg hover:bg-accent"
-        >
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-            <path d="M8.5 2.5L4 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back
-        </Link>
-      </div>
+    <div className="min-h-screen flex bg-background">
 
       {/* ── Left: Form Panel ── */}
-      <div className="flex-1 flex items-center justify-center px-8 xl:px-16">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex flex-col bg-background relative">
+        {/* Back button — floated, doesn't affect centering */}
+        <div className="absolute top-5 left-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border bg-background px-3 py-1.5 rounded-lg hover:bg-accent"
+          >
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <path d="M8.5 2.5L4 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back
+          </Link>
+        </div>
 
-          {/* Logo */}
-          <div className="flex items-center gap-2.5 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-destructive flex items-center justify-center flex-shrink-0">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2L14 13H2L8 2Z" fill="white" />
-              </svg>
-            </div>
-            <div className="leading-none">
-              <p className="text-sm font-bold tracking-tight">Operation Keep Safe!</p>
-              <p className="text-[10px] text-muted-foreground font-normal">De La Salle Lipa</p>
-            </div>
-          </div>
+        {/* Centered content */}
+        <div className="flex-1 flex items-center justify-center px-8 xl:px-16">
+          <div className="w-full max-w-md">
 
-          {/* Heading */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold tracking-tight mb-3">Welcome back</h1>
-            <p className="text-muted-foreground text-base leading-relaxed">
-              Sign in to your stakeholder account to access crisis information,
-              request help, and stay updated.
-            </p>
-          </div>
-
-          {/* Form */}
-          <div className="mb-7">
-            {!hasEnvVars ? <EnvVarWarning /> : (
-              <Suspense><LoginForm /></Suspense>
-            )}
-          </div>
-
-          {/* Switch link */}
-          <div className="pt-6 border-t border-border">
-            <Link
-              href="/login-office"
-              className="flex items-center justify-between w-full text-sm px-4 py-3 rounded-xl border border-border hover:bg-accent transition-all group"
-            >
-              <span className="text-muted-foreground group-hover:text-foreground transition-colors">
-                Signing in as Office Staff?
-              </span>
-              <span className="font-medium text-foreground flex items-center gap-1">
-                Office Portal
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M3 6h6M6.5 3.5L9 6l-2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Logo */}
+            <div className="flex items-center gap-2.5 mb-8">
+              <div className="w-8 h-8 rounded-lg bg-destructive flex items-center justify-center flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2L14 13H2L8 2Z" fill="white" />
                 </svg>
-              </span>
-            </Link>
-          </div>
+              </div>
+              <div className="leading-none">
+                <p className="text-sm font-bold tracking-tight">Operation Keep Safe!</p>
+                <p className="text-[10px] text-muted-foreground">De La Salle Lipa</p>
+              </div>
+            </div>
 
+            {/* Heading */}
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold tracking-tight mb-2">Welcome back</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Sign in to your stakeholder account to access crisis information,
+                request help, and stay updated.
+              </p>
+            </div>
+
+            {/* Form */}
+            <div className="mb-6">
+              {!hasEnvVars ? <EnvVarWarning /> : (
+                <Suspense><LoginForm /></Suspense>
+              )}
+            </div>
+
+            {/* Switch link */}
+            <div className="pt-5 border-t border-border">
+              <Link
+                href="/login-office"
+                className="flex items-center justify-between w-full text-sm px-4 py-3 rounded-xl border border-border hover:bg-accent transition-all group"
+              >
+                <span className="text-muted-foreground text-xs group-hover:text-foreground transition-colors">
+                  Signing in as Office Staff?
+                </span>
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1">
+                  Office Portal
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                    <path d="M3 6h6M6.5 3.5L9 6l-2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </Link>
+            </div>
+
+          </div>
         </div>
       </div>
 
@@ -122,7 +123,6 @@ export default async function LoginPage() {
             </div>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mb-8">
             {[{ v: "1,240", l: "Safe" }, { v: "38", l: "Pending" }, { v: "12", l: "SOS Sent" }].map((s) => (
               <div key={s.l} className="bg-background border border-border rounded-xl py-4 text-center">
@@ -132,9 +132,9 @@ export default async function LoginPage() {
             ))}
           </div>
 
-          <h2 className="text-2xl font-bold tracking-tight mb-3">Your safety, our priority</h2>
+          <h2 className="text-2xl font-bold tracking-tight mb-2">Your safety, our priority</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Access real-time crisis updates, request assistance, and connect with campus offices — all from one place.
+            Access real-time crisis updates, request assistance, and connect with campus offices — all in one place.
           </p>
         </div>
       </div>
