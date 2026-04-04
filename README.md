@@ -1,10 +1,10 @@
 # 🚨 Operation Keep Safe (OKS!)
 
-<p align="center">
+<p>
   <strong>Enhancing Crisis Management and Emergency Response for De La Salle Lipa</strong>
 </p>
 
-**Live Demo:** [oks-web.vercel.app](https://oks-web.vercel.app) *(Replace with your actual Vercel domain if different)*
+**Live Demo:** [oks-web.vercel.app](https://oks-web.vercel.app)
 
 ## 📋 Overview
 Operation Keep Safe (OKS!) is a centralized platform designed to streamline emergency responses, coordinate office communications, and ensure the safety of students and faculty during crisis situations on campus. 
