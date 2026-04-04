@@ -4,15 +4,6 @@
   <strong>Enhancing Crisis Management and Emergency Response for De La Salle Lipa</strong>
 </p>
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
-  <a href="#project-structure"><strong>Project Structure</strong></a> ·
-  <a href="#local-development"><strong>Local Development</strong></a> ·
-  <a href="#database-schema"><strong>Database Schema</strong></a>
-</p>
-<br/>
-
 **Live Demo:** [oks-web.vercel.app](https://oks-web.vercel.app) *(Replace with your actual Vercel domain if different)*
 
 ## 📋 Overview
@@ -23,8 +14,6 @@ The platform utilizes a strict **Role-Based Access Control (RBAC)** system to se
 2. **Offices (ISESSO, CIO, ICTC):** Act as the Command Center. They can create crisis alerts, broadcast announcements, manage incoming help requests, and track safety surveys.
 3. **System Admins:** Have top-level oversight to manage user accounts, register new office staff, and monitor system health.
 
----
-
 ## ✨ Features
 
 - **🔒 Secure Role-Based Authentication:** Distinct portals and dashboards for Admins, Offices, and Stakeholders powered by Supabase Auth and secure cookies.
@@ -33,8 +22,6 @@ The platform utilizes a strict **Role-Based Access Control (RBAC)** system to se
 - **📢 Broadcast Announcements:** Offices can push high-priority updates directly to stakeholder feeds.
 - **📋 Safety Surveys:** Dynamic forms to quickly assess the status and safety of the community post-incident.
 - **📱 Responsive UI:** Mobile-first design for stakeholders (who are likely on their phones during an emergency) and desktop-optimized data tables for the Office Command Center.
-
----
 
 ## 🛠 Tech Stack
 
@@ -48,8 +35,6 @@ The platform utilizes a strict **Role-Based Access Control (RBAC)** system to se
 **Backend & Infrastructure**
 - [Supabase](https://supabase.com/) (PostgreSQL Database, Authentication, Row Level Security)
 - [Vercel](https://vercel.com/) (Hosting & CI/CD)
-
----
 
 ## 📂 Project Structure
 
@@ -68,8 +53,6 @@ app/
 ````
 
 *Note: Shared UI elements (like buttons and forms) are kept in the root `components/` directory.*
-
------
 
 ## 💻 Local Development
 
@@ -95,7 +78,7 @@ app/
     ```
 
 3.  **Configure Environment Variables:**
-    Create a `.env.local` file in the root directory and add your Supabase credentials and Admin fallback keys:
+    Create a `.env.local` file in the root directory and add your credentials:
 
     ```env
     NEXT_PUBLIC_SUPABASE_URL=
@@ -108,8 +91,6 @@ app/
     ```bash
     npm run dev
     ```
-
------
 
 ## 🗄️ Database Schema Summary
 
