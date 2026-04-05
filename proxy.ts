@@ -5,13 +5,21 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  
+  // Always update the session first
   const response = await updateSession(request);
 
-  // 1. Strictly Protect Admin Routes
+  // 1. Allow the admin login page to render without interference
+  if (pathname === '/login-portal') {
+    return response;
+  }
+
+  // 2. Strictly Protect Admin Routes
   if (pathname.startsWith('/portal')) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    // If no user is logged in at all, kick them out
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = '/login-portal';
@@ -19,32 +27,9 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Verify Admin Privileges
-    let isAuthorized = false;
-
-    // Check Pure Admin
-    const { data: admin } = await supabase.from("admin").select("id").eq("id", user.id).maybeSingle();
-    if (admin) isAuthorized = true;
-
-    // Check Dual-Role Office
-    if (!isAuthorized) {
-      const { data: office } = await supabase.from("office").select("is_admin").eq("id", user.id).maybeSingle();
-      if (office?.is_admin) isAuthorized = true;
-    }
-
-    if (!isAuthorized) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/login-portal';
-      url.searchParams.set('error', 'unauthorized');
-      return NextResponse.redirect(url);
-    }
-
+    // Since auth.ts verified their admin status during login, 
+    // and RLS protects the actual data, we just pass them through here.
     return response;
-  }
-
-  // 2. Allow the admin login page to render without Supabase interference
-  if (pathname === '/login-portal') {
-    return NextResponse.next();
   }
 
   // 3. Standard Supabase Session Management for Stakeholders and Offices

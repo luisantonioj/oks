@@ -18,7 +18,7 @@ type FormState = {
   message?: string;
 };
 
-// ── ADMIN LOGIN (Hardcoded check with secure cookie - NO SUPABASE) ──
+// ── ADMIN LOGIN (Now using real Supabase Auth + Dual Role Check) ──
 export async function adminSignIn(
   prevState: FormState,
   formData: FormData
@@ -61,11 +61,11 @@ export async function adminSignIn(
       return { error: 'Unauthorized: You do not have system administrator privileges.' };
     }
 
-    redirect('/portal/dashboard');
+    // Return success to the client component so it can handle the redirect safely
+    return { success: true };
+    
   } catch (error) {
-    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
-      throw error;
-    }
+    console.error('[adminSignIn] Error:', error);
     return { error: 'An unexpected error occurred' };
   }
 }

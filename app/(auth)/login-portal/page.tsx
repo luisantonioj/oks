@@ -1,14 +1,30 @@
 // app/(auth)/login-portal/page.tsx
 import { AdminLoginForm } from "@/components/admin-login-form";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function LoginPortalPage() {
-  // 1. Session Checks (Zero-Flash Redirects) — UNCHANGED
-  const cookieStore = await cookies();
-  if (cookieStore.get("oks_admin_session")?.value === "authenticated") {
-    redirect("/portal/dashboard");
+  // 1. Session Checks (Zero-Flash Redirects) — UPDATED TO SUPABASE
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    // If they are already logged in, check if they actually have Admin rights
+    let isAuthorized = false;
+
+    const { data: admin } = await supabase.from("admin").select("id").eq("id", user.id).maybeSingle();
+    if (admin) isAuthorized = true;
+
+    if (!isAuthorized) {
+      const { data: office } = await supabase.from("office").select("is_admin").eq("id", user.id).maybeSingle();
+      if (office?.is_admin) isAuthorized = true;
+    }
+
+    // If they are authorized, skip the login screen
+    if (isAuthorized) {
+      redirect("/portal/dashboard");
+    }
   }
 
   // 2. Render UI

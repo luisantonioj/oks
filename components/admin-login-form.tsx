@@ -14,13 +14,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export function AdminLoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [state, formAction, isPending] = useActionState(adminSignIn, {});
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state?.success) {
+      router.refresh();
+      router.push('/portal/dashboard');
+    }
+  }, [state?.success, router]);
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

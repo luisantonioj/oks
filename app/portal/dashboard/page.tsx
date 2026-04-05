@@ -1,18 +1,28 @@
 // app/portal/dashboard/page.tsx
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { getAllOffices, getAllStakeholders } from "@/lib/queries/user";
+import { getDashboardStats } from "@/lib/queries/crisis";
 
 export default async function AdminDashboard() {
-  const cookieStore = await cookies();
-  const adminSession = cookieStore.get("oks_admin_session")?.value;
+  // 1. USE SUPABASE FOR AUTH CHECK
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (adminSession !== "authenticated") {
+  if (!user) {
     redirect("/login-portal");
   }
 
   const adminName = process.env.ADMIN_NAME || "Administrator";
   const firstName = adminName.split(" ")[0];
+
+  // ── Fetch Real Data from Supabase ──
+  const [offices, stakeholders, stats] = await Promise.all([
+    getAllOffices(),
+    getAllStakeholders(),
+    getDashboardStats(),
+  ]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
