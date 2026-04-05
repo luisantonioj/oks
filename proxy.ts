@@ -1,22 +1,45 @@
 // proxy.ts
 import { updateSession } from "@/lib/supabase/proxy";
 import { type NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const response = await updateSession(request);
 
   // 1. Strictly Protect Admin Routes
   if (pathname.startsWith('/portal')) {
-    const adminSession = request.cookies.get('oks_admin_session')?.value;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (adminSession !== 'authenticated') {
+    if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = '/login-portal';
       url.searchParams.set('error', 'unauthorized');
       return NextResponse.redirect(url);
     }
-    
-    return NextResponse.next(); // Let authenticated admins through
+
+    // Verify Admin Privileges
+    let isAuthorized = false;
+
+    // Check Pure Admin
+    const { data: admin } = await supabase.from("admin").select("id").eq("id", user.id).maybeSingle();
+    if (admin) isAuthorized = true;
+
+    // Check Dual-Role Office
+    if (!isAuthorized) {
+      const { data: office } = await supabase.from("office").select("is_admin").eq("id", user.id).maybeSingle();
+      if (office?.is_admin) isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login-portal';
+      url.searchParams.set('error', 'unauthorized');
+      return NextResponse.redirect(url);
+    }
+
+    return response;
   }
 
   // 2. Allow the admin login page to render without Supabase interference
@@ -25,7 +48,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // 3. Standard Supabase Session Management for Stakeholders and Offices
-  return await updateSession(request);
+  return response;
 }
 
 export const config = {

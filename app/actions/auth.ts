@@ -27,43 +27,42 @@ export async function adminSignIn(
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    console.log('[adminSignIn] Login attempt for:', email);
-
     if (!email || !password) {
       return { error: 'Email and password required' };
     }
 
-    // Load admin credentials from environment variables
-    const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    const supabase = await createClient();
 
-    if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-      console.error('[adminSignIn] ADMIN_EMAIL or ADMIN_PASSWORD not set in environment');
-      return { error: 'Server configuration error. Please contact support.' };
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (email.toLowerCase().trim() !== ADMIN_EMAIL.toLowerCase() || password !== ADMIN_PASSWORD) {
-      console.log('[adminSignIn] Invalid credentials provided');
+    if (error || !data.user) {
       return { error: 'Invalid admin credentials' };
     }
 
-    // Set cookie for admin session (NO Supabase involved)
-    const cookieStore = await cookies();
-    cookieStore.set('oks_admin_session', 'authenticated', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24, // 24 hours
-    });
+    // Verify they actually have Admin privileges
+    const userId = data.user.id;
+    let isAuthorized = false;
 
-    console.log('[adminSignIn] ✓ Admin authenticated, cookie set, redirecting...');
+    // Check 1: Are they a Pure Admin?
+    const { data: pureAdmin } = await supabase.from('admin').select('id').eq('id', userId).maybeSingle();
+    if (pureAdmin) isAuthorized = true;
 
-    // Redirect to admin dashboard
+    // Check 2: Are they an Office tagged with is_admin = true?
+    if (!isAuthorized) {
+      const { data: dualRoleOffice } = await supabase.from('office').select('is_admin').eq('id', userId).maybeSingle();
+      if (dualRoleOffice?.is_admin) isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      await supabase.auth.signOut();
+      return { error: 'Unauthorized: You do not have system administrator privileges.' };
+    }
+
     redirect('/portal/dashboard');
   } catch (error) {
-    console.error('[adminSignIn] Error:', error);
-    // Re-throw redirect errors (these are expected)
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
       throw error;
     }
@@ -266,8 +265,8 @@ export async function signOut() {
 
 // ── ADMIN SIGN OUT ──
 export async function adminSignOut() {
-  const cookieStore = await cookies();
-  cookieStore.delete('oks_admin_session');
+  const supabase = await createClient();
+  await supabase.auth.signOut();
   redirect('/login-portal');
 }
 
