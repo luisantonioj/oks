@@ -23,55 +23,56 @@ export default async function LoginOfficePage() {
     <div className="min-h-screen flex bg-background">
 
       {/* ── Left: Form Panel ── */}
-      <div className="flex-1 flex flex-col bg-background relative">
-        {/* Back button */}
-        <div className="absolute top-5 left-6">
+      <div className="flex-1 flex flex-col overflow-y-auto">
+
+        {/* Top row: back button LEFT + logo RIGHT on same horizontal line */}
+        <div className="flex-shrink-0 flex items-center gap-4 px-8 xl:px-16 pt-6 pb-0">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border bg-background px-3 py-1.5 rounded-lg hover:bg-accent"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border bg-background px-3 py-1.5 rounded-lg hover:bg-accent flex-shrink-0"
           >
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
               <path d="M8.5 2.5L4 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Back
           </Link>
+
+          {/* Logo — same row as back button */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-destructive flex items-center justify-center flex-shrink-0">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2L14 13H2L8 2Z" fill="white" />
+              </svg>
+            </div>
+            <div className="leading-none">
+              <p className="text-sm font-bold tracking-tight">Operation Keep Safe!</p>
+              <p className="text-[10px] text-muted-foreground">De La Salle Lipa</p>
+            </div>
+            <span className="ml-1 text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">
+              Office Staff
+            </span>
+          </div>
         </div>
 
-        {/* Centered content */}
-        <div className="flex-1 flex items-center justify-center px-8 xl:px-16">
+        {/* Centered form content */}
+        <div className="flex-1 flex items-center justify-center px-8 xl:px-16 py-8">
           <div className="w-full max-w-md">
 
-            {/* Logo + badge */}
-            <div className="flex items-center gap-2.5 mb-8">
-              <div className="w-8 h-8 rounded-lg bg-destructive flex items-center justify-center flex-shrink-0">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2L14 13H2L8 2Z" fill="white" />
-                </svg>
-              </div>
-              <div className="leading-none">
-                <p className="text-sm font-bold tracking-tight">Operation Keep Safe!</p>
-                <p className="text-[10px] text-muted-foreground">De La Salle Lipa</p>
-              </div>
-              <span className="ml-1 text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">
-                Office Staff
-              </span>
-            </div>
-
             {/* Heading */}
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold tracking-tight mb-2">Office Portal</h1>
+            <div className="mb-5">
+              <h1 className="text-3xl font-bold tracking-tight mb-1.5">Office Portal</h1>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Sign in to manage crisis operations, deploy announcements, and coordinate
-                emergency response for De La Salle Lipa.
+                Sign in to manage crisis operations, deploy announcements, and
+                coordinate emergency response for De La Salle Lipa.
               </p>
             </div>
 
             {/* Info strip */}
-            <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3.5 mb-6">
+            <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3.5 mb-4">
               <div className="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                  <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.3" className="text-blue-500" />
-                  <path d="M7 6v4M7 4.5v.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" className="text-blue-500" />
+                  <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M7 6v4M7 4.5v.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                 </svg>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -80,12 +81,12 @@ export default async function LoginOfficePage() {
             </div>
 
             {/* Form */}
-            <div className="mb-6">
+            <div className="mb-4">
               <OfficeLoginForm />
             </div>
 
             {/* Switch link */}
-            <div className="pt-5 border-t border-border">
+            <div className="pt-4 border-t border-border">
               <Link
                 href="/login"
                 className="flex items-center justify-between w-full text-sm px-4 py-3 rounded-xl border border-border hover:bg-accent transition-all group"
@@ -153,7 +154,6 @@ export default async function LoginOfficePage() {
               </div>
             ))}
           </div>
-
           <div className="grid grid-cols-2 gap-3 mb-8">
             {["Post Announcement", "Dispatch Team"].map((label) => (
               <div key={label} className="bg-background border border-border rounded-xl py-3 text-xs font-medium text-center text-muted-foreground">
@@ -161,7 +161,6 @@ export default async function LoginOfficePage() {
               </div>
             ))}
           </div>
-
           <h2 className="text-2xl font-bold tracking-tight mb-2">Coordinate with clarity</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Your command center for managing every aspect of campus crisis response — fast, clear, and accountable.
