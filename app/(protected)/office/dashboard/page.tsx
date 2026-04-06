@@ -16,24 +16,10 @@ export default async function OfficeDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Command Center</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{officeName} · Welcome back, {firstName}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/office/crises">
-            <button className="text-sm font-medium border border-border px-4 py-2 rounded-xl hover:bg-accent transition-colors">
-              Manage Crises
-            </button>
-          </Link>
-          <Link href="/office/announcements">
-            <button className="text-sm font-semibold bg-foreground text-background px-4 py-2 rounded-xl hover:opacity-90 transition-opacity">
-              + Announcement
-            </button>
-          </Link>
-        </div>
+      {/* ── Header — display only, no action buttons ── */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Command Center</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{officeName} · Welcome back, {firstName}</p>
       </div>
 
       {/* ── Stat Cards ── */}
@@ -143,9 +129,8 @@ export default async function OfficeDashboard() {
           </div>
         </div>
 
-        {/* Right */}
+        {/* Right — profile card + today's summary only */}
         <div className="space-y-4">
-          {/* Office card + Today's Summary */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-sm font-bold text-blue-600 dark:text-blue-400 flex-shrink-0">
@@ -181,31 +166,6 @@ export default async function OfficeDashboard() {
                   <p className="text-xs text-muted-foreground">{s.label}</p>
                   <p className="text-xs font-semibold">{s.value}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Office Tools */}
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
-              <p className="text-sm font-semibold">Office Tools</p>
-            </div>
-            <div className="p-3 space-y-1.5">
-              {[
-                { label: "Create Crisis", href: "/office/crises", icon: "⚡", hover: "hover:bg-destructive/10 hover:border-destructive/25" },
-                { label: "Post Announcement", href: "/office/announcements", icon: "📢", hover: "hover:bg-blue-500/10 hover:border-blue-500/25" },
-                { label: "Build Survey", href: "/office/surveys/new", icon: "📋", hover: "hover:bg-green-500/10 hover:border-green-500/25" },
-                { label: "Progress Report", href: "/office/reports", icon: "📊", hover: "hover:bg-purple-500/10 hover:border-purple-500/25" },
-              ].map((tool) => (
-                <Link key={tool.label} href={tool.href}>
-                  <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border transition-all cursor-pointer ${tool.hover}`}>
-                    <span className="text-sm">{tool.icon}</span>
-                    <span className="text-xs font-medium flex-1">{tool.label}</span>
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-muted-foreground">
-                      <path d="M3 5h4M5.5 3L7 5l-1.5 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                </Link>
               ))}
             </div>
           </div>
