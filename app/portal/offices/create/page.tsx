@@ -1,3 +1,4 @@
+// app/portal/create/page.tsx
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -5,8 +6,11 @@ import { CreateOfficeForm } from '@/components/create-office-form';
 import { ArrowLeft, Building2 } from 'lucide-react';
 
 export default async function AdminCreateOfficePage() {
+  // Use the cookie check to match your adminSignIn action!
   const cookieStore = await cookies();
-  if (cookieStore.get('oks_admin_session')?.value !== 'authenticated') redirect('/login-portal');
+  if (cookieStore.get('oks_admin_session')?.value !== 'authenticated') {
+    redirect('/login-portal');
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-2xl mx-auto">

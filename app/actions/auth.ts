@@ -292,6 +292,9 @@ export async function createOffice(
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const officeName = formData.get('office_name') as string;
+    const age = formData.get('age') ? Number(formData.get('age')) : null;
+    const gender = formData.get('gender') as string || null;
+    const contact = formData.get('contact') as string || null;
 
     console.log('[createOffice] Creating office for:', { name, email, officeName });
 
@@ -340,6 +343,9 @@ export async function createOffice(
         email,
         role: 'office',
         office_name: officeName,
+        age,
+        gender,
+        contact,
       });
 
     if (insertError) {
