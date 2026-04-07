@@ -113,6 +113,36 @@ export function CreateOfficeForm({
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              {/* Age */}
+              <div className="grid gap-2">
+                <Label htmlFor="age">Age</Label>
+                <Input id="age" name="age" type="number" min="18" max="100" placeholder="e.g., 35" />
+              </div>
+
+              {/* Gender */}
+              <div className="grid gap-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select name="gender">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Contact Number */}
+            <div className="grid gap-2">
+              <Label htmlFor="contact">Contact Number</Label>
+              <Input id="contact" name="contact" type="tel" placeholder="e.g., 09123456789" />
+            </div>
+
             {/* Error / Success Messages */}
             {state?.error && (
               <div className="p-3 rounded bg-destructive/10 border border-destructive text-sm text-destructive">
