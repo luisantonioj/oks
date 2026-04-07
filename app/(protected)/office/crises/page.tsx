@@ -1,103 +1,29 @@
 // app/(protected)/office/crises/page.tsx
-"use client";
-
-import { useState } from "react";
-import { Crisis, CrisisFeatures } from "../../../../components/crisis/crisis.types";
-import { defaultFeatures, emptyForm, initialCrises } from "../../../../components/crisis/crisis.data";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { getCrises } from "@/lib/queries/crisis";
 import { ActiveCrisisCard, ResolvedCrisisCard } from "../../../../components/crisis/CrisisCard";
-import { CrisisModal, CrisisFormState } from "../../../../components/crisis/CrisisModal";
+import { CrisisModalWrapper } from "./CrisisModalWrapper";
+import { Crisis } from "../../../../components/crisis/crisis.types"; // <-- ADDED IMPORT
 
-export default function OfficeCrisesPage() {
-  const [crises, setCrises] = useState<Crisis[]>(initialCrises);
-  const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<CrisisFormState>(emptyForm);
-  const [features, setFeatures] = useState<CrisisFeatures>({ ...defaultFeatures });
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState(false);
+export default async function OfficeCrisesPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login-portal");
+  }
+
+  // Fetch REAL data from Supabase and cast it to the UI type to satisfy TypeScript
+  const rawCrises = await getCrises();
+  const crises = rawCrises as unknown as Crisis[]; 
+  
+  // Notice we filter by lowercase "active" and "resolved" to match your DB
   const activeCrises = crises.filter((c) => c.status === "active");
   const resolvedCrises = crises.filter((c) => c.status === "resolved");
 
-  function openCreate() {
-    setForm(emptyForm);
-    setFeatures({ ...defaultFeatures });
-    setFormError("");
-    setFormSuccess(false);
-    setEditingId(null);
-    setModalMode("create");
-  }
-
-  function openEdit(crisis: Crisis) {
-    setForm({
-      name: crisis.name,
-      type: crisis.type,
-      summary: crisis.summary,
-      affected_areas: crisis.affected_areas.join(", "),
-      severity: crisis.severity,
-    });
-    setFeatures({ ...crisis.features });
-    setFormError("");
-    setFormSuccess(false);
-    setEditingId(crisis.id);
-    setModalMode("edit");
-  }
-
-  function closeModal() {
-    setModalMode(null);
-    setEditingId(null);
-    setFormError("");
-    setFormSuccess(false);
-    setForm(emptyForm);
-    setFeatures({ ...defaultFeatures });
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.name.trim() || !form.type || !form.summary.trim() || !form.affected_areas.trim()) {
-      setFormError("Please fill in all required fields.");
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const areas = form.affected_areas.split(",").map((a) => a.trim()).filter(Boolean);
-
-    if (modalMode === "create") {
-      const newCrisis: Crisis = {
-        id: `crisis-${Date.now()}`,
-        name: form.name.trim(),
-        type: form.type,
-        summary: form.summary.trim(),
-        description: form.summary.trim(),
-        affected_areas: areas,
-        severity: form.severity,
-        status: "active",
-        students_at_risk: 0,
-        created_at: now,
-        updated_at: now,
-        help_requests: [],
-        announcements: [],
-        progress_updates: [],
-        volunteers: 0,
-        donations_count: 0,
-        features: { ...features },
-      };
-      setCrises([newCrisis, ...crises]);
-    } else if (modalMode === "edit" && editingId) {
-      setCrises(crises.map((c) =>
-        c.id === editingId
-          ? { ...c, name: form.name.trim(), type: form.type, summary: form.summary.trim(), affected_areas: areas, severity: form.severity, features: { ...features }, updated_at: now }
-          : c
-      ));
-    }
-
-    setFormSuccess(true);
-    setTimeout(() => { setFormSuccess(false); closeModal(); }, 1500);
-  }
-
   return (
     <div className="min-h-screen bg-background">
-
       {/* Header */}
       <div className="bg-card border-b border-border px-6 py-5">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
@@ -105,17 +31,12 @@ export default function OfficeCrisesPage() {
             <h1 className="text-2xl font-bold text-foreground">Crisis Management</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Monitor and manage all active and past crises</p>
           </div>
-          <button
-            onClick={openCreate}
-            className="inline-flex items-center gap-2 bg-[#00C48C] hover:bg-[#00a876] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
-          >
-            <span className="text-lg leading-none">+</span> New Crisis
-          </button>
+          {/* This client component handles the modal state */}
+          <CrisisModalWrapper />
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
-
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           {[
@@ -140,7 +61,7 @@ export default function OfficeCrisesPage() {
           ) : (
             <div className="space-y-3">
               {activeCrises.map((crisis) => (
-                <ActiveCrisisCard key={crisis.id} crisis={crisis} onEdit={openEdit} />
+                <ActiveCrisisCard key={crisis.id} crisis={crisis} />
               ))}
             </div>
           )}
@@ -152,27 +73,12 @@ export default function OfficeCrisesPage() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Resolved Crises</h2>
             <div className="space-y-3">
               {resolvedCrises.map((crisis) => (
-                <ResolvedCrisisCard key={crisis.id} crisis={crisis} onEdit={openEdit} />
+                <ResolvedCrisisCard key={crisis.id} crisis={crisis} />
               ))}
             </div>
           </section>
         )}
       </div>
-
-      {/* Modal */}
-      {modalMode && (
-        <CrisisModal
-          mode={modalMode}
-          form={form}
-          features={features}
-          formError={formError}
-          formSuccess={formSuccess}
-          onClose={closeModal}
-          onSubmit={handleSubmit}
-          onFormChange={(updates) => setForm((prev) => ({ ...prev, ...updates }))}
-          onToggleFeature={(key) => setFeatures((prev) => ({ ...prev, [key]: !prev[key] }))}
-        />
-      )}
     </div>
   );
 }

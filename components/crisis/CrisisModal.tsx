@@ -1,6 +1,8 @@
 // components/crisis/CrisisModal.tsx
 "use client";
 
+import { useActionState, useEffect } from "react";
+import { createCrisis } from "@/app/actions/crisis"; // <-- MUST IMPORT THIS
 import { CrisisFeatures } from "./crisis.types";
 import { crisisTypes, optionalFeatures } from "./crisis.data";
 
@@ -10,28 +12,41 @@ export type CrisisFormState = {
   summary: string;
   affected_areas: string;
   severity: string;
+  required_actions: string;
 };
 
 interface CrisisModalProps {
   mode: "create" | "edit";
   form: CrisisFormState;
   features: CrisisFeatures;
-  formError: string;
-  formSuccess: boolean;
   onClose: () => void;
-  onSubmit: (e: React.FormEvent) => void;
   onFormChange: (updates: Partial<CrisisFormState>) => void;
   onToggleFeature: (key: keyof CrisisFeatures) => void;
 }
 
+// 1. Define the type for the Action State
+type ActionState = {
+  error?: string;
+  success?: boolean;
+};
+
+// 2. Define a clean initial state
+const initialState: ActionState = {};
+
 export function CrisisModal({
-  mode, form, features, formError, formSuccess,
-  onClose, onSubmit, onFormChange, onToggleFeature,
+  mode, form, features,
+  onClose, onFormChange, onToggleFeature,
 }: CrisisModalProps) {
   const isCreate = mode === "create";
-  const title = isCreate ? "Create New Crisis" : "Edit Crisis";
+  const titleText = isCreate ? "Create New Crisis" : "Edit Crisis";
   const submitLabel = isCreate ? "Create Crisis" : "Save Changes";
-  const successMsg = isCreate ? "✅ Crisis created successfully!" : "✅ Crisis updated successfully!";
+  
+  // 3. Pass the typed initial state here!
+  const [state, formAction, isPending] = useActionState(createCrisis, initialState);
+
+  // Note: We don't actually need an effect to close the modal on success 
+  // because the Server Action triggers a full route redirect on success!
+  // If it doesn't redirect, it means there was an error, which we show in the UI.
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -39,11 +54,18 @@ export function CrisisModal({
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card rounded-t-2xl">
-          <h2 className="font-bold text-foreground text-lg">{title}</h2>
+          <h2 className="font-bold text-foreground text-lg">{titleText}</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl leading-none">×</button>
         </div>
 
-        <form onSubmit={onSubmit} className="p-6 space-y-4">
+        <form action={formAction} className="p-6 space-y-4">
+          
+          {/* HIDDEN INPUTS */}
+          <input type="hidden" name="severity" value={form.severity} />
+          {features.notify_stakeholders && <input type="hidden" name="feature_notify" value="on" />}
+          {features.sound_alarm && <input type="hidden" name="feature_alarm" value="on" />}
+          {features.request_backup && <input type="hidden" name="feature_backup" value="on" />}
+          {features.lockdown_areas && <input type="hidden" name="feature_lockdown" value="on" />}
 
           {/* Crisis Name */}
           <div>
@@ -52,9 +74,11 @@ export function CrisisModal({
             </label>
             <input
               type="text"
-              value={form.name}
+              name="name" 
+              defaultValue={form.name || ""} 
               onChange={(e) => onFormChange({ name: e.target.value })}
-              placeholder="e.g., Typhoon Jacinto"
+              placeholder="e.g., Typhoon... Earthquake..."
+              required
               className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -65,8 +89,10 @@ export function CrisisModal({
               Crisis Type <span className="text-destructive">*</span>
             </label>
             <select
-              value={form.type}
+              name="type" 
+              defaultValue={form.type}
               onChange={(e) => onFormChange({ type: e.target.value })}
+              required
               className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Select a type...</option>
@@ -80,10 +106,27 @@ export function CrisisModal({
               Summary <span className="text-destructive">*</span>
             </label>
             <textarea
+              name="summary" 
               rows={3}
-              value={form.summary}
+              defaultValue={form.summary}
               onChange={(e) => onFormChange({ summary: e.target.value })}
+              required
               placeholder="Brief description of the crisis situation..."
+              className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+            />
+          </div>
+
+          {/* Immediate Actions Required */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              Immediate Actions Required
+            </label>
+            <textarea
+              name="required_actions" 
+              rows={2}
+              defaultValue={form.required_actions || ""}
+              onChange={(e) => onFormChange({ required_actions: e.target.value })}
+              placeholder="e.g., Evacuate immediately, avoid North Wing..."
               className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
@@ -95,8 +138,10 @@ export function CrisisModal({
             </label>
             <input
               type="text"
-              value={form.affected_areas}
+              name="affected_areas" 
+              defaultValue={form.affected_areas}
               onChange={(e) => onFormChange({ affected_areas: e.target.value })}
+              required
               placeholder="e.g., Lipa City, Batangas City, Taal"
               className="w-full text-sm border border-input rounded-lg px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
@@ -139,26 +184,6 @@ export function CrisisModal({
               Home and Announcements are always enabled. Toggle the rest as needed.
             </p>
 
-            {/* Always-on features */}
-            <div className="space-y-2 mb-2">
-              {[
-                { label: "🏠 Home", desc: "Crisis overview and details" },
-                { label: "📢 Announcements", desc: "Broadcast updates to stakeholders" },
-              ].map((f) => (
-                <div key={f.label} className="flex items-center justify-between px-4 py-3 rounded-lg bg-muted/50 border border-border">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{f.label}</p>
-                    <p className="text-xs text-muted-foreground">{f.desc}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Always on</span>
-                    <div className="w-10 h-5 bg-[#00C48C] rounded-full opacity-50 cursor-not-allowed" />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Toggleable features */}
             <div className="space-y-2">
               {optionalFeatures.map((f) => (
                 <div
@@ -189,12 +214,9 @@ export function CrisisModal({
             </div>
           </div>
 
-          {/* Feedback */}
-          {formError && (
-            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{formError}</p>
-          )}
-          {formSuccess && (
-            <p className="text-sm text-[#00C48C] bg-[#00C48C]/10 px-3 py-2 rounded-lg">{successMsg}</p>
+          {/* Server Feedback */}
+          {state?.error && (
+            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{state.error}</p>
           )}
 
           {/* Actions */}
@@ -202,15 +224,17 @@ export function CrisisModal({
             <button
               type="button"
               onClick={onClose}
+              disabled={isPending}
               className="flex-1 text-sm font-medium py-2.5 rounded-lg border border-border text-foreground hover:bg-accent transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
+              disabled={isPending}
               className="flex-1 text-sm font-semibold py-2.5 rounded-lg bg-[#00C48C] hover:bg-[#00a876] text-white transition-colors"
             >
-              {submitLabel}
+              {isPending ? "Creating..." : submitLabel}
             </button>
           </div>
         </form>
