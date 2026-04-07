@@ -17,7 +17,7 @@ export default async function AdminDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
-      {/* ── Header — no button, display only ── */}
+      {/* ── Header — display only, no buttons ── */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">System Administration</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
@@ -128,7 +128,7 @@ export default async function AdminDashboard() {
             </span>
           </div>
 
-          {/* System Status — second */}
+          {/* System Status */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-border">
               <p className="text-sm font-semibold">System Status</p>
