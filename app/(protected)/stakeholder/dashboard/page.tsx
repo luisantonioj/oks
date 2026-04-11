@@ -2,6 +2,7 @@
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { SOSButton } from "@/components/SOSButton";
 
 export default async function StakeholderDashboard() {
   const profile = await getCurrentUserProfile();
@@ -18,7 +19,7 @@ export default async function StakeholderDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
-      {/* ── Header — no Request Help button ── */}
+      {/* ── Header ── */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           {greeting}, {firstName} 👋
@@ -57,19 +58,10 @@ export default async function StakeholderDashboard() {
       {/* ── Stat Cards — SOS big card + 3 regular ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
-        {/* SOS — big red card */}
-        <Link href="/stakeholder/help-requests/new">
-          <div className="bg-destructive rounded-2xl p-5 hover:bg-destructive/90 transition-colors cursor-pointer flex flex-col items-center justify-center text-white text-center h-full min-h-[140px]">
-            <div className="w-10 h-10 rounded-xl border-2 border-white/30 flex items-center justify-center mb-3">
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2L14 13H2L8 2Z" stroke="white" strokeWidth="1.5" />
-                <path d="M8 6v3.5M8 11v.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </div>
-            <p className="text-xl font-bold tracking-tight">SOS</p>
-            <p className="text-[11px] text-white/75 mt-0.5">Tap for help</p>
-          </div>
-        </Link>
+        {/* SOS — big card with full animated SOSButton */}
+        <div className="bg-destructive/5 border border-destructive/20 rounded-2xl flex flex-col items-center justify-center min-h-[180px] p-4">
+          <SOSButton variant="full" />
+        </div>
 
         {/* Active Crises */}
         <Link href="/stakeholder/announcements">
