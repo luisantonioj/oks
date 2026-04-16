@@ -6,7 +6,7 @@ import { AlertTriangle } from "lucide-react";
 
 interface SOSButtonProps {
   crisisId?: string;
-  variant?: "full" | "compact";
+  variant?: "full" | "compact" | "card";
 }
 
 export function SOSButton({ crisisId, variant = "full" }: SOSButtonProps) {
@@ -24,6 +24,56 @@ export function SOSButton({ crisisId, variant = "full" }: SOSButtonProps) {
     }, 300);
   };
 
+  // ── Card variant: used in the stat cards grid on the dashboard ──
+  if (variant === "card") {
+    return (
+      <button
+        onClick={handleClick}
+        className={`bg-destructive rounded-2xl cursor-pointer flex flex-col items-center justify-center text-white text-center h-full min-h-[140px] relative overflow-hidden select-none transition-transform w-full ${
+          isPressed ? "scale-95" : "active:scale-95"
+        }`}
+      >
+        {/* Pulsing glow rings */}
+        <span
+          className="absolute rounded-full bg-white/20 pointer-events-none"
+          style={{
+            width: "90px",
+            height: "90px",
+            animation: "sos-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite",
+          }}
+        />
+        <span
+          className="absolute rounded-full bg-white/10 pointer-events-none"
+          style={{
+            width: "110px",
+            height: "110px",
+            animation: "sos-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite 0.4s",
+          }}
+        />
+
+        {/* Inner circle */}
+        <div className="relative z-10 flex flex-col items-center justify-center w-16 h-16 rounded-full bg-red-700 border-4 border-red-400/40 shadow-lg mb-1">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2L14 13H2L8 2Z" stroke="white" strokeWidth="1.5" />
+            <path d="M8 6v3.5M8 11v.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <p className="text-[11px] font-black tracking-widest leading-none mt-0.5">SOS</p>
+        </div>
+        <p className="text-[10px] text-white/70 mt-1.5 relative z-10">Tap for help</p>
+
+        {/* Keyframes */}
+        <style>{`
+          @keyframes sos-ping {
+            0%   { transform: scale(0.8); opacity: 0.7; }
+            70%  { transform: scale(1.6); opacity: 0;   }
+            100% { transform: scale(1.6); opacity: 0;   }
+          }
+        `}</style>
+      </button>
+    );
+  }
+
+  // ── Compact variant ──
   if (variant === "compact") {
     return (
       <button
@@ -42,6 +92,7 @@ export function SOSButton({ crisisId, variant = "full" }: SOSButtonProps) {
     );
   }
 
+  // ── Full variant (default) ──
   return (
     <div className="flex flex-col items-center gap-3">
       <button
