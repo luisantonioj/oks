@@ -17,12 +17,13 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { label: "Dashboard", href: "/office/dashboard" },
-    { label: "Crises", href: "/office/crises" },
+    { label: "Dashboard",     href: "/office/dashboard" },
+    { label: "Crises",        href: "/office/crises" },
     { label: "Help Requests", href: "/office/help-requests" },
     { label: "Announcements", href: "/office/announcements" },
-    { label: "Surveys", href: "/office/surveys" },
-    { label: "Reports", href: "/office/reports" },
+    { label: "Surveys",       href: "/office/surveys" },
+    { label: "Reports",       href: "/office/reports" },
+    { label: "Inbox",         href: "/office/inbox" },
   ];
 
   return (
@@ -67,11 +68,13 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             <ThemeSwitcher />
             <Link href="/office/profile">
-              <div className={`w-8 h-8 rounded-full bg-blue-500/15 border flex items-center justify-center text-xs font-semibold text-blue-600 dark:text-blue-400 transition-colors ${
-                pathname.startsWith("/office/profile")
-                  ? "border-blue-500/50"
-                  : "border-blue-500/20 hover:border-blue-500/40"
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full bg-blue-500/15 border flex items-center justify-center text-xs font-semibold text-blue-600 dark:text-blue-400 transition-colors ${
+                  pathname.startsWith("/office/profile")
+                    ? "border-blue-500/50"
+                    : "border-blue-500/20 hover:border-blue-500/40"
+                }`}
+              >
                 {firstName[0]?.toUpperCase()}
               </div>
             </Link>
@@ -102,14 +105,21 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-30 flex">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <div className="relative z-10 ml-auto w-72 h-full bg-background border-l border-border flex flex-col p-5 shadow-xl">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-7 h-7 rounded-md bg-destructive flex items-center justify-center">
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 2L14 13H2L8 2Z" fill="white" /></svg>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2L14 13H2L8 2Z" fill="white" />
+                </svg>
               </div>
               <span className="text-sm font-bold">OKS!</span>
-              <span className="ml-auto text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{officeName}</span>
+              <span className="ml-auto text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {officeName}
+              </span>
             </div>
             <nav className="flex flex-col gap-1 flex-1">
               {navLinks.map((n) => {
@@ -120,7 +130,9 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
                     href={n.href}
                     onClick={() => setMobileOpen(false)}
                     className={`text-sm px-3 py-2.5 rounded-xl transition-colors ${
-                      isActive ? "bg-accent font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                      isActive
+                        ? "bg-accent font-semibold text-foreground"
+                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                     }`}
                   >
                     {n.label}

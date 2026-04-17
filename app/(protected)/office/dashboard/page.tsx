@@ -2,7 +2,7 @@
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { EmergencyContactsEditor } from "@/components/emergency-contacts-editor";
 
 export default async function OfficeDashboard() {
   const profile = await getCurrentUserProfile();
@@ -10,45 +10,26 @@ export default async function OfficeDashboard() {
     redirect("/login-office");
   }
 
-  const supabase = await createClient();
-
-  const { data: helpRequests } = await supabase
-    .from('help_request')
-    .select('*, stakeholder(name)')
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  const requests = helpRequests ?? [];
-  const pendingCount = requests.filter((r: any) => r.status === 'pending').length;
-
   const officeName = (profile as any).office_name ?? "Office";
   const name = profile.name ?? "Officer";
   const firstName = name.split(" ")[0];
 
-  function timeAgo(dateStr: string) {
-    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-    if (diff < 60) return `${diff}s ago`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
-      {/* Header */}
+      {/* ── Header ── */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Command Center</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{officeName} · Welcome back, {firstName}</p>
       </div>
 
-      {/* Stat Cards */}
+      {/* ── Stat Cards: Active Crises | Pending SOS | Volunteers | Donations ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Active Crises", value: "2", icon: "⚡", color: "text-destructive", bg: "bg-destructive/10", href: "/office/crises" },
-          { label: "Pending SOS", value: String(pendingCount), icon: "🆘", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-500/10", href: "/office/inbox" },
-          { label: "Volunteers", value: "24", icon: "🤝", color: "text-green-600 dark:text-green-400", bg: "bg-green-500/10", href: "/office/dashboard" },
-          { label: "Donations", value: "12", icon: "📦", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10", href: "/office/dashboard" },
+          { label: "Active Crises", value: "2",  icon: "⚡", color: "text-destructive",                        bg: "bg-destructive/10",  href: "/office/crises"        },
+          { label: "Pending SOS",   value: "3",  icon: "🆘", color: "text-yellow-600 dark:text-yellow-400",    bg: "bg-yellow-500/10",   href: "/office/help-requests" },
+          { label: "Volunteers",    value: "24", icon: "🤝", color: "text-green-600 dark:text-green-400",      bg: "bg-green-500/10",    href: "/office/dashboard"     },
+          { label: "Donations",     value: "12", icon: "📦", color: "text-blue-600 dark:text-blue-400",        bg: "bg-blue-500/10",     href: "/office/dashboard"     },
         ].map((card) => (
           <Link key={card.label} href={card.href}>
             <div className="bg-card border border-border rounded-2xl p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer">
@@ -60,29 +41,25 @@ export default async function OfficeDashboard() {
             </div>
           </Link>
         ))}
-
-        {/* Inbox Card */}
-        <Link href="/office/inbox">
-          <div className="bg-card border border-border rounded-2xl p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer">
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center text-base mb-4">💬</div>
-            <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{requests.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Inbox</p>
-          </div>
-        </Link>
       </div>
 
-      {/* Main Grid */}
+      {/* ── Emergency Contacts — editable by office staff ── */}
+      <EmergencyContactsEditor />
+
+      {/* ── Main Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">
+
+        {/* Left */}
         <div className="space-y-4">
 
-          {/* Help Requests — real data */}
+          {/* Help Requests */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold">Help Requests</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Incoming SOS from stakeholders</p>
               </div>
-              <Link href="/office/inbox" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <Link href="/office/help-requests" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                 View all →
               </Link>
             </div>
@@ -92,41 +69,34 @@ export default async function OfficeDashboard() {
               ))}
             </div>
             <div className="divide-y divide-border">
-              {requests.length === 0 ? (
-                <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-                  No help requests yet.
+              {[
+                { name: "Maria Santos",   loc: "Mabini Bldg, 3rd Floor",   status: "Pending",  time: "2m ago",  urgent: true  },
+                { name: "Juan Dela Cruz", loc: "Main Library, Room 204",    status: "Pending",  time: "8m ago",  urgent: true  },
+                { name: "Ana Reyes",      loc: "Engineering Lab B",         status: "Resolved", time: "15m ago", urgent: false },
+                { name: "Carlo Mendoza",  loc: "Dormitory Block C",         status: "Pending",  time: "22m ago", urgent: true  },
+              ].map((req) => (
+                <div key={req.name} className="px-5 py-3 grid grid-cols-[1fr_120px_80px_70px] gap-3 items-center hover:bg-muted/20 transition-colors">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 ${req.urgent ? "bg-destructive" : "bg-muted-foreground"}`}>
+                      {req.name[0]}
+                    </div>
+                    <p className="text-xs font-semibold truncate">{req.name}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{req.loc}</p>
+                  <span className={`text-[10px] font-semibold px-2 py-1 rounded-full w-fit ${
+                    req.status === "Pending"
+                      ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400"
+                      : "bg-green-500/15 text-green-700 dark:text-green-400"
+                  }`}>
+                    {req.status}
+                  </span>
+                  <p className="text-[10px] text-muted-foreground">{req.time}</p>
                 </div>
-              ) : (
-                requests.map((req: any) => {
-                  const stakeholderName = req.stakeholder?.name ?? 'Unknown';
-                  const isPending = req.status === 'pending';
-                  return (
-                    <Link key={req.id} href={`/office/inbox/${req.id}`}>
-                      <div className="px-5 py-3 grid grid-cols-[1fr_120px_80px_70px] gap-3 items-center hover:bg-muted/20 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 ${isPending ? "bg-destructive" : "bg-muted-foreground"}`}>
-                            {stakeholderName[0]?.toUpperCase()}
-                          </div>
-                          <p className="text-xs font-semibold truncate">{stakeholderName}</p>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">{req.location}</p>
-                        <span className={`text-[10px] font-semibold px-2 py-1 rounded-full w-fit ${
-                          isPending
-                            ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400"
-                            : "bg-green-500/15 text-green-700 dark:text-green-400"
-                        }`}>
-                          {req.status}
-                        </span>
-                        <p className="text-[10px] text-muted-foreground">{timeAgo(req.created_at)}</p>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
+              ))}
             </div>
           </div>
 
-          {/* Active Crises — kept as-is (static for now) */}
+          {/* Active Crises */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
               <div>
@@ -139,8 +109,8 @@ export default async function OfficeDashboard() {
             </div>
             <div className="divide-y divide-border">
               {[
-                { type: "Typhoon", name: "Typhoon Carina — signal #2 affecting campus grounds", severity: "high", loc: "Main Campus, Mabini Bldg", time: "2h ago" },
-                { type: "Flood", name: "Flash flood warning for low-lying areas near dormitories", severity: "high", loc: "Dormitory Area, Grounds", time: "4h ago" },
+                { type: "Typhoon", name: "Typhoon Carina — signal #2 affecting campus grounds",           severity: "high", loc: "Main Campus, Mabini Bldg", time: "2h ago" },
+                { type: "Flood",   name: "Flash flood warning for low-lying areas near dormitories",      severity: "high", loc: "Dormitory Area, Grounds",  time: "4h ago" },
               ].map((c) => (
                 <div key={c.type} className="px-5 py-4 flex items-start gap-3 hover:bg-muted/20 transition-colors">
                   <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -163,7 +133,7 @@ export default async function OfficeDashboard() {
           </div>
         </div>
 
-        {/* Right — profile card */}
+        {/* Right — profile card + today's summary */}
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
@@ -189,11 +159,12 @@ export default async function OfficeDashboard() {
               </span>
             </div>
             <div className="pt-4 border-t border-border space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">Today's Summary</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">Today&apos;s Summary</p>
               {[
-                { label: "Requests Resolved", value: String(requests.filter((r: any) => r.status === 'resolved').length) },
-                { label: "Requests Pending", value: String(pendingCount) },
-                { label: "Total Requests", value: String(requests.length) },
+                { label: "Requests Resolved",   value: "5" },
+                { label: "Announcements Sent",  value: "2" },
+                { label: "Surveys Active",      value: "1" },
+                { label: "Volunteers Deployed", value: "8" },
               ].map((s) => (
                 <div key={s.label} className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">{s.label}</p>

@@ -3,7 +3,6 @@ import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SOSButton } from "@/components/SOSButton";
-import { MessageSquare } from 'lucide-react';
 
 export default async function StakeholderDashboard() {
   const profile = await getCurrentUserProfile();
@@ -15,7 +14,8 @@ export default async function StakeholderDashboard() {
   const firstName = name.split(" ")[0];
   const email = profile.email ?? "";
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
@@ -26,7 +26,7 @@ export default async function StakeholderDashboard() {
           {greeting}, {firstName} 👋
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Here's your current situation overview.
+          Here&apos;s your current situation overview.
         </p>
       </div>
 
@@ -56,13 +56,11 @@ export default async function StakeholderDashboard() {
         </Link>
       </div>
 
-      {/* ── Stat Cards — SOS big card + 3 regular ── */}
+      {/* ── Stat Cards: SOS | Active Crises | Announcements | Open Surveys (4 in one row) ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
-        {/* SOS — big card with full animated SOSButton */}
-        <div className="bg-destructive/5 border border-destructive/20 rounded-2xl flex flex-col items-center justify-center min-h-[180px] p-4">
-          <SOSButton variant="full" />
-        </div>
+        {/* SOS — animated pulsing card (existing SOSButton with card variant) */}
+        <SOSButton variant="card" />
 
         {/* Active Crises */}
         <Link href="/stakeholder/announcements">
@@ -84,14 +82,6 @@ export default async function StakeholderDashboard() {
           </div>
         </Link>
 
-<Link href="/stakeholder/inbox">
-  <div className="bg-card border border-border rounded-2xl p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer h-full">
-    <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center text-base mb-4">💬</div>
-    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">0</p>
-    <p className="text-xs font-semibold mt-1">Messages</p>
-    <p className="text-[10px] text-muted-foreground mt-0.5">From offices</p>
-  </div>
-</Link>
         {/* Open Surveys */}
         <Link href="/stakeholder/surveys">
           <div className="bg-card border border-border rounded-2xl p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer h-full">
@@ -101,6 +91,54 @@ export default async function StakeholderDashboard() {
             <p className="text-[10px] text-muted-foreground mt-0.5">Awaiting response</p>
           </div>
         </Link>
+      </div>
+
+      {/* ── Emergency Contacts (read-only; office staff can edit their own copy) ── */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M3 3.5A1.5 1.5 0 014.5 2h.879a1 1 0 01.95.684l.73 2.19a1 1 0 01-.23 1.02L5.5 6.72A9.015 9.015 0 009.28 10.5l.826-1.33a1 1 0 011.02-.23l2.19.73A1 1 0 0114 10.621V11.5A1.5 1.5 0 0112.5 13C6.701 13 2 8.299 2 2.5A1.5 1.5 0 013.5 1h.5"
+                stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+              />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Emergency Contacts</p>
+            <p className="text-xs text-muted-foreground">Save these numbers — call immediately during emergencies</p>
+          </div>
+        </div>
+        <div className="p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              { label: "DLSL Security Office",    number: "109",            note: "On-campus security & emergency dispatch",       icon: "🏫", color: "bg-blue-500/10 border-blue-500/20",      numColor: "text-blue-600 dark:text-blue-400"   },
+              { label: "DLSL Health Services",    number: "110",            note: "Medical assistance & first aid on campus",      icon: "🏥", color: "bg-green-500/10 border-green-500/20",    numColor: "text-green-600 dark:text-green-400" },
+              { label: "ISESSO Hotline",          number: "112",            note: "Institutional Safety & Emergency Services",     icon: "🛡️", color: "bg-orange-500/10 border-orange-500/20",  numColor: "text-orange-600 dark:text-orange-400" },
+              { label: "Lipa City Fire Station",  number: "(043) 756-2873", note: "Fire emergencies in Lipa City",                icon: "🚒", color: "bg-red-500/10 border-red-500/20",        numColor: "text-destructive"                   },
+              { label: "Lipa City Police Station",number: "(043) 756-0099", note: "Law enforcement & public safety",              icon: "🚔", color: "bg-indigo-500/10 border-indigo-500/20",  numColor: "text-indigo-600 dark:text-indigo-400" },
+              { label: "National Emergency",      number: "911",            note: "Police, fire & medical emergencies",           icon: "📞", color: "bg-destructive/10 border-destructive/25", numColor: "text-destructive"                   },
+            ].map((c) => (
+              <div key={c.label} className={`rounded-xl border p-4 ${c.color}`}>
+                <div className="flex items-start gap-3">
+                  <span className="text-xl flex-shrink-0 mt-0.5">{c.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold mb-0.5">{c.label}</p>
+                    <p className={`text-lg font-black tracking-tight leading-none ${c.numColor}`}>{c.number}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">{c.note}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-4 flex items-center gap-1.5">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+              <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M7 6v4M7 4.5v.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+            Contact numbers may be updated by campus offices. Check this section regularly during active crisis situations.
+          </p>
+        </div>
       </div>
 
       {/* ── Main Grid ── */}
@@ -119,9 +157,9 @@ export default async function StakeholderDashboard() {
           </div>
           <div className="divide-y divide-border">
             {[
-              { title: "Classes Suspended — Typhoon Carina", tag: "Urgent", office: "CIO", time: "2 hours ago", desc: "All classes are suspended effective immediately due to Typhoon Carina. Please proceed to designated evacuation areas.", read: false },
-              { title: "Evacuation Routes Update", tag: "Urgent", office: "ISESSO", time: "3 hours ago", desc: "Evacuation routes have been updated. Refer to posted maps in all buildings for the nearest exits and assembly points.", read: false },
-              { title: "Relief Operations Begin Tomorrow", tag: null, office: "CIO", time: "5 hours ago", desc: "Relief operations will commence at 8AM tomorrow. Volunteers may report to the gymnasium for assignment.", read: true },
+              { title: "Classes Suspended — Typhoon Carina", tag: "Urgent", office: "CIO",    time: "2 hours ago", desc: "All classes are suspended effective immediately due to Typhoon Carina. Please proceed to designated evacuation areas.", read: false },
+              { title: "Evacuation Routes Update",           tag: "Urgent", office: "ISESSO", time: "3 hours ago", desc: "Evacuation routes have been updated. Refer to posted maps in all buildings for the nearest exits and assembly points.", read: false },
+              { title: "Relief Operations Begin Tomorrow",   tag: null,     office: "CIO",    time: "5 hours ago", desc: "Relief operations will commence at 8AM tomorrow. Volunteers may report to the gymnasium for assignment.", read: true  },
             ].map((item) => (
               <div key={item.title} className="px-5 py-4 flex items-start gap-3 hover:bg-muted/30 transition-colors">
                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${item.read ? "bg-muted-foreground/30" : "bg-destructive"}`} />
@@ -147,6 +185,7 @@ export default async function StakeholderDashboard() {
 
         {/* Right column */}
         <div className="space-y-4">
+
           {/* Profile card */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
@@ -175,8 +214,8 @@ export default async function StakeholderDashboard() {
             </div>
             <div className="p-3 space-y-2">
               {[
-                { type: "Typhoon", desc: "Typhoon Carina affecting Batangas province", severity: "high" },
-                { type: "Flood", desc: "Flash flood warning for low-lying areas near campus", severity: "high" },
+                { type: "Typhoon", desc: "Typhoon Carina affecting Batangas province",            severity: "high" },
+                { type: "Flood",   desc: "Flash flood warning for low-lying areas near campus",   severity: "high" },
               ].map((s) => (
                 <div key={s.type} className="flex items-start gap-3 p-3 rounded-xl bg-muted/40 border border-border/50">
                   <div className="w-7 h-7 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -185,9 +224,7 @@ export default async function StakeholderDashboard() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <p className="text-xs font-semibold">{s.type}</p>
-                      <span className="text-[9px] font-semibold bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full">
-                        {s.severity}
-                      </span>
+                      <span className="text-[9px] font-semibold bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full">{s.severity}</span>
                     </div>
                     <p className="text-[10px] text-muted-foreground leading-relaxed">{s.desc}</p>
                   </div>
@@ -195,6 +232,7 @@ export default async function StakeholderDashboard() {
               ))}
             </div>
           </div>
+
         </div>
       </div>
     </div>
