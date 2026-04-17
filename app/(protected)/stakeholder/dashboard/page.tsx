@@ -3,6 +3,7 @@ import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SOSButton } from "@/components/SOSButton";
+import { MessageSquare } from 'lucide-react';
 
 export default async function StakeholderDashboard() {
   const profile = await getCurrentUserProfile();
@@ -83,6 +84,14 @@ export default async function StakeholderDashboard() {
           </div>
         </Link>
 
+<Link href="/stakeholder/inbox">
+  <div className="bg-card border border-border rounded-2xl p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer h-full">
+    <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center text-base mb-4">💬</div>
+    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">0</p>
+    <p className="text-xs font-semibold mt-1">Messages</p>
+    <p className="text-[10px] text-muted-foreground mt-0.5">From offices</p>
+  </div>
+</Link>
         {/* Open Surveys */}
         <Link href="/stakeholder/surveys">
           <div className="bg-card border border-border rounded-2xl p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer h-full">

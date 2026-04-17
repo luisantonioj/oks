@@ -16,7 +16,6 @@ export async function createHelpRequest(
     if (authError || !user) return { error: 'Unauthorized' };
 
     const location = formData.get('location') as string;
-    const notes = formData.get('notes') as string;
     const crisis_id = formData.get('crisis_id') as string;
 
     if (!location || !crisis_id) {
@@ -29,8 +28,7 @@ export async function createHelpRequest(
         stakeholder_id: user.id,
         crisis_id,
         location,
-        notes,
-        status: 'pending'
+        status: 'pending',
       });
 
     if (error) {
@@ -38,7 +36,8 @@ export async function createHelpRequest(
       return { error: error.message || 'Failed to submit request' };
     }
 
-    revalidatePath('/stakeholder/help-requests');
+    revalidatePath('/stakeholder/inbox');
+    revalidatePath('/office/inbox');
     return { success: true, message: 'Help request submitted successfully' };
   } catch (error) {
     console.error('Unexpected error in createHelpRequest:', error);
@@ -51,9 +50,7 @@ export async function updateHelpRequestStatus(id: string, status: 'pending' | 'r
     const supabase = await createClient();
     
     const updateData: { status: string; office_id?: string } = { status };
-    if (office_id) {
-      updateData.office_id = office_id;
-    }
+    if (office_id) updateData.office_id = office_id;
 
     const { error } = await supabase
       .from('help_request')
@@ -63,7 +60,8 @@ export async function updateHelpRequestStatus(id: string, status: 'pending' | 'r
     if (error) return { error: error.message };
 
     revalidatePath('/office/dashboard');
-    revalidatePath('/portal/dashboard');
+    revalidatePath('/office/inbox');
+    revalidatePath('/stakeholder/inbox');
     return { success: true };
   } catch (error) {
     return { error: 'An unexpected error occurred' };
