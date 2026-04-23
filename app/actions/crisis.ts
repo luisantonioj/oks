@@ -79,6 +79,65 @@ export async function createCrisis(
   }
 }
 
+export async function updateCrisis(
+  prevState: CrisisActionState, 
+  formData: FormData
+): Promise<CrisisActionState> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    const id = formData.get('id') as string;
+    if (!id) return { error: 'Crisis ID is missing' };
+
+    const name = formData.get('name') as string;
+    const type = formData.get('type') as string;
+    const severity = formData.get('severity') as string;
+    const summary = formData.get('summary') as string;
+    const required_actions = formData.get('required_actions') as string;
+
+    const areasInput = formData.get('affected_areas') as string;
+    const affected_areas = areasInput 
+      ? areasInput.split(',').map(area => area.trim()).filter(Boolean) 
+      : [];
+
+    const features = {
+      notify_stakeholders: formData.get("feature_notify") === "on",
+      sound_alarm: formData.get("feature_alarm") === "on",
+      request_backup: formData.get("feature_backup") === "on",
+      lockdown_areas: formData.get("feature_lockdown") === "on",
+    };
+
+    if (!name || !type || !severity) return { error: 'Name, Type, and Severity are required.' };
+
+    const { error } = await supabase
+      .from('crisis')
+      .update({
+        name,
+        type,
+        summary,
+        affected_areas,
+        severity,
+        required_actions,
+        features,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id); // Ensure it only updates this specific crisis!
+
+    if (error) return { error: error.message };
+
+    // Refresh pages to show updated data
+    revalidatePath('/office/crises');
+    revalidatePath(`/office/crises/${id}`);
+    revalidatePath('/office/dashboard');
+    
+    return { success: true };
+  } catch (error) {
+    return { error: 'An unexpected error occurred during update' };
+  }
+}
+
 // Update Crisis Status (Kept unchanged)
 export async function updateCrisisStatus(id: string, status: string, resolution_notes?: string) {
   try {

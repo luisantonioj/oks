@@ -2,11 +2,12 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { createCrisis } from "@/app/actions/crisis"; // <-- MUST IMPORT THIS
+import { createCrisis, updateCrisis, CrisisActionState } from "@/app/actions/crisis"; 
 import { CrisisFeatures } from "./crisis.types";
 import { crisisTypes, optionalFeatures } from "./crisis.data";
 
 export type CrisisFormState = {
+  id?: string;
   name: string;
   type: string;
   summary: string;
@@ -42,7 +43,8 @@ export function CrisisModal({
   const submitLabel = isCreate ? "Create Crisis" : "Save Changes";
   
   // 3. Pass the typed initial state here!
-  const [state, formAction, isPending] = useActionState(createCrisis, initialState);
+  const actionToUse = isCreate ? createCrisis : updateCrisis;
+  const [state, formAction, isPending] = useActionState(actionToUse, initialState);
 
   // Note: We don't actually need an effect to close the modal on success 
   // because the Server Action triggers a full route redirect on success!
@@ -66,6 +68,8 @@ export function CrisisModal({
           {features.sound_alarm && <input type="hidden" name="feature_alarm" value="on" />}
           {features.request_backup && <input type="hidden" name="feature_backup" value="on" />}
           {features.lockdown_areas && <input type="hidden" name="feature_lockdown" value="on" />}
+          {mode === "edit" && form.id && <input type="hidden" name="id" value={form.id} />}
+          <input type="hidden" name="severity" value={form.severity} />
 
           {/* Crisis Name */}
           <div>
