@@ -124,7 +124,7 @@ export async function getCrisisSummary() {
 
   const { data, error } = await supabase
     .from('crisis')
-    .select('id, type, summary, severity, status, affected_areas, created_at')
+    .select('id, name, type, summary, severity, status, affected_areas, created_at')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(5);
