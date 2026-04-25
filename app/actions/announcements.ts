@@ -70,3 +70,50 @@ export async function deleteAnnouncement(id: string) {
     return { error: 'An unexpected error occurred' };
   }
 }
+
+export async function updateAnnouncement(formData: FormData) {
+  try {
+    const supabase = await createClient();
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    const id = formData.get('id') as string;
+    const title = formData.get('title') as string;
+    const content = formData.get('content') as string;
+    const priority = formData.get('priority') as string;
+    const crisis_id = formData.get('crisis_id') as string;
+
+    if (!id || !title || !content || !crisis_id) {
+      return { error: 'Missing required fields' };
+    }
+
+    const { error } = await supabase
+      .from('announcement')
+      .update({
+        title,
+        content,
+        priority: priority || 'normal',
+        crisis_id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('office_id', user.id); // Extra security check to ensure they own it
+
+    if (error) {
+      console.error('Failed to update announcement:', error);
+      return { error: error.message || 'Failed to update announcement' };
+    }
+
+    // Refresh pages
+    revalidatePath('/office/announcements');
+    revalidatePath('/office/dashboard');
+    revalidatePath('/portal/dashboard');
+    revalidatePath('/stakeholder/dashboard');
+    
+    return { success: true, message: 'Announcement updated successfully' };
+  } catch (error) {
+    console.error('Unexpected error in updateAnnouncement:', error);
+    return { error: 'An unexpected error occurred' };
+  }
+}
