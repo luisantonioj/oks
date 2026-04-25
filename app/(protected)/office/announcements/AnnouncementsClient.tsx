@@ -4,7 +4,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Announcement, Crisis } from "@/types/database";
-import { createAnnouncement, deleteAnnouncement } from "@/app/actions/announcements";
+import { createAnnouncement, deleteAnnouncement, updateAnnouncement } from "@/app/actions/announcements";
 
 function PriorityBadge({ priority }: { priority: string }) {
   return (
@@ -25,16 +25,39 @@ export default function AnnouncementsClient({ initialAnnouncements, crises }: An
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filterCrisis, setFilterCrisis] = useState("all");
   
+  // NEW: Track if we are editing an existing announcement
+  const [editId, setEditId] = useState<string | null>(null);
+  
   const [form, setForm] = useState({ title: "", content: "", crisis_id: "", priority: "normal" });
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState(false);
   
-  // useTransition allows us to manage loading states for Server Actions without full page reloads
   const [isPending, startTransition] = useTransition();
 
   const filtered = filterCrisis === "all"
     ? initialAnnouncements
     : initialAnnouncements.filter((a) => a.crisis_id === filterCrisis);
+
+  // Opens the modal and populates it with the existing data
+  function handleEditClick(ann: Announcement) {
+    setEditId(ann.id);
+    setForm({
+      title: ann.title,
+      content: ann.content,
+      crisis_id: ann.crisis_id,
+      priority: ann.priority || "normal",
+    });
+    setShowCompose(true);
+  }
+
+  // Resets the modal entirely
+  function closeAndResetModal() {
+    setShowCompose(false);
+    setEditId(null);
+    setFormError("");
+    setFormSuccess(false);
+    setForm({ title: "", content: "", crisis_id: "", priority: "normal" });
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,26 +66,30 @@ export default function AnnouncementsClient({ initialAnnouncements, crises }: An
       return;
     }
 
-    // Convert React state into FormData for the Server Action
     const formData = new FormData();
     formData.append("title", form.title);
     formData.append("content", form.content);
     formData.append("crisis_id", form.crisis_id);
     formData.append("priority", form.priority);
+    
+    // If editing, append the ID so the backend knows which row to update
+    if (editId) {
+      formData.append("id", editId);
+    }
 
     startTransition(async () => {
-      const result = await createAnnouncement(formData);
+      // Smartly choose which server action to call
+      const result = editId 
+        ? await updateAnnouncement(formData)
+        : await createAnnouncement(formData);
       
       if (result.error) {
         setFormError(result.error);
       } else {
         setFormError("");
         setFormSuccess(true);
-        // Let user see success message before closing modal
         setTimeout(() => { 
-          setFormSuccess(false); 
-          setShowCompose(false); 
-          setForm({ title: "", content: "", crisis_id: "", priority: "normal" });
+          closeAndResetModal();
         }, 1500);
       }
     });
@@ -87,7 +114,10 @@ export default function AnnouncementsClient({ initialAnnouncements, crises }: An
             </p>
           </div>
           <button
-            onClick={() => setShowCompose(true)}
+            onClick={() => {
+              setEditId(null); // Ensure it's a blank slate for "Compose"
+              setShowCompose(true);
+            }}
             className="inline-flex items-center gap-2 bg-[#00C48C] hover:bg-[#00a876] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
           >
             📢 Compose
@@ -129,7 +159,7 @@ export default function AnnouncementsClient({ initialAnnouncements, crises }: An
               });
 
               return (
-                <div key={ann.id} className={`bg-card rounded-xl border border-border overflow-hidden ${isPending && deleteId === ann.id ? 'opacity-50' : ''}`}>
+                <div key={ann.id} className={`bg-card rounded-xl border border-border overflow-hidden ${isPending && (deleteId === ann.id || editId === ann.id) ? 'opacity-50' : ''}`}>
                   <div
                     className="p-5 cursor-pointer hover:bg-accent/50 transition-colors"
                     onClick={() => setExpandedId(expandedId === ann.id ? null : ann.id)}
@@ -157,6 +187,12 @@ export default function AnnouncementsClient({ initialAnnouncements, crises }: An
                       <p className="text-sm text-muted-foreground leading-relaxed mt-3 whitespace-pre-wrap">{ann.content}</p>
                       <div className="flex items-center gap-3 mt-4">
                         <button
+                          onClick={() => handleEditClick(ann)}
+                          className="text-xs text-[#00C48C] hover:text-[#00a876] font-medium transition-colors"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
                           onClick={() => setDeleteId(ann.id)}
                           className="text-xs text-destructive hover:text-destructive/80 font-medium transition-colors"
                         >
@@ -164,7 +200,7 @@ export default function AnnouncementsClient({ initialAnnouncements, crises }: An
                         </button>
                         <Link
                           href={`/office/crises/${ann.crisis_id}`}
-                          className="text-xs text-[#00C48C] hover:underline font-medium"
+                          className="text-xs text-muted-foreground hover:underline font-medium ml-auto"
                         >
                           View crisis →
                         </Link>
@@ -178,14 +214,16 @@ export default function AnnouncementsClient({ initialAnnouncements, crises }: An
         )}
       </div>
 
-      {/* Compose Modal */}
+      {/* Compose/Edit Modal */}
       {showCompose && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-card rounded-2xl shadow-2xl w-full max-w-lg border border-border">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="font-bold text-foreground text-lg">Compose Announcement</h2>
+              <h2 className="font-bold text-foreground text-lg">
+                {editId ? "Edit Announcement" : "Compose Announcement"}
+              </h2>
               <button
-                onClick={() => { setShowCompose(false); setFormError(""); setFormSuccess(false); }}
+                onClick={closeAndResetModal}
                 className="text-muted-foreground hover:text-foreground text-xl leading-none"
               >
                 ×
@@ -270,14 +308,14 @@ export default function AnnouncementsClient({ initialAnnouncements, crises }: An
               )}
               {formSuccess && (
                 <p className="text-sm text-[#00C48C] bg-[#00C48C]/10 px-3 py-2 rounded-lg">
-                  ✅ Announcement posted successfully!
+                  ✅ Announcement {editId ? "updated" : "posted"} successfully!
                 </p>
               )}
 
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowCompose(false)}
+                  onClick={closeAndResetModal}
                   disabled={isPending}
                   className="flex-1 text-sm font-medium py-2.5 rounded-lg border border-border text-foreground hover:bg-accent transition-colors disabled:opacity-50"
                 >
@@ -288,7 +326,7 @@ export default function AnnouncementsClient({ initialAnnouncements, crises }: An
                   disabled={isPending}
                   className="flex-1 text-sm font-semibold py-2.5 rounded-lg bg-[#00C48C] hover:bg-[#00a876] text-white transition-colors flex items-center justify-center disabled:opacity-50"
                 >
-                  {isPending ? "Posting..." : "Post Announcement"}
+                  {isPending ? (editId ? "Updating..." : "Posting...") : (editId ? "Update Announcement" : "Post Announcement")}
                 </button>
               </div>
             </form>
