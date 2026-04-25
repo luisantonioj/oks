@@ -6,7 +6,7 @@ import { AlertTriangle } from "lucide-react";
 
 interface SOSButtonProps {
   crisisId?: string;
-  variant?: "full" | "compact";
+  variant?: "full" | "compact" | "card";
 }
 
 export function SOSButton({ crisisId, variant = "full" }: SOSButtonProps) {
