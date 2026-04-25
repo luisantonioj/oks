@@ -1,3 +1,4 @@
+//app/(protected)/office/surveys/[id]/page.tsx
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getSurveyById, getSurveyResponses } from '@/lib/queries/survey';
 import { closeSurvey } from '@/app/actions/survey';
