@@ -3,11 +3,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Report, ReportCrisis } from "../../../../components/reports/reports.data";
-import { ReportsSidebar } from "../../../../components/reports/ReportsSidebar";
-import { ReportsFeed } from "../../../../components/reports/ReportsFeed";
-import { ReportsModal, ReportFormState } from "../../../../components/reports/ReportsModal";
-import { createProgressReport } from "@/app/actions/report";
+import { Report, ReportCrisis } from "@/components/reports/reports.data";
+import { ReportsSidebar } from "@/components/reports/ReportsSidebar";
+import { ReportsFeed } from "@/components/reports/ReportsFeed";
+import { ReportsModal, ReportFormState } from "@/components/reports/ReportsModal";
+import { createProgressReport, updateProgressReport } from "@/app/actions/report";
 
 interface OfficeReportsClientProps {
   initialReports: Report[];
@@ -24,6 +24,7 @@ export function OfficeReportsClient({ initialReports, crises, officeName }: Offi
   };
 
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null); // <-- Added state
   const [filterCrisis, setFilterCrisis] = useState("all");
   const [selectedIcon, setSelectedIcon] = useState("📦");
   const [form, setForm] = useState<ReportFormState>(emptyForm);
@@ -36,6 +37,20 @@ export function OfficeReportsClient({ initialReports, crises, officeName }: Offi
     setFormSuccess(false);
     setForm(emptyForm);
     setSelectedIcon("📦");
+    setEditId(null); // <-- Reset edit ID
+  }
+
+  // <-- New Edit Handler
+  function handleEdit(report: Report) {
+    setEditId(report.id);
+    setForm({
+      crisis_id: report.crisis_id,
+      title: report.title,
+      content: report.content,
+      posted_by: report.posted_by,
+    });
+    setSelectedIcon(report.icon);
+    setShowForm(true);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -47,20 +62,26 @@ export function OfficeReportsClient({ initialReports, crises, officeName }: Offi
 
     setFormError("");
     
-    // Use transition to show a loading state while saving to DB
     startTransition(async () => {
       try {
-        await createProgressReport({
+        const payload = {
           crisis_id: form.crisis_id,
           title: form.title.trim(),
           content: form.content.trim(),
           icon: selectedIcon,
-        });
+        };
+
+        // <-- Smart Routing (Update vs Create)
+        if (editId) {
+          await updateProgressReport(editId, payload);
+        } else {
+          await createProgressReport(payload);
+        }
         
         setFormSuccess(true);
         setTimeout(() => { 
           closeModal();
-          router.refresh(); // Tells Next.js to fetch the new DB data
+          router.refresh(); 
         }, 1500);
       } catch (error: any) {
         setFormError(error.message || "Failed to post update.");
@@ -84,7 +105,7 @@ export function OfficeReportsClient({ initialReports, crises, officeName }: Offi
             disabled={isPending}
             className="inline-flex items-center gap-2 bg-[#00C48C] hover:bg-[#00a876] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
           >
-            📝 {isPending ? "Posting..." : "Add Update"}
+            📝 {isPending ? "Saving..." : "Add Update"}
           </button>
         </div>
       </div>
@@ -102,6 +123,7 @@ export function OfficeReportsClient({ initialReports, crises, officeName }: Offi
             reports={initialReports}
             crises={crises}
             filterCrisis={filterCrisis}
+            onEdit={handleEdit} // <-- Pass down the edit handler
           />
         </div>
       </div>
@@ -114,6 +136,7 @@ export function OfficeReportsClient({ initialReports, crises, officeName }: Offi
           selectedIcon={selectedIcon}
           formError={formError}
           formSuccess={formSuccess}
+          isEditing={!!editId} // <-- Tell modal it's in edit mode
           onClose={closeModal}
           onSubmit={handleSubmit}
           onFormChange={(updates) => setForm((prev) => ({ ...prev, ...updates }))}
