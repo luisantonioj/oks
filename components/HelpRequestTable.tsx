@@ -27,6 +27,42 @@ const statusConfig = {
   },
 };
 
+const DUMMY_REQUESTS: HelpRequest[] = [
+  {
+    id: "dummy-1",
+    stakeholder_id: "demo",
+    crisis_id: "crisis-typhoon-carina",
+    office_id: "ISESSO",
+    location: "Mabini Building, 3rd Floor Room 312",
+    notes: "Roof is leaking badly, floor is flooded.",
+    status: "resolved",
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  },
+  {
+    id: "dummy-2",
+    stakeholder_id: "demo",
+    crisis_id: "crisis-typhoon-carina",
+    office_id: "CIO",
+    location: "Main Library, Ground Floor Exit",
+    notes: "Exit door is jammed, students cannot evacuate.",
+    status: "resolved",
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
+  },
+  {
+    id: "dummy-3",
+    stakeholder_id: "demo",
+    crisis_id: "crisis-flood-2024",
+    office_id: "ISESSO",
+    location: "Dormitory Block C, Room 105",
+    notes: "Flooding inside the room, need immediate assistance.",
+    status: "pending",
+    created_at: new Date(Date.now() - 1000 * 60 * 22).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 22).toISOString(),
+  },
+];
+
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleString("en-PH", {
     month: "short",
@@ -49,25 +85,25 @@ export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestT
     });
   };
 
-  if (requests.length === 0) {
+  const isEmpty = requests.length === 0;
+  const displayRequests = isEmpty && viewMode === "stakeholder" ? DUMMY_REQUESTS : requests;
+
+  if (isEmpty && viewMode === "office") {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <AlertCircle className="h-10 w-10 text-muted-foreground/40" />
         <p className="text-muted-foreground font-medium">No help requests found</p>
-        <p className="text-sm text-muted-foreground/60">
-          {viewMode === "stakeholder"
-            ? "You haven't submitted any emergency requests yet."
-            : "No incoming help requests at this time."}
-        </p>
+        <p className="text-sm text-muted-foreground/60">No incoming help requests at this time.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      {requests.map((req) => {
+      {displayRequests.map((req) => {
         const status = statusConfig[req.status as keyof typeof statusConfig] || statusConfig.pending;
         const isExpanded = expanded === req.id;
+        const isDummy = req.id.startsWith("dummy-");
 
         return (
           <div
@@ -96,7 +132,7 @@ export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestT
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
-                {viewMode === "office" && req.status === "pending" && (
+                {viewMode === "office" && req.status === "pending" && !isDummy && (
                   <Button
                     size="sm"
                     variant="outline"
