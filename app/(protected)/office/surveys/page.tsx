@@ -1,3 +1,4 @@
+//app/(protected)/office/surveys/page.tsx
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getSurveys, getSurveyResponseCountMap } from '@/lib/queries/survey';
 import { redirect } from 'next/navigation';
