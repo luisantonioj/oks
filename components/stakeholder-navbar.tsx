@@ -16,10 +16,11 @@ export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { label: "Dashboard", href: "/stakeholder/dashboard" },
+    { label: "Dashboard",     href: "/stakeholder/dashboard" },
     { label: "Announcements", href: "/stakeholder/announcements" },
-    { label: "Surveys", href: "/stakeholder/surveys" },
-    { label: "My Requests", href: "/stakeholder/help-requests" },
+    { label: "Surveys",       href: "/stakeholder/surveys" },
+    { label: "My Requests",   href: "/stakeholder/help-requests" },
+    { label: "Inbox",         href: "/stakeholder/inbox" },
   ];
 
   return (
@@ -61,11 +62,13 @@ export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             <ThemeSwitcher />
             <Link href="/stakeholder/profile">
-              <div className={`w-8 h-8 rounded-full bg-muted border flex items-center justify-center text-xs font-semibold transition-colors ${
-                pathname.startsWith("/stakeholder/profile")
-                  ? "border-foreground text-foreground"
-                  : "border-border text-muted-foreground hover:border-muted-foreground/40"
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full bg-muted border flex items-center justify-center text-xs font-semibold transition-colors ${
+                  pathname.startsWith("/stakeholder/profile")
+                    ? "border-foreground text-foreground"
+                    : "border-border text-muted-foreground hover:border-muted-foreground/40"
+                }`}
+              >
                 {firstName[0]?.toUpperCase()}
               </div>
             </Link>
@@ -95,11 +98,16 @@ export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-30 flex">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <div className="relative z-10 ml-auto w-64 h-full bg-background border-l border-border flex flex-col p-5 shadow-xl">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-7 h-7 rounded-md bg-destructive flex items-center justify-center">
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 2L14 13H2L8 2Z" fill="white" /></svg>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2L14 13H2L8 2Z" fill="white" />
+                </svg>
               </div>
               <span className="text-sm font-bold">OKS!</span>
             </div>
@@ -112,7 +120,9 @@ export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
                     href={n.href}
                     onClick={() => setMobileOpen(false)}
                     className={`text-sm px-3 py-2.5 rounded-xl transition-colors ${
-                      isActive ? "bg-accent font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                      isActive
+                        ? "bg-accent font-semibold text-foreground"
+                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                     }`}
                   >
                     {n.label}
