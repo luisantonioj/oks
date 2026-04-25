@@ -1,3 +1,5 @@
+import { required } from "zod/mini";
+
 // types/database.ts
 export interface Office {
   id: string;
@@ -30,14 +32,18 @@ export interface Stakeholder {
 
 export interface Crisis {
   id: string;
+  name: string;
   type: string;
   summary: string;
-  affected_areas: string;
+  affected_areas: string[];
   severity: string;
   status: string;
   office_id: string;
   created_at: string;
   updated_at: string;
+  required_actions?: string;
+  resolution_notes?: string; 
+  features?: any;
 }
 
 export interface Announcement {
