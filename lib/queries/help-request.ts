@@ -1,3 +1,4 @@
+//lib/queries/help-request.ts
 import { createClient } from '@/lib/supabase/server';
 import { HelpRequest } from '@/types/database';
 
