@@ -1,11 +1,10 @@
-//app/(protected)/stakeholder/surveys/[id]/page.tsx
+// app/(protected)/stakeholder/surveys/[id]/page.tsx
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getSurveyById, getStakeholderSurveyResponse } from '@/lib/queries/survey';
-import { submitSurveyResponse } from '@/app/actions/survey';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ClipboardList, CheckCircle2, Lock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { SurveySubmitForm } from '@/components/SurveySubmitForm'; // <-- Import new form
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -33,13 +32,14 @@ export default async function StakeholderSurveyDetailPage({ params }: PageProps)
 
   let parsedAnswers: Record<string, string | string[]> = {};
   if (existingResponse?.answers) {
-    try { parsedAnswers = JSON.parse(existingResponse.answers); } catch { parsedAnswers = {}; }
+    // FIX: Safely handle if Supabase already parsed the jsonb into an object!
+    parsedAnswers = typeof existingResponse.answers === 'string'
+      ? JSON.parse(existingResponse.answers)
+      : existingResponse.answers;
   }
 
   const isClosed = survey.status !== 'active';
   const hasResponded = !!existingResponse;
-
-  const boundAction = submitSurveyResponse.bind(null, null) as (formData: FormData) => void;
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-2xl mx-auto">
@@ -104,73 +104,9 @@ export default async function StakeholderSurveyDetailPage({ params }: PageProps)
         </div>
       )}
 
-      {/* Survey Form */}
+      {/* Clean Client Form Component */}
       {!hasResponded && !isClosed && (
-        <form action={boundAction} className="space-y-6">
-          <input type="hidden" name="survey_id" value={survey.id} />
-
-          {questions.map((q, idx) => (
-            <div key={q.id} className="rounded-lg border bg-card p-5 space-y-3">
-              <label className="text-sm font-semibold leading-tight block">
-                <span className="text-muted-foreground mr-2">{idx + 1}.</span>
-                {q.text}
-                <span className="text-red-500 ml-1">*</span>
-              </label>
-
-              {q.type === 'text' && (
-                <textarea
-                  name={`q_${q.id}`}
-                  required
-                  rows={3}
-                  placeholder="Your answer..."
-                  className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
-                />
-              )}
-
-              {q.type === 'radio' && (
-                <div className="space-y-2">
-                  {(q.options || []).map((opt, i) => (
-                    <label key={i} className="flex items-center gap-2.5 cursor-pointer group">
-                      <input
-                        type="radio"
-                        name={`q_${q.id}`}
-                        value={opt}
-                        required
-                        className="w-4 h-4 accent-primary"
-                      />
-                      <span className="text-sm group-hover:text-foreground transition-colors">
-                        {opt}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-
-              {q.type === 'checkbox' && (
-                <div className="space-y-2">
-                  {(q.options || []).map((opt, i) => (
-                    <label key={i} className="flex items-center gap-2.5 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        name={`q_${q.id}`}
-                        value={opt}
-                        className="w-4 h-4 accent-primary rounded"
-                      />
-                      <span className="text-sm group-hover:text-foreground transition-colors">
-                        {opt}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-
-          <Button type="submit" className="w-full h-11 gap-2 font-semibold">
-            <ClipboardList className="h-4 w-4" />
-            Submit Response
-          </Button>
-        </form>
+        <SurveySubmitForm surveyId={survey.id} questions={questions} />
       )}
     </div>
   );
