@@ -37,9 +37,16 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
       for (const opt of q.options || []) answerMap[q.id][opt] = 0;
     }
   }
+  
+  // FIX #1: Safely parse analytics map
   for (const response of responses) {
     let answers: Record<string, string | string[]> = {};
-    try { answers = JSON.parse(response.answers); } catch { continue; }
+    try { 
+      answers = typeof response.answers === 'string' 
+        ? JSON.parse(response.answers) 
+        : response.answers || {}; 
+    } catch { continue; }
+    
     for (const [qId, val] of Object.entries(answers)) {
       if (!answerMap[qId]) continue;
       const values = Array.isArray(val) ? val : [val];
@@ -112,8 +119,14 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
                   <p className="text-xs text-muted-foreground italic">No responses yet</p>
                 ) : (
                   responses.map((r) => {
+                    // FIX #2: Safely parse text answers
                     let ans: Record<string, string | string[]> = {};
-                    try { ans = JSON.parse(r.answers); } catch { return null; }
+                    try { 
+                      ans = typeof r.answers === 'string' 
+                        ? JSON.parse(r.answers) 
+                        : r.answers || {}; 
+                    } catch { return null; }
+                    
                     const val = ans[q.id];
                     if (!val) return null;
                     return (
