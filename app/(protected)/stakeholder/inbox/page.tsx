@@ -1,3 +1,4 @@
+//app/(protected)/stakeholder/inbox/page.tsx
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getInboxThreads } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';

@@ -1,3 +1,4 @@
+//app/actions/help-request.ts
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
@@ -17,6 +18,7 @@ export async function createHelpRequest(
 
     const location = formData.get('location') as string;
     const crisis_id = formData.get('crisis_id') as string;
+    const notes = formData.get('notes') as string;
 
     if (!location || !crisis_id) {
       return { error: 'Location and Crisis ID are required' };
@@ -28,6 +30,7 @@ export async function createHelpRequest(
         stakeholder_id: user.id,
         crisis_id,
         location,
+        notes,
         status: 'pending',
       });
 
@@ -36,6 +39,7 @@ export async function createHelpRequest(
       return { error: error.message || 'Failed to submit request' };
     }
 
+    revalidatePath('/stakeholder/help-requests');
     revalidatePath('/stakeholder/inbox');
     revalidatePath('/office/inbox');
     return { success: true, message: 'Help request submitted successfully' };
