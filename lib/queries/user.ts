@@ -184,7 +184,6 @@ export async function getOfficeProfile(userId: string) {
 
 // Admin-only: Get all offices
 export async function getAllOffices() {
-  // 1. Check the hardcoded Admin cookie instead of Supabase auth
   const cookieStore = await cookies();
   const adminSession = cookieStore.get('oks_admin_session')?.value;
 
@@ -192,10 +191,10 @@ export async function getAllOffices() {
     throw new Error('Unauthorized: Admin only');
   }
 
-  // 2. Safe fetch (returns empty array if backend isn't ready)
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const adminSupabase = createAdminClient();
+    
+    const { data, error } = await adminSupabase
       .from('office')
       .select('*')
       .order('created_at', { ascending: false });
@@ -203,7 +202,7 @@ export async function getAllOffices() {
     if (error) throw error;
     return data ?? [];
   } catch (error) {
-    console.log("Backend not connected yet. Returning empty offices for UI.");
+    console.error("Backend not connected yet. Returning empty offices for UI.", error);
     return [];
   }
 }
@@ -218,8 +217,9 @@ export async function getAllStakeholders() {
   }
 
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const adminSupabase = createAdminClient();
+    
+    const { data, error } = await adminSupabase
       .from('stakeholder')
       .select('*')
       .order('created_at', { ascending: false });
@@ -227,7 +227,7 @@ export async function getAllStakeholders() {
     if (error) throw error;
     return data ?? [];
   } catch (error) {
-    console.log("Backend not connected yet. Returning empty stakeholders for UI.");
+    console.error("Backend not connected yet. Returning empty stakeholders for UI.", error);
     return [];
   }
 }
