@@ -1,3 +1,4 @@
+//app/(protected)/stakeholder/surveys/[id]/page.tsx
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getSurveyById, getStakeholderSurveyResponse } from '@/lib/queries/survey';
 import { submitSurveyResponse } from '@/app/actions/survey';
