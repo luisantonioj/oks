@@ -30,13 +30,19 @@ export async function getMessages(helpRequestId: string): Promise<Message[]> {
 export async function getInboxThreads(userId: string, role: 'stakeholder' | 'office') {
   const supabase = await createClient();
 
-  const column = role === 'stakeholder' ? 'stakeholder_id' : 'office_id';
-
-  const { data, error } = await supabase
+  // Start the base query
+  let query = supabase
     .from('help_request')
     .select('*, message(content, created_at, sender_role)')
-    .eq(column, userId)
     .order('created_at', { ascending: false });
+
+  // If it's a stakeholder, strictly show their own requests.
+  // If it's an office, we DO NOT filter by office_id so they can see all incoming requests.
+  if (role === 'stakeholder') {
+    query = query.eq('stakeholder_id', userId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching inbox threads:', error);
