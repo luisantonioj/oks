@@ -1,3 +1,4 @@
+//lib/queries/survey.ts
 import { createClient } from '@/lib/supabase/server';
 import { Survey, SurveyResponse } from '@/types/database';
 

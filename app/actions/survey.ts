@@ -1,3 +1,4 @@
+//app/actions/survey.ts
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
@@ -89,7 +90,7 @@ export async function submitSurveyResponse(
     const { error } = await supabase.from('survey_response').insert({
       survey_id,
       stakeholder_id: user.id,
-      answers: JSON.stringify(answers),
+      answers: answers, 
     });
 
     if (error) return { error: error.message || 'Failed to submit response' };
