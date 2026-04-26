@@ -1,14 +1,41 @@
 // app/(protected)/office/dashboard/page.tsx
 import { getCurrentUserProfile } from "@/lib/queries/user";
+import { getDashboardStats, getCrisisSummary } from "@/lib/queries/crisis";
+import { getAllHelpRequests } from "@/lib/queries/help-request";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { EmergencyContactsEditor } from "@/components/emergency-contacts-editor";
 
+// Helper for displaying "5m ago", "2h ago", etc.
+function getRelativeTime(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+
+  if (diffInMinutes < 1) return 'Just now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d ago`;
+}
+
 export default async function OfficeDashboard() {
   const profile = await getCurrentUserProfile();
+  
   if (!profile || profile.role !== "office") {
     redirect("/login-office");
   }
+
+  // Fetch all required data concurrently for the dashboard
+  const [stats, activeCrisesList, recentRequests] = await Promise.all([
+    getDashboardStats(),
+    getCrisisSummary(),
+    getAllHelpRequests()
+  ]);
+
+  // Grab the 5 most recent requests for the preview grid
+  const topRequests = recentRequests.slice(0, 5);
 
   const officeName = (profile as any).office_name ?? "Office";
   const name = profile.name ?? "Officer";
@@ -26,10 +53,10 @@ export default async function OfficeDashboard() {
       {/* ── Stat Cards: Active Crises | Pending SOS | Volunteers | Donations ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Active Crises", value: "2",  icon: "⚡", color: "text-destructive",                        bg: "bg-destructive/10",  href: "/office/crises"        },
-          { label: "Pending SOS",   value: "3",  icon: "🆘", color: "text-yellow-600 dark:text-yellow-400",    bg: "bg-yellow-500/10",   href: "/office/help-requests" },
-          { label: "Volunteers",    value: "24", icon: "🤝", color: "text-green-600 dark:text-green-400",      bg: "bg-green-500/10",    href: "/office/dashboard"     },
-          { label: "Donations",     value: "12", icon: "📦", color: "text-blue-600 dark:text-blue-400",        bg: "bg-blue-500/10",     href: "/office/dashboard"     },
+          { label: "Active Crises", value: stats.activeCrises.toString(),  icon: "⚡", color: "text-destructive",        bg: "bg-destructive/10",  href: "/office/crises"        },
+          { label: "Pending SOS",   value: stats.pendingHelpRequests.toString(), icon: "🆘", color: "text-yellow-600 dark:text-yellow-400",    bg: "bg-yellow-500/10",   href: "/office/help-requests" },
+          { label: "Volunteers",    value: stats.totalVolunteers.toString(), icon: "🤝", color: "text-green-600 dark:text-green-400",      bg: "bg-green-500/10",    href: "/office/dashboard"     },
+          { label: "Donations",     value: stats.totalDonations.toString(), icon: "📦", color: "text-blue-600 dark:text-blue-400",        bg: "bg-blue-500/10",     href: "/office/dashboard"     },
         ].map((card) => (
           <Link key={card.label} href={card.href}>
             <div className="bg-card border border-border rounded-2xl p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer">
@@ -69,30 +96,32 @@ export default async function OfficeDashboard() {
               ))}
             </div>
             <div className="divide-y divide-border">
-              {[
-                { name: "Maria Santos",   loc: "Mabini Bldg, 3rd Floor",   status: "Pending",  time: "2m ago",  urgent: true  },
-                { name: "Juan Dela Cruz", loc: "Main Library, Room 204",    status: "Pending",  time: "8m ago",  urgent: true  },
-                { name: "Ana Reyes",      loc: "Engineering Lab B",         status: "Resolved", time: "15m ago", urgent: false },
-                { name: "Carlo Mendoza",  loc: "Dormitory Block C",         status: "Pending",  time: "22m ago", urgent: true  },
-              ].map((req) => (
-                <div key={req.name} className="px-5 py-3 grid grid-cols-[1fr_120px_80px_70px] gap-3 items-center hover:bg-muted/20 transition-colors">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 ${req.urgent ? "bg-destructive" : "bg-muted-foreground"}`}>
-                      {req.name[0]}
-                    </div>
-                    <p className="text-xs font-semibold truncate">{req.name}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">{req.loc}</p>
-                  <span className={`text-[10px] font-semibold px-2 py-1 rounded-full w-fit ${
-                    req.status === "Pending"
-                      ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400"
-                      : "bg-green-500/15 text-green-700 dark:text-green-400"
-                  }`}>
-                    {req.status}
-                  </span>
-                  <p className="text-[10px] text-muted-foreground">{req.time}</p>
+              {topRequests.length === 0 ? (
+                <div className="px-5 py-6 text-sm text-center text-muted-foreground">
+                  No recent help requests.
                 </div>
-              ))}
+              ) : (
+                topRequests.map((req) => (
+                  <div key={req.id} className="px-5 py-3 grid grid-cols-[1fr_120px_80px_70px] gap-3 items-center hover:bg-muted/20 transition-colors">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 ${req.status === "pending" ? "bg-destructive" : "bg-muted-foreground"}`}>
+                        {/* Using an initial as a placeholder until stakeholder profile join is added */}
+                        U
+                      </div>
+                      <p className="text-xs font-semibold truncate">User {req.id.slice(0,4).toUpperCase()}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{req.location || "Location not provided"}</p>
+                    <span className={`text-[10px] capitalize font-semibold px-2 py-1 rounded-full w-fit ${
+                      req.status === "pending"
+                        ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400"
+                        : "bg-green-500/15 text-green-700 dark:text-green-400"
+                    }`}>
+                      {req.status}
+                    </span>
+                    <p className="text-[10px] text-muted-foreground">{getRelativeTime(req.created_at)}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -108,27 +137,36 @@ export default async function OfficeDashboard() {
               </Link>
             </div>
             <div className="divide-y divide-border">
-              {[
-                { type: "Typhoon", name: "Typhoon Carina — signal #2 affecting campus grounds",           severity: "high", loc: "Main Campus, Mabini Bldg", time: "2h ago" },
-                { type: "Flood",   name: "Flash flood warning for low-lying areas near dormitories",      severity: "high", loc: "Dormitory Area, Grounds",  time: "4h ago" },
-              ].map((c) => (
-                <div key={c.type} className="px-5 py-4 flex items-start gap-3 hover:bg-muted/20 transition-colors">
-                  <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-sm">⚡</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="text-sm font-semibold">{c.type}</p>
-                      <span className="text-[10px] font-semibold bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full">{c.severity}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-1">{c.name}</p>
-                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                      <span>📍 {c.loc}</span>
-                      <span>· {c.time}</span>
-                    </div>
-                  </div>
+              {activeCrisesList.length === 0 ? (
+                <div className="px-5 py-6 text-sm text-center text-muted-foreground">
+                  No active crises at the moment.
                 </div>
-              ))}
+              ) : (
+                activeCrisesList.map((c) => (
+                  <div key={c.id} className="px-5 py-4 flex items-start gap-3 hover:bg-muted/20 transition-colors">
+                    <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-sm">⚡</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="text-sm capitalize font-semibold">{c.type}</p>
+                        {c.severity && (
+                          <span className={`text-[10px] capitalize font-semibold px-1.5 py-0.5 rounded-full ${
+                            c.severity === "high" ? "bg-destructive/15 text-destructive" : "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400"
+                          }`}>
+                            {c.severity}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-1">{c.name || c.summary}</p>
+                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                        <span>📍 {c.affected_areas || 'System Wide'}</span>
+                        <span>· {getRelativeTime(c.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -138,7 +176,7 @@ export default async function OfficeDashboard() {
           <div className="bg-card border border-border rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-sm font-bold text-blue-600 dark:text-blue-400 flex-shrink-0">
-                {firstName[0]?.toUpperCase()}
+                {firstName[0]?.toUpperCase() || "O"}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{name}</p>
@@ -159,12 +197,12 @@ export default async function OfficeDashboard() {
               </span>
             </div>
             <div className="pt-4 border-t border-border space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">Today&apos;s Summary</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">Global System Stats</p>
               {[
-                { label: "Requests Resolved",   value: "5" },
-                { label: "Announcements Sent",  value: "2" },
-                { label: "Surveys Active",      value: "1" },
-                { label: "Volunteers Deployed", value: "8" },
+                { label: "Total Crises Tracked",   value: stats.totalCrises.toString() },
+                { label: "Total Requests Made",    value: stats.totalHelpRequests.toString() },
+                { label: "Active Pending SOS",     value: stats.pendingHelpRequests.toString() },
+                { label: "Registered Volunteers",  value: stats.totalVolunteers.toString() },
               ].map((s) => (
                 <div key={s.label} className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">{s.label}</p>

@@ -1,3 +1,4 @@
+//lib/queries/message.ts
 import { createClient } from '@/lib/supabase/server';
 
 export interface Message {

@@ -1,3 +1,4 @@
+//app/(protected)/office/help-requests/page.tsx
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getAllHelpRequests } from '@/lib/queries/help-request';
 import { redirect } from 'next/navigation';

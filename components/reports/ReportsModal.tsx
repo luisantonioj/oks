@@ -16,6 +16,7 @@ interface ReportsModalProps {
   selectedIcon: string;
   formError: string;
   formSuccess: boolean;
+  isEditing?: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   onFormChange: (updates: Partial<ReportFormState>) => void;
@@ -23,7 +24,7 @@ interface ReportsModalProps {
 }
 
 export function ReportsModal({
-  crises, form, selectedIcon, formError, formSuccess,
+  crises, form, selectedIcon, formError, formSuccess, isEditing,
   onClose, onSubmit, onFormChange, onIconChange,
 }: ReportsModalProps) {
   return (
@@ -32,9 +33,14 @@ export function ReportsModal({
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card rounded-t-2xl">
-          <h2 className="font-bold text-foreground text-lg">Add Progress Update</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl leading-none">
-            ×
+          <h2 className="font-bold text-foreground text-lg">
+            {isEditing ? "Edit Progress Update" : "Add Progress Update"}
+          </h2>
+          <button
+            type="submit"
+            className="flex-1 text-sm font-semibold py-2.5 rounded-lg bg-[#00C48C] hover:bg-[#00a876] text-white transition-colors"
+          >
+            {isEditing ? "Save Changes" : "Post Update"}
           </button>
         </div>
 

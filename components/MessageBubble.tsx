@@ -1,3 +1,4 @@
+//components/MessageBubble.tsx
 import { Message } from '@/lib/queries/message';
 import { cn } from '@/lib/utils';
 

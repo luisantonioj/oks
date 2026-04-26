@@ -1,3 +1,4 @@
+//app/(protected)/stakeholder/help-requests/page.tsx
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getStakeholderHelpRequests } from '@/lib/queries/help-request';
 import { redirect } from 'next/navigation';

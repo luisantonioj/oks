@@ -1,3 +1,4 @@
+//app/(protected)/office/inbox/[requestId]/page.tsx
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getMessages } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';

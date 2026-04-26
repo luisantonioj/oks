@@ -1,14 +1,14 @@
 // components/reports/ReportsFeed.tsx
-
 import { Report, ReportCrisis } from "./reports.data";
 
 interface ReportsFeedProps {
   reports: Report[];
   crises: ReportCrisis[];
   filterCrisis: string;
+  onEdit?: (report: Report) => void; 
 }
 
-export function ReportsFeed({ reports, crises, filterCrisis }: ReportsFeedProps) {
+export function ReportsFeed({ reports, crises, filterCrisis, onEdit }: ReportsFeedProps) {
   const filtered = filterCrisis === "all"
     ? [...reports].sort((a, b) => b.timestamp - a.timestamp)
     : [...reports].filter((r) => r.crisis_id === filterCrisis).sort((a, b) => b.timestamp - a.timestamp);
@@ -38,7 +38,7 @@ export function ReportsFeed({ reports, crises, filterCrisis }: ReportsFeedProps)
           </div>
         ) : (
           filtered.map((report) => (
-            <div key={report.id} className="flex items-start gap-4 p-5">
+            <div key={report.id} className="flex items-start gap-4 p-5 hover:bg-accent/30 transition-colors group">
               <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">
                 {report.icon}
               </div>
@@ -48,10 +48,23 @@ export function ReportsFeed({ reports, crises, filterCrisis }: ReportsFeedProps)
                     <p className="text-sm font-bold text-foreground">{report.title}</p>
                     <p className="text-xs text-[#00C48C] font-medium">{report.crisis}</p>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs text-muted-foreground">{report.posted_at}</p>
-                    <p className="text-xs text-muted-foreground/60 mt-0.5">by {report.posted_by}</p>
+                  
+                  {/* Updated Right Side to include the Edit Button */}
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <div>
+                      <p className="text-xs text-muted-foreground">{report.posted_at}</p>
+                      <p className="text-xs text-muted-foreground/60 mt-0.5">by {report.posted_by}</p>
+                    </div>
+                    {onEdit && (
+                      <button 
+                        onClick={() => onEdit(report)}
+                        className="text-xs font-medium text-blue-500 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ✏️ Edit
+                      </button>
+                    )}
                   </div>
+
                 </div>
                 <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{report.content}</p>
               </div>
