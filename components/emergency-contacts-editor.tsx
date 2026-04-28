@@ -3,17 +3,21 @@
 // components/emergency-contacts-editor.tsx
 // Office staff can view and edit emergency contact numbers.
 // The updated numbers are immediately reflected in this component's state.
-// In production, wire handleSave() to a Supabase server action so numbers
-// persist and the stakeholder dashboard reads them from the database.
 
 import { useState } from "react";
+import { updateEmergencyContacts } from "@/app/actions/office"; // Your server action!
 
-interface Contact {
+export interface Contact {
   id: string;
   label: string;
   number: string;
   note: string;
   icon: string;
+}
+
+interface Props {
+  officeId: string;
+  initialContacts?: Contact[];
 }
 
 const DEFAULT_CONTACTS: Contact[] = [
@@ -25,10 +29,13 @@ const DEFAULT_CONTACTS: Contact[] = [
   { id: "6", label: "National Emergency",       number: "911",            note: "Police, fire & medical emergencies",           icon: "📞" },
 ];
 
-export function EmergencyContactsEditor() {
-  const [contacts, setContacts] = useState<Contact[]>(DEFAULT_CONTACTS);
+export function EmergencyContactsEditor({ officeId, initialContacts }: Props) {
+  // Use data from Supabase if it exists, otherwise fall back to DEFAULT_CONTACTS
+  const startingData = initialContacts && initialContacts.length > 0 ? initialContacts : DEFAULT_CONTACTS;
+
+  const [contacts, setContacts] = useState<Contact[]>(startingData);
   const [editing, setEditing]   = useState(false);
-  const [draft, setDraft]       = useState<Contact[]>(DEFAULT_CONTACTS);
+  const [draft, setDraft]       = useState<Contact[]>(startingData);
   const [saving, setSaving]     = useState(false);
   const [saved, setSaved]       = useState(false);
 
@@ -43,9 +50,18 @@ export function EmergencyContactsEditor() {
 
   async function handleSave() {
     setSaving(true);
-    // TODO: replace with a real server action / Supabase upsert so that
-    // numbers persist across sessions and stakeholders see the new values.
-    await new Promise((r) => setTimeout(r, 500));
+    
+    // Call your Supabase Server Action
+    const result = await updateEmergencyContacts(officeId, draft);
+    
+    if (result.error) {
+      console.error(result.error);
+      alert("Failed to save emergency contacts.");
+      setSaving(false);
+      return;
+    }
+
+    // Success! Update local UI state
     setContacts(draft);
     setSaving(false);
     setEditing(false);
