@@ -56,7 +56,15 @@ export function OfficeProfileClient({ initialData }: Props) {
       if (result.error) {
         setError(result.error);
       } else {
-        setData(draft);
+        // Create a fresh timestamp for right now
+        const now = new Date().toISOString();
+        
+        // Update both data and draft with the new fields AND the new timestamp
+        const updatedProfile = { ...draft, updated_at: now };
+        
+        setData(updatedProfile);
+        setDraft(updatedProfile); // Keep draft in sync for future edits
+        
         setEditing(false);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
