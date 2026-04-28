@@ -1,7 +1,6 @@
-// app/(protected)/office/profile/page.tsx
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
-import { OfficeProfileClient } from "@/components/office-profile-client";
+import { OfficeProfileClient } from "./OfficeProfileClient"; 
 
 export default async function OfficeProfile() {
   const profile = await getCurrentUserProfile();
