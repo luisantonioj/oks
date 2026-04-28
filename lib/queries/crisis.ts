@@ -51,7 +51,7 @@ export async function getCrisisById(id: string): Promise<Crisis | null> {
 
   const { data, error } = await supabase
     .from('crisis')
-    .select('*')
+    .select('*, announcements:announcement(*), help_requests:help_request(*), progress_updates:progress_report(*)')
     .eq('id', id)
     .single();
 

@@ -44,6 +44,8 @@ export async function createAnnouncement(formData: FormData) {
     revalidatePath('/office/dashboard');
     revalidatePath('/portal/dashboard');
     revalidatePath('/stakeholder/dashboard');
+    revalidatePath(`/office/crises/${crisis_id}`);
+    revalidatePath('/office/crises');
     
     return { success: true, message: 'Announcement posted successfully' };
   } catch (error) {
@@ -65,6 +67,8 @@ export async function deleteAnnouncement(id: string) {
 
     revalidatePath('/office/dashboard');
     revalidatePath('/portal/dashboard');
+    revalidatePath('/office/crises', 'layout');
+
     return { success: true };
   } catch (error) {
     return { error: 'An unexpected error occurred' };
@@ -110,6 +114,8 @@ export async function updateAnnouncement(formData: FormData) {
     revalidatePath('/office/dashboard');
     revalidatePath('/portal/dashboard');
     revalidatePath('/stakeholder/dashboard');
+    revalidatePath(`/office/crises/${crisis_id}`);
+    revalidatePath('/office/crises');
     
     return { success: true, message: 'Announcement updated successfully' };
   } catch (error) {
