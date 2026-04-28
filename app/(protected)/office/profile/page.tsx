@@ -1,7 +1,9 @@
-// app/(protected)/office/profile/page.tsx
+//app/(protected)/office/profile/page.tsx
 import { getCurrentUserProfile } from "@/lib/queries/user";
+import { createClient } from "@/lib/supabase/server"; // Import the client
 import { redirect } from "next/navigation";
-import { OfficeProfileClient } from "@/components/office-profile-client";
+import { OfficeProfileClient } from "./OfficeProfileClient"; 
+import { EmergencyContactsEditor } from "@/components/emergency-contacts-editor"; 
 
 export default async function OfficeProfile() {
   const profile = await getCurrentUserProfile();
@@ -9,6 +11,14 @@ export default async function OfficeProfile() {
   if (!profile || profile.role !== "office") {
     redirect("/login-office");
   }
+
+  // FETCH FROM THE NEW TABLE:
+  const supabase = await createClient();
+  const { data: dbContacts } = await supabase
+    .from('emergency_contact')
+    .select('*')
+    .eq('office_id', profile.id)
+    .order('created_at', { ascending: true }); // Keep them in the order they were added
 
   const p = profile as any;
 
@@ -26,9 +36,19 @@ export default async function OfficeProfile() {
   };
 
   return (
-    <OfficeProfileClient
-      initialData={displayData}
-      userId={p.id}
-    />
+    <div className="space-y-6"> 
+      <OfficeProfileClient
+        initialData={displayData}
+        userId={p.id}
+      />
+      
+      <div className="mt-8">
+        <EmergencyContactsEditor 
+          officeId={profile.id} 
+          // Pass the data fetched from the new table
+          initialContacts={dbContacts ?? []} 
+        />
+      </div>
+    </div>
   );
 }
