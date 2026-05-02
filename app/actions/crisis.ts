@@ -10,6 +10,8 @@ export type CrisisActionState = {
   success?: boolean;
 };
 
+// app/actions/crisis.ts
+
 export async function createCrisis(
   prevState: CrisisActionState, 
   formData: FormData
@@ -31,11 +33,17 @@ export async function createCrisis(
       ? areasInput.split(',').map(area => area.trim()).filter(Boolean) 
       : [];
 
+    // FIX: Include all 9 optional features here, just like in updateCrisis
     const features = {
-      notify_stakeholders: formData.get("feature_notify") === "on",
-      sound_alarm: formData.get("feature_alarm") === "on",
-      request_backup: formData.get("feature_backup") === "on",
-      lockdown_areas: formData.get("feature_lockdown") === "on",
+      survey:               formData.get("feature_survey")      === "on",
+      help_button:          formData.get("feature_help_button") === "on",
+      progress:             formData.get("feature_progress")    === "on",
+      donation:             formData.get("feature_donation")    === "on",
+      volunteer:            formData.get("feature_volunteer")   === "on",
+      notify_stakeholders:  formData.get("feature_notify")      === "on",
+      sound_alarm:          formData.get("feature_alarm")       === "on",
+      request_backup:       formData.get("feature_backup")      === "on",
+      lockdown_areas:       formData.get("feature_lockdown")    === "on",
     };
 
     if (!name || !type || !severity) {
@@ -73,7 +81,7 @@ export async function createCrisis(
   } catch (error) {
     console.error('Unexpected error in createCrisis:', error);
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
-      throw error; // Next.js needs this to process the redirect!
+      throw error; 
     }
     return { error: 'An unexpected error occurred' };
   }
