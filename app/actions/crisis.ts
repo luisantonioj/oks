@@ -33,7 +33,6 @@ export async function createCrisis(
       ? areasInput.split(',').map(area => area.trim()).filter(Boolean) 
       : [];
 
-    // FIX: Include all 9 optional features here, just like in updateCrisis
     const features = {
       survey:               formData.get("feature_survey")      === "on",
       help_button:          formData.get("feature_help_button") === "on",
@@ -174,5 +173,29 @@ export async function updateCrisisStatus(id: string, status: string, resolution_
     return { success: true };
   } catch (error) {
     return { error: 'An unexpected error occurred' };
+  }
+}
+
+export async function deleteCrisis(id: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return { error: 'Unauthorized' };
+
+    const { error } = await supabase
+      .from('crisis')
+      .delete()
+      .eq('id', id);
+
+    if (error) return { error: error.message };
+
+    // Refresh pages to reflect the deletion
+    revalidatePath('/office/crises');
+    revalidatePath('/office/dashboard');
+    
+    return { success: true };
+  } catch (error) {
+    return { error: 'An unexpected error occurred while deleting' };
   }
 }
