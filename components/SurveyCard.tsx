@@ -7,11 +7,14 @@ import {
   Lock, ShieldAlert, HeartHandshake, Users 
 } from "lucide-react";
 
+// UPDATE: Added optional officeName and isOwner props
 interface SurveyCardProps {
   survey: Survey;
   viewMode: "stakeholder" | "office";
   hasResponded?: boolean;
   responseCount?: number;
+  officeName?: string;
+  isOwner?: boolean;
 }
 
 const typeConfig: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string; border: string }> = {
@@ -46,7 +49,7 @@ function formatDate(dateStr: string) {
   });
 }
 
-export function SurveyCard({ survey, viewMode, hasResponded, responseCount }: SurveyCardProps) {
+export function SurveyCard({ survey, viewMode, hasResponded, responseCount, officeName, isOwner }: SurveyCardProps) {
   const href =
     viewMode === "stakeholder"
       ? `/stakeholder/surveys/${survey.id}`
@@ -114,14 +117,22 @@ export function SurveyCard({ survey, viewMode, hasResponded, responseCount }: Su
               {survey.title}
             </h3>
 
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {formatDate(survey.created_at)}
               </span>
+              
+              {/* UPDATE: Display "Created by" label */}
+              {viewMode === "office" && officeName && (
+                <span className="flex items-center gap-1 text-muted-foreground/80 truncate">
+                  • Created by: <span className={isOwner ? "font-semibold text-foreground" : ""}>{isOwner ? "You" : officeName}</span>
+                </span>
+              )}
+
               {viewMode === "office" && responseCount !== undefined && (
                 <span className="flex items-center gap-1">
-                  <ClipboardList className="h-3 w-3" />
+                  • <ClipboardList className="h-3 w-3 ml-0.5" />
                   {responseCount} {responseCount === 1 ? "response" : "responses"}
                 </span>
               )}

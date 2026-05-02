@@ -2,6 +2,7 @@
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getSurveyById, getSurveyResponses } from '@/lib/queries/survey';
 import { closeSurvey } from '@/app/actions/survey';
+import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -55,6 +56,14 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
   const [survey, responses] = await Promise.all([getSurveyById(id), getSurveyResponses(id)]);
   if (!survey) notFound();
 
+  // SECURE ACTION: Check if current user owns this survey
+  const isOwner = survey.office_id === profile.id;
+
+  // FETCH CREATOR NAME:
+  const supabase = await createClient();
+  const { data: creator } = await supabase.from('office').select('name').eq('id', survey.office_id).single();
+  const officeName = creator?.name || 'Unknown Office';
+
   // FIX: Supabase returns JSONB as parsed objects, so JSON.parse crashes if we don't check typeof
   let questions: SurveyQuestion[] = [];
   try { 
@@ -63,6 +72,7 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
       : (survey.questions || []); 
   } catch { questions = []; }
 
+  // Pre-fill answer map so all options show 0% even with no responses
   const answerMap: Record<string, Record<string, number>> = {};
   for (const q of questions) {
     if (q.type !== 'text') {
@@ -103,7 +113,7 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
           </div>
           <div>
             <h1 className="text-xl font-bold">{survey.title}</h1>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               
               {/* Active/Closed Status Badge */}
               <Badge variant="outline" className={isActive ? "border-blue-400 text-blue-600 bg-blue-50 dark:bg-blue-950/20 text-xs" : "text-xs text-muted-foreground"}>
@@ -127,14 +137,21 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
                 </Badge>
               )}
 
+              {/* Display Creator Name */}
+              <span className="text-xs text-muted-foreground flex items-center gap-1 ml-1 border-l border-border pl-3">
+                 Created by: <span className={isOwner ? "font-semibold text-foreground" : ""}>{isOwner ? "You" : officeName}</span>
+              </span>
+
               {/* Response Count */}
-              <span className="text-xs text-muted-foreground flex items-center gap-1 ml-1">
+              <span className="text-xs text-muted-foreground flex items-center gap-1 ml-1 border-l border-border pl-3">
                 <Users className="h-3 w-3" />{responses.length} response{responses.length !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
         </div>
-        {isActive && (
+
+        {/* SECURE ACTION: Only the owner can see the close button */}
+        {isActive && isOwner && (
           <form action={async () => { 'use server'; await closeSurvey(id); }}>
             <Button type="submit" variant="outline" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
               <Lock className="h-3.5 w-3.5" />Close Survey

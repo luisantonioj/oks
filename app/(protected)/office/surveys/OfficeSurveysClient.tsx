@@ -30,12 +30,15 @@ function TabButton({ label, icon, active, count, onClick }: { label: string; ico
   );
 }
 
+// UPDATE: Add officeMap and currentOfficeId to props
 interface OfficeSurveysClientProps {
   surveys: Survey[];
   responseCounts: Record<string, number>;
+  officeMap: Record<string, string>;
+  currentOfficeId: string;
 }
 
-export function OfficeSurveysClient({ surveys, responseCounts }: OfficeSurveysClientProps) {
+export function OfficeSurveysClient({ surveys, responseCounts, officeMap, currentOfficeId }: OfficeSurveysClientProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
 
   const filtered = activeTab === "all" ? surveys : surveys.filter((s) => s.survey_type === activeTab);
@@ -57,7 +60,7 @@ export function OfficeSurveysClient({ surveys, responseCounts }: OfficeSurveysCl
             <ClipboardList className="h-6 w-6 text-blue-500" /> Surveys
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {surveys.length} survey{surveys.length !== 1 ? "s" : ""} created
+            {surveys.length} survey{surveys.length !== 1 ? "s" : ""} across all offices
           </p>
         </div>
         <Link href="/office/surveys/new">
@@ -80,7 +83,14 @@ export function OfficeSurveysClient({ surveys, responseCounts }: OfficeSurveysCl
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" /> Active ({activeSurveys.length})
           </h2>
           {activeSurveys.map((survey) => (
-            <SurveyCard key={survey.id} survey={survey} viewMode="office" responseCount={responseCounts[survey.id] ?? 0} />
+            <SurveyCard 
+              key={survey.id} 
+              survey={survey} 
+              viewMode="office" 
+              responseCount={responseCounts[survey.id] ?? 0} 
+              officeName={survey.office_id ? officeMap[survey.office_id] : 'Unknown Office'}
+              isOwner={survey.office_id === currentOfficeId}
+            />
           ))}
         </section>
       )}
@@ -89,7 +99,14 @@ export function OfficeSurveysClient({ surveys, responseCounts }: OfficeSurveysCl
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Closed ({closedSurveys.length})</h2>
           {closedSurveys.map((survey) => (
-            <SurveyCard key={survey.id} survey={survey} viewMode="office" responseCount={responseCounts[survey.id] ?? 0} />
+            <SurveyCard 
+              key={survey.id} 
+              survey={survey} 
+              viewMode="office" 
+              responseCount={responseCounts[survey.id] ?? 0} 
+              officeName={survey.office_id ? officeMap[survey.office_id] : 'Unknown Office'}
+              isOwner={survey.office_id === currentOfficeId}
+            />
           ))}
         </section>
       )}
