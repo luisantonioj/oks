@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CrisisModal, CrisisFormState } from "./CrisisModal";
 import { CrisisFeatures } from "./crisis.types";
-import { updateCrisisStatus } from "@/app/actions/crisis";
+import { updateCrisisStatus, deleteCrisis } from "@/app/actions/crisis";
 
 const blankFeatures: CrisisFeatures = {
   survey: false, help_button: false, progress: false, donation: false, volunteer: false,
@@ -27,6 +27,7 @@ interface Props {
 export function CrisisDetailActionsClient(crisis: Props) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [formState, setFormState] = useState<CrisisFormState>({
     id: crisis.id,
@@ -46,6 +47,16 @@ export function CrisisDetailActionsClient(crisis: Props) {
     });
   }
 
+  function handleDelete() {
+    startTransition(async () => {
+        const result = await deleteCrisis(crisis.id);
+        if (!result.error) {
+        router.push("/office/crises");
+        }
+        setDeleteOpen(false);
+    });
+    }
+
   return (
     <>
       <button
@@ -63,6 +74,12 @@ export function CrisisDetailActionsClient(crisis: Props) {
           {isPending ? "Saving..." : "Mark as Resolved"}
         </button>
       )}
+      <button
+        onClick={() => setDeleteOpen(true)}
+        className="text-sm bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium px-4 py-2 rounded-lg border border-destructive transition-colors"
+        >
+        🗑️ Delete
+      </button>
       {editOpen && (
         <CrisisModal
           mode="edit"
@@ -73,6 +90,32 @@ export function CrisisDetailActionsClient(crisis: Props) {
           onToggleFeature={(key) => setFeatures((p) => ({ ...p, [key]: !p[key] }))}
         />
       )}
+      {deleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-background border border-border rounded-xl p-6 max-w-sm w-full mx-4 shadow-lg">
+            <h2 className="text-lg font-semibold text-foreground mb-2">Delete Crisis</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+                Are you sure you want to delete <span className="font-medium text-foreground">{crisis.name}</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+                <button
+                onClick={() => setDeleteOpen(false)}
+                disabled={isPending}
+                className="text-sm bg-muted hover:bg-accent text-foreground font-medium px-4 py-2 rounded-lg border border-border transition-colors disabled:opacity-50"
+                >
+                Cancel
+                </button>
+                <button
+                onClick={handleDelete}
+                disabled={isPending}
+                className="text-sm bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                >
+                {isPending ? "Deleting..." : "Delete"}
+                </button>
+            </div>
+            </div>
+        </div>
+        )}
     </>
   );
 }

@@ -1,10 +1,14 @@
-//app/(protected)/office/surveys/[id]/page.tsx
+// app/(protected)/office/surveys/[id]/page.tsx
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getSurveyById, getSurveyResponses } from '@/lib/queries/survey';
 import { closeSurvey } from '@/app/actions/survey';
+import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ClipboardList, Users, BarChart3, Lock } from 'lucide-react';
+import { 
+  ArrowLeft, ClipboardList, Users, BarChart3, Lock, 
+  ShieldAlert, HeartHandshake 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -19,6 +23,31 @@ interface SurveyQuestion {
   options?: string[];
 }
 
+// Map the survey types to their respective UI styles
+const typeConfig: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string; border: string }> = {
+  safety: {
+    label: "Safety",
+    icon: <ShieldAlert className="h-3.5 w-3.5" />,
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50 dark:bg-orange-950/20",
+    border: "border-orange-300 dark:border-orange-800",
+  },
+  donation: {
+    label: "Donation",
+    icon: <HeartHandshake className="h-3.5 w-3.5" />,
+    color: "text-pink-600 dark:text-pink-400",
+    bg: "bg-pink-50 dark:bg-pink-950/20",
+    border: "border-pink-300 dark:border-pink-800",
+  },
+  volunteer: {
+    label: "Volunteer",
+    icon: <Users className="h-3.5 w-3.5" />,
+    color: "text-green-600 dark:text-green-400",
+    bg: "bg-green-50 dark:bg-green-950/20",
+    border: "border-green-300 dark:border-green-800",
+  },
+};
+
 export default async function OfficeSurveyDetailPage({ params }: PageProps) {
   const profile = await getCurrentUserProfile();
   if (!profile || profile.role !== 'office') redirect('/login-office');
@@ -27,9 +56,23 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
   const [survey, responses] = await Promise.all([getSurveyById(id), getSurveyResponses(id)]);
   if (!survey) notFound();
 
-  let questions: SurveyQuestion[] = [];
-  try { questions = JSON.parse(survey.questions); } catch { questions = []; }
+  // SECURE ACTION: Check if current user owns this survey
+  const isOwner = survey.office_id === profile.id;
 
+  // FETCH CREATOR NAME:
+  const supabase = await createClient();
+  const { data: creator } = await supabase.from('office').select('name').eq('id', survey.office_id).single();
+  const officeName = creator?.name || 'Unknown Office';
+
+  // FIX: Supabase returns JSONB as parsed objects, so JSON.parse crashes if we don't check typeof
+  let questions: SurveyQuestion[] = [];
+  try { 
+    questions = typeof survey.questions === 'string' 
+      ? JSON.parse(survey.questions) 
+      : (survey.questions || []); 
+  } catch { questions = []; }
+
+  // Pre-fill answer map so all options show 0% even with no responses
   const answerMap: Record<string, Record<string, number>> = {};
   for (const q of questions) {
     if (q.type !== 'text') {
@@ -38,13 +81,13 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
     }
   }
   
-  // FIX #1: Safely parse analytics map
+  // Safely parse analytics map
   for (const response of responses) {
     let answers: Record<string, string | string[]> = {};
     try { 
       answers = typeof response.answers === 'string' 
         ? JSON.parse(response.answers) 
-        : response.answers || {}; 
+        : (response.answers || {}); 
     } catch { continue; }
     
     for (const [qId, val] of Object.entries(answers)) {
@@ -55,6 +98,7 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
   }
 
   const isActive = survey.status === 'active';
+  const typeStyle = survey.survey_type ? typeConfig[survey.survey_type] : null;
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-3xl mx-auto">
@@ -69,17 +113,45 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
           </div>
           <div>
             <h1 className="text-xl font-bold">{survey.title}</h1>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              
+              {/* Active/Closed Status Badge */}
               <Badge variant="outline" className={isActive ? "border-blue-400 text-blue-600 bg-blue-50 dark:bg-blue-950/20 text-xs" : "text-xs text-muted-foreground"}>
-                {isActive ? <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />Active</span> : "Closed"}
+                {isActive ? (
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    Active
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <Lock className="h-3 w-3" /> Closed
+                  </span>
+                )}
               </Badge>
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
+
+              {/* Survey Type Badge */}
+              {typeStyle && (
+                <Badge variant="outline" className={`text-xs gap-1 ${typeStyle.color} ${typeStyle.bg} ${typeStyle.border}`}>
+                  {typeStyle.icon}
+                  {typeStyle.label}
+                </Badge>
+              )}
+
+              {/* Display Creator Name */}
+              <span className="text-xs text-muted-foreground flex items-center gap-1 ml-1 border-l border-border pl-3">
+                 Created by: <span className={isOwner ? "font-semibold text-foreground" : ""}>{isOwner ? "You" : officeName}</span>
+              </span>
+
+              {/* Response Count */}
+              <span className="text-xs text-muted-foreground flex items-center gap-1 ml-1 border-l border-border pl-3">
                 <Users className="h-3 w-3" />{responses.length} response{responses.length !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
         </div>
-        {isActive && (
+
+        {/* SECURE ACTION: Only the owner can see the close button */}
+        {isActive && isOwner && (
           <form action={async () => { 'use server'; await closeSurvey(id); }}>
             <Button type="submit" variant="outline" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
               <Lock className="h-3.5 w-3.5" />Close Survey
@@ -107,35 +179,44 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
           <BarChart3 className="h-4 w-4" />Response Summary
         </h2>
+
+        {questions.length === 0 && (
+          <p className="text-sm text-muted-foreground italic border rounded-lg p-6 text-center bg-card">
+            No questions found in this survey.
+          </p>
+        )}
+
         {questions.map((q, idx) => (
-          <div key={q.id} className="rounded-lg border bg-card p-5 space-y-3">
+          <div key={q.id} className="rounded-lg border bg-card p-5 space-y-3 shadow-sm">
             <p className="text-sm font-semibold">
               <span className="text-muted-foreground mr-2">{idx + 1}.</span>{q.text}
               <span className="ml-2 text-xs font-normal text-muted-foreground">({q.type})</span>
             </p>
             {q.type === 'text' ? (
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {responses.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">No responses yet</p>
-                ) : (
-                  responses.map((r) => {
-                    // FIX #2: Safely parse text answers
+                {(() => {
+                  // Extract valid text answers specifically for this question
+                  const validAnswers = responses.map((r) => {
                     let ans: Record<string, string | string[]> = {};
-                    try { 
+                    try {
                       ans = typeof r.answers === 'string' 
                         ? JSON.parse(r.answers) 
-                        : r.answers || {}; 
+                        : (r.answers || {});
                     } catch { return null; }
-                    
                     const val = ans[q.id];
-                    if (!val) return null;
-                    return (
-                      <div key={r.id} className="text-sm bg-muted/40 rounded px-3 py-2 leading-relaxed">
-                        {Array.isArray(val) ? val.join(', ') : val}
-                      </div>
-                    );
-                  }).filter(Boolean)
-                )}
+                    return val ? { id: r.id, val } : null;
+                  }).filter(Boolean) as { id: string, val: string | string[] }[];
+
+                  if (validAnswers.length === 0) {
+                    return <p className="text-xs text-muted-foreground italic">No responses yet</p>;
+                  }
+
+                  return validAnswers.map((item) => (
+                    <div key={item.id} className="text-sm bg-muted/40 rounded px-3 py-2 leading-relaxed">
+                      {Array.isArray(item.val) ? item.val.join(', ') : item.val}
+                    </div>
+                  ));
+                })()}
               </div>
             ) : (
               <div className="space-y-2">

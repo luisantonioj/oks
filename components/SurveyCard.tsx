@@ -1,14 +1,45 @@
+// components/SurveyCard.tsx
 import Link from "next/link";
 import { Survey } from "@/types/database";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, ChevronRight, CheckCircle2, Clock } from "lucide-react";
+import { 
+  ClipboardList, ChevronRight, CheckCircle2, Clock, 
+  Lock, ShieldAlert, HeartHandshake, Users 
+} from "lucide-react";
 
+// UPDATE: Added optional officeName and isOwner props
 interface SurveyCardProps {
   survey: Survey;
   viewMode: "stakeholder" | "office";
   hasResponded?: boolean;
   responseCount?: number;
+  officeName?: string;
+  isOwner?: boolean;
 }
+
+const typeConfig: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string; border: string }> = {
+  safety: {
+    label: "Safety",
+    icon: <ShieldAlert className="h-3.5 w-3.5" />,
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50 dark:bg-orange-950/20",
+    border: "border-orange-300 dark:border-orange-800",
+  },
+  donation: {
+    label: "Donation",
+    icon: <HeartHandshake className="h-3.5 w-3.5" />,
+    color: "text-pink-600 dark:text-pink-400",
+    bg: "bg-pink-50 dark:bg-pink-950/20",
+    border: "border-pink-300 dark:border-pink-800",
+  },
+  volunteer: {
+    label: "Volunteer",
+    icon: <Users className="h-3.5 w-3.5" />,
+    color: "text-green-600 dark:text-green-400",
+    bg: "bg-green-50 dark:bg-green-950/20",
+    border: "border-green-300 dark:border-green-800",
+  },
+};
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-PH", {
@@ -18,13 +49,14 @@ function formatDate(dateStr: string) {
   });
 }
 
-export function SurveyCard({ survey, viewMode, hasResponded, responseCount }: SurveyCardProps) {
+export function SurveyCard({ survey, viewMode, hasResponded, responseCount, officeName, isOwner }: SurveyCardProps) {
   const href =
     viewMode === "stakeholder"
       ? `/stakeholder/surveys/${survey.id}`
       : `/office/surveys/${survey.id}`;
 
   const isActive = survey.status === "active";
+  const type = survey.survey_type ? typeConfig[survey.survey_type] : null;
 
   return (
     <Link href={href} className="block group">
@@ -56,9 +88,19 @@ export function SurveyCard({ survey, viewMode, hasResponded, responseCount }: Su
                     Active
                   </span>
                 ) : (
-                  "Closed"
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 text-muted-foreground"><Lock size={12}/></span>
+                    Closed
+                  </span>
                 )}
               </Badge>
+
+              {type && (
+                <Badge variant="outline" className={`text-xs gap-1 ${type.color} ${type.bg} ${type.border}`}>
+                  {type.icon}
+                  {type.label}
+                </Badge>
+              )}
 
               {viewMode === "stakeholder" && hasResponded && (
                 <Badge
@@ -75,14 +117,22 @@ export function SurveyCard({ survey, viewMode, hasResponded, responseCount }: Su
               {survey.title}
             </h3>
 
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {formatDate(survey.created_at)}
               </span>
+              
+              {/* UPDATE: Display "Created by" label */}
+              {viewMode === "office" && officeName && (
+                <span className="flex items-center gap-1 text-muted-foreground/80 truncate">
+                  • Created by: <span className={isOwner ? "font-semibold text-foreground" : ""}>{isOwner ? "You" : officeName}</span>
+                </span>
+              )}
+
               {viewMode === "office" && responseCount !== undefined && (
                 <span className="flex items-center gap-1">
-                  <ClipboardList className="h-3 w-3" />
+                  • <ClipboardList className="h-3 w-3 ml-0.5" />
                   {responseCount} {responseCount === 1 ? "response" : "responses"}
                 </span>
               )}
