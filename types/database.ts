@@ -60,7 +60,8 @@ export interface Announcement {
 export interface Survey {
   id: string;
   title: string;
-  questions: string; // Likely JSON string or array, but schema says 'questions'
+  survey_type: string; // 'safety' | 'donation' | 'volunteer'  
+  questions: string; 
   crisis_id: string;
   office_id: string;
   status: string;
