@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Crisis } from "@/components/crisis/crisis.types";
 import { getCrisisById } from "@/lib/queries/crisis";
 import { getAnnouncements } from "@/lib/queries/announcement";        
+import { getSurveys } from "@/lib/queries/survey";
 import { SeverityBadge, StatusBadge, formatDateTime } from "@/components/crisis/CrisisBadges";
 import {
   CrisisSurveySection, CrisisHelpRequestsSection, CrisisAnnouncementsSection,
@@ -20,6 +21,7 @@ export default async function CrisisDetailPage({ params }: { params: Promise<{ i
   const features = crisis.features || {};
 
   const dbAnnouncements = await getAnnouncements(id);
+  const dbSurveys = await getSurveys({ crisis_id: id });
   const announcements = dbAnnouncements.map((ann) => ({
     id: ann.id,
     title: ann.title,
