@@ -1,3 +1,4 @@
+//app/components/SurveyBuilder.tsx
 "use client";
 
 import { useState, useActionState } from "react";
@@ -89,16 +90,31 @@ export function SurveyBuilder({ crises, onSubmit }: SurveyBuilderProps) {
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="survey_type" className="text-sm font-semibold">Survey Type *</Label>
+        <select
+          id="survey_type"
+          name="survey_type"
+          required
+          className="flex h-9 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          <option value="">Select type...</option>
+          <option value="safety">🛡️ Safety Check</option>
+          <option value="donation">💝 Donation Pledge</option>
+          <option value="volunteer">🙋 Volunteer Registration</option>
+        </select>
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="crisis_id" className="text-sm font-semibold">Related Crisis *</Label>
         <select
           id="crisis_id"
           name="crisis_id"
           required
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
+          className="flex h-9 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <option value="">Select a crisis...</option>
           {crises.map((c) => (
-            <option key={c.id} value={c.id}>{c.type} — {c.affected_areas}</option>
+            <option key={c.id} value={c.id}>{c.name || c.type} — {Array.isArray(c.affected_areas) ? c.affected_areas.join(", ") : c.affected_areas}</option>
           ))}
         </select>
       </div>

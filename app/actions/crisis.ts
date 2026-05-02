@@ -103,10 +103,15 @@ export async function updateCrisis(
       : [];
 
     const features = {
-      notify_stakeholders: formData.get("feature_notify") === "on",
-      sound_alarm: formData.get("feature_alarm") === "on",
-      request_backup: formData.get("feature_backup") === "on",
-      lockdown_areas: formData.get("feature_lockdown") === "on",
+      survey:               formData.get("feature_survey")      === "on",
+      help_button:          formData.get("feature_help_button") === "on",
+      progress:             formData.get("feature_progress")    === "on",
+      donation:             formData.get("feature_donation")    === "on",
+      volunteer:            formData.get("feature_volunteer")   === "on",
+      notify_stakeholders:  formData.get("feature_notify")      === "on",
+      sound_alarm:          formData.get("feature_alarm")       === "on",
+      request_backup:       formData.get("feature_backup")      === "on",
+      lockdown_areas:       formData.get("feature_lockdown")    === "on",
     };
 
     if (!name || !type || !severity) return { error: 'Name, Type, and Severity are required.' };

@@ -19,7 +19,9 @@ export async function createSurvey(
     const crisis_id = formData.get('crisis_id') as string;
     const questionsRaw = formData.get('questions') as string;
 
-    if (!title || !crisis_id || !questionsRaw) return { error: 'Title, crisis, and questions are required' };
+    const survey_type = formData.get('survey_type') as string;
+    if (!title || !crisis_id || !questionsRaw || !survey_type) 
+      return { error: 'Title, type, crisis, and questions are required' };
 
     let questions;
     try {
@@ -33,6 +35,7 @@ export async function createSurvey(
 
     const { error } = await supabase.from('survey').insert({
       title,
+      survey_type,
       crisis_id,
       questions: JSON.stringify(validQuestions),
       office_id: user.id,
@@ -62,6 +65,15 @@ export async function submitSurveyResponse(
 
     const survey_id = formData.get('survey_id') as string;
     if (!survey_id) return { error: 'Survey ID is required' };
+
+    const { data: surveyData } = await supabase
+      .from('survey')
+      .select('status')
+      .eq('id', survey_id)
+      .single();
+
+    if (!surveyData || surveyData.status !== 'active')
+      return { error: 'This survey is no longer accepting responses.' };
 
     const { data: existing } = await supabase
       .from('survey_response')
