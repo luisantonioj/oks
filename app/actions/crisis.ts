@@ -183,12 +183,21 @@ export async function deleteCrisis(id: string) {
     
     if (!user) return { error: 'Unauthorized' };
 
-    const { error } = await supabase
+    // ADDED .select() to verify the row was actually deleted
+    const { data, error } = await supabase
       .from('crisis')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select();
 
     if (error) return { error: error.message };
+
+    // NEW: If data is empty, RLS blocked it or the ID didn't match.
+    if (!data || data.length === 0) {
+      return { 
+        error: 'Delete blocked by Database. Please check your Supabase RLS Policies for the crisis table.' 
+      };
+    }
 
     // Refresh pages to reflect the deletion
     revalidatePath('/office/crises');
