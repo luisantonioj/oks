@@ -1,7 +1,11 @@
+// components/SurveyCard.tsx
 import Link from "next/link";
 import { Survey } from "@/types/database";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, ChevronRight, CheckCircle2, Clock } from "lucide-react";
+import { 
+  ClipboardList, ChevronRight, CheckCircle2, Clock, 
+  Lock, ShieldAlert, HeartHandshake, Users 
+} from "lucide-react";
 
 interface SurveyCardProps {
   survey: Survey;
@@ -9,6 +13,30 @@ interface SurveyCardProps {
   hasResponded?: boolean;
   responseCount?: number;
 }
+
+const typeConfig: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string; border: string }> = {
+  safety: {
+    label: "Safety",
+    icon: <ShieldAlert className="h-3.5 w-3.5" />,
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50 dark:bg-orange-950/20",
+    border: "border-orange-300 dark:border-orange-800",
+  },
+  donation: {
+    label: "Donation",
+    icon: <HeartHandshake className="h-3.5 w-3.5" />,
+    color: "text-pink-600 dark:text-pink-400",
+    bg: "bg-pink-50 dark:bg-pink-950/20",
+    border: "border-pink-300 dark:border-pink-800",
+  },
+  volunteer: {
+    label: "Volunteer",
+    icon: <Users className="h-3.5 w-3.5" />,
+    color: "text-green-600 dark:text-green-400",
+    bg: "bg-green-50 dark:bg-green-950/20",
+    border: "border-green-300 dark:border-green-800",
+  },
+};
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-PH", {
@@ -25,6 +53,7 @@ export function SurveyCard({ survey, viewMode, hasResponded, responseCount }: Su
       : `/office/surveys/${survey.id}`;
 
   const isActive = survey.status === "active";
+  const type = survey.survey_type ? typeConfig[survey.survey_type] : null;
 
   return (
     <Link href={href} className="block group">
@@ -56,9 +85,19 @@ export function SurveyCard({ survey, viewMode, hasResponded, responseCount }: Su
                     Active
                   </span>
                 ) : (
-                  "Closed"
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 text-muted-foreground"><Lock size={12}/></span>
+                    Closed
+                  </span>
                 )}
               </Badge>
+
+              {type && (
+                <Badge variant="outline" className={`text-xs gap-1 ${type.color} ${type.bg} ${type.border}`}>
+                  {type.icon}
+                  {type.label}
+                </Badge>
+              )}
 
               {viewMode === "stakeholder" && hasResponded && (
                 <Badge
