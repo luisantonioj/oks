@@ -22,11 +22,80 @@ interface SurveyBuilderProps {
   onSubmit: (prevState: SurveyActionState, formData: FormData) => Promise<SurveyActionState>;
 }
 
+function generateVolunteerTemplate(): SurveyQuestion[] {
+  return [
+    {
+      id: crypto.randomUUID(),
+      text: "Are you willing to volunteer?",
+      type: "radio",
+      options: ["Yes", "No"],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "What is your availability?",
+      type: "checkbox",
+      options: [
+        "Weekdays (Morning)", "Weekdays (Afternoon)", "Weekdays (Evening)",
+        "Weekends (Morning)", "Weekends (Afternoon)", "Weekends (Evening)",
+      ],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "How many hours can you commit per shift?",
+      type: "radio",
+      options: ["2–4 hours", "4–6 hours", "6–8 hours", "Full day (8+ hours)"],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "What skills or roles can you offer?",
+      type: "checkbox",
+      options: [
+        "First Aid / Medical Support",
+        "Food & Water Distribution",
+        "Logistics & Supply Management",
+        "Search & Rescue",
+        "Psychological Support / Counseling",
+        "Community Coordination",
+        "Documentation & Reporting",
+        "Driver / Transportation",
+      ],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "What resources can you bring?",
+      type: "checkbox",
+      options: [
+        "Personal vehicle",
+        "Communication equipment (radio, phone)",
+        "First aid kit",
+        "Food & water supplies",
+        "Tools & equipment",
+        "None",
+      ],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "I agree to the volunteer waiver and consent to participate in disaster relief activities.",
+      type: "radio",
+      options: ["I agree", "I do not agree"],
+    },
+  ];
+}
+
 export function SurveyBuilder({ crises, onSubmit }: SurveyBuilderProps) {
   const [questions, setQuestions] = useState<SurveyQuestion[]>([
     { id: crypto.randomUUID(), text: "", type: "text" },
   ]);
+  const [surveyType, setSurveyType] = useState<string>("");
   const [state, formAction, isPending] = useActionState(onSubmit, null);
+
+  const handleSurveyTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newType = e.target.value;
+    setSurveyType(newType);
+    if (newType === "volunteer") {
+      setQuestions(generateVolunteerTemplate());
+    }
+  };
 
   const addQuestion = () => {
     setQuestions((prev) => [...prev, { id: crypto.randomUUID(), text: "", type: "text" }]);
@@ -94,6 +163,8 @@ export function SurveyBuilder({ crises, onSubmit }: SurveyBuilderProps) {
         <select
           id="survey_type"
           name="survey_type"
+          value={surveyType}
+          onChange={handleSurveyTypeChange}
           required
           className="flex h-9 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
@@ -102,6 +173,11 @@ export function SurveyBuilder({ crises, onSubmit }: SurveyBuilderProps) {
           <option value="donation">💝 Donation Pledge</option>
           <option value="volunteer">🙋 Volunteer Registration</option>
         </select>
+        {surveyType === "volunteer" && (
+          <p className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md px-3 py-2">
+            Volunteer template pre-loaded — questions are editable below.
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">

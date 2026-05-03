@@ -106,7 +106,21 @@ export default async function StakeholderSurveyDetailPage({ params }: PageProps)
 
       {/* Clean Client Form Component */}
       {!hasResponded && !isClosed && (
-        <SurveySubmitForm surveyId={survey.id} questions={questions} />
+        <SurveySubmitForm
+          surveyId={survey.id}
+          questions={questions}
+          isVolunteerSurvey={survey.survey_type === 'volunteer'}
+          stakeholderProfile={
+            survey.survey_type === 'volunteer'
+              ? {
+                  name: (profile as any).name ?? '',
+                  email: profile.email ?? '',
+                  contact: (profile as any).contact ?? '',
+                  community: (profile as any).community ?? '',
+                }
+              : undefined
+          }
+        />
       )}
     </div>
   );

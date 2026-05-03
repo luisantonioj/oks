@@ -1,9 +1,11 @@
+//components/SurveySubmitForm.tsx
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
 import { submitSurveyResponse } from "@/app/actions/survey";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Loader2 } from "lucide-react";
+import { ClipboardList, Loader2, User } from "lucide-react";
 
 interface SurveyQuestion {
   id: string;
@@ -12,12 +14,32 @@ interface SurveyQuestion {
   options?: string[];
 }
 
-export function SurveySubmitForm({ surveyId, questions }: { surveyId: string, questions: SurveyQuestion[] }) {
+interface StakeholderProfile {
+  name: string;
+  email?: string;
+  contact?: string;
+  community?: string;
+}
+
+interface SurveySubmitFormProps {
+  surveyId: string;
+  questions: SurveyQuestion[];
+  isVolunteerSurvey?: boolean;
+  stakeholderProfile?: StakeholderProfile;
+}
+
+export function SurveySubmitForm({ surveyId, questions, isVolunteerSurvey, stakeholderProfile }: SurveySubmitFormProps) {
   const [state, formAction, isPending] = useActionState(submitSurveyResponse, null);
+  const [q1Answer, setQ1Answer] = useState<string>("");
+
+  const isWilling = isVolunteerSurvey && q1Answer === "Yes";
 
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="survey_id" value={surveyId} />
+      {isWilling && stakeholderProfile && (
+        <input type="hidden" name="__stake_name" value={stakeholderProfile.name} />
+      )}
 
       {questions.map((q, idx) => (
         <div key={q.id} className="rounded-lg border bg-card p-5 space-y-3">
@@ -41,7 +63,16 @@ export function SurveySubmitForm({ surveyId, questions }: { surveyId: string, qu
             <div className="space-y-2">
               {(q.options || []).map((opt, i) => (
                 <label key={i} className="flex items-center gap-2.5 cursor-pointer group">
-                  <input type="radio" name={`q_${q.id}`} value={opt} required className="w-4 h-4 accent-primary" />
+                  <input
+                    type="radio"
+                    name={`q_${q.id}`}
+                    value={opt}
+                    required
+                    className="w-4 h-4 accent-primary"
+                    onChange={() => {
+                      if (isVolunteerSurvey && idx === 0) setQ1Answer(opt);
+                    }}
+                  />
                   <span className="text-sm group-hover:text-foreground transition-colors">{opt}</span>
                 </label>
               ))}
@@ -58,10 +89,29 @@ export function SurveySubmitForm({ surveyId, questions }: { surveyId: string, qu
               ))}
             </div>
           )}
+
+          {/* Auto-fill profile details after Q1 when volunteer answers Yes */}
+          {isVolunteerSurvey && idx === 0 && isWilling && stakeholderProfile && (
+            <div className="mt-3 rounded-md bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 p-3 flex items-start gap-2.5">
+              <User className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="text-xs space-y-0.5">
+                <p className="font-semibold text-green-700 dark:text-green-400">Your details will be automatically recorded:</p>
+                <p className="text-muted-foreground">Name: <span className="font-medium text-foreground">{stakeholderProfile.name}</span></p>
+                {stakeholderProfile.email && (
+                  <p className="text-muted-foreground">Email: <span className="font-medium text-foreground">{stakeholderProfile.email}</span></p>
+                )}
+                {stakeholderProfile.contact && (
+                  <p className="text-muted-foreground">Contact: <span className="font-medium text-foreground">{stakeholderProfile.contact}</span></p>
+                )}
+                {stakeholderProfile.community && (
+                  <p className="text-muted-foreground">Community: <span className="font-medium text-foreground">{stakeholderProfile.community}</span></p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       ))}
 
-      {/* This will explicitly show you if Supabase rejects the save! */}
       {state?.error && (
         <div className="p-3 rounded-md bg-destructive/10 border border-destructive/30 text-sm text-destructive font-medium">
           {state.error}
