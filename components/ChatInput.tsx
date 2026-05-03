@@ -6,12 +6,18 @@ import { sendMessage } from '@/app/actions/message';
 import { Button } from '@/components/ui/button';
 import { Send, Loader2 } from 'lucide-react';
 
+interface QuickAction {
+  label: string;
+  text: string;
+}
+
 interface ChatInputProps {
   helpRequestId: string;
   senderRole: 'stakeholder' | 'office';
+  quickActions?: QuickAction[];
 }
 
-export function ChatInput({ helpRequestId, senderRole }: ChatInputProps) {
+export function ChatInput({ helpRequestId, senderRole, quickActions }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -39,9 +45,23 @@ export function ChatInput({ helpRequestId, senderRole }: ChatInputProps) {
   }
 
   return (
-    <div className="border-t border-border bg-card px-4 py-3">
+    <div className="border-t border-border bg-card px-4 py-3 space-y-2">
+      {quickActions && quickActions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {quickActions.map((qa) => (
+            <button
+              key={qa.label}
+              type="button"
+              onClick={() => setValue(qa.text)}
+              className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {qa.label}
+            </button>
+          ))}
+        </div>
+      )}
       {error && (
-        <p className="text-xs text-destructive mb-2">{error}</p>
+        <p className="text-xs text-destructive">{error}</p>
       )}
       <form ref={formRef} onSubmit={handleSubmit} className="flex items-end gap-2">
         <textarea

@@ -4,9 +4,36 @@ import { getMessages } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';
 import { MessageBubble } from '@/components/MessageBubble';
 import { ChatInput } from '@/components/ChatInput';
-import { ArrowLeft, MapPin, AlertTriangle, User } from 'lucide-react';
+import { ArrowLeft, MapPin, AlertTriangle, User, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { OfficeProfile } from '@/types/user';
+
+const CIO_QUICK_ACTIONS = [
+  { label: 'Relief en route', text: 'Relief resources have been coordinated and are on their way to your area.' },
+  { label: 'Volunteer deployed', text: 'A volunteer team has been deployed to assist you. Please stay at your location.' },
+  { label: 'Welfare logged', text: 'Your welfare status has been acknowledged and logged. We will continue to monitor.' },
+  { label: 'Donation support', text: 'Donation support has been arranged and is en route to your location.' },
+  { label: 'Resolved', text: 'Your request has been resolved. Please let us know if you need further assistance.' },
+];
+
+const ISSESO_QUICK_ACTIONS = [
+  { label: 'SOS received', text: 'SOS received. Rescue team is being dispatched to your location immediately.' },
+  { label: 'Tactical response', text: 'Tactical response initiated. Ground command is en route to your area.' },
+  { label: 'Threat assessment', text: 'Threat assessment is underway. Please stay in a secure location until further notice.' },
+  { label: 'Area secured', text: 'Your area is being secured. Do not move until you receive clearance from our team.' },
+  { label: 'Resolved', text: 'The situation has been resolved and secured. Contact us immediately if the threat returns.' },
+];
+
+function getQuickActions(officeName: string) {
+  const name = officeName.toUpperCase();
+  if (name.includes('CIO') || name.includes('COMMUNITY')) return CIO_QUICK_ACTIONS;
+  if (name.includes('ISSESO') || name.includes('SAFETY') || name.includes('SECURITY')) return ISSESO_QUICK_ACTIONS;
+  return [
+    { label: 'Help on the way', text: 'Help is on the way. Please stay calm and remain at your location.' },
+    { label: 'Resolved', text: 'Your request has been resolved. Please let us know if you need further assistance.' },
+  ];
+}
 
 interface PageProps {
   params: Promise<{ requestId: string }>;
@@ -15,6 +42,7 @@ interface PageProps {
 export default async function OfficeChatPage({ params }: PageProps) {
   const profile = await getCurrentUserProfile();
   if (!profile || profile.role !== 'office') redirect('/login-office');
+  const officeProfile = profile as OfficeProfile;
 
   const { requestId } = await params;
 
@@ -34,7 +62,8 @@ export default async function OfficeChatPage({ params }: PageProps) {
     .single();
 
   const messages = await getMessages(requestId);
-
+  const quickActions = getQuickActions(officeProfile.office_name ?? '');
+  
   const statusColor = {
     pending: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/20',
     resolved: 'bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/20',
@@ -54,8 +83,10 @@ export default async function OfficeChatPage({ params }: PageProps) {
               <User className="h-3.5 w-3.5" />
               {stakeholder?.name ?? 'Unknown Stakeholder'}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {stakeholder?.contact ?? 'No contact info'}
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Building2 className="h-3 w-3" />
+              {officeProfile.office_name}
+              {stakeholder?.contact ? ` · ${stakeholder.contact}` : ''}
             </p>
           </div>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>
@@ -99,7 +130,7 @@ export default async function OfficeChatPage({ params }: PageProps) {
       </div>
 
       {/* Input */}
-      <ChatInput helpRequestId={requestId} senderRole="office" />
+      <ChatInput helpRequestId={requestId} senderRole="office" quickActions={quickActions} />
     </div>
   );
 }
