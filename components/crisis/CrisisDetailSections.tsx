@@ -2,8 +2,18 @@
 
 import Link from "next/link";
 import { Crisis } from "./crisis.types";
-import { ClipboardList, ShieldAlert, HeartHandshake, Users, Lock, ChevronRight, Plus } from "lucide-react";
+import { ClipboardList, ShieldAlert, HeartHandshake, Users, Lock, ChevronRight, Plus, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+export interface VolunteerResponseEntry {
+  id: string;
+  survey_id: string;
+  stakeholder_id: string;
+  stakeholder_name: string;
+  answers: Record<string, string | string[]>;
+  created_at: string;
+  questions: { id: string; text: string; type: string; options?: string[] }[];
+}
 
 const surveyTypeConfig: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string; border: string }> = {
   safety: {
@@ -205,29 +215,91 @@ export function CrisisDonationsSection() {
 }
 
 // ── Volunteer ────────────────────────────────────────────────────────────────
-export function CrisisVolunteerSection({ crisis }: { crisis: Crisis }) {
+export function CrisisVolunteerSection({
+  crisis,
+  volunteerResponses = [],
+}: {
+  crisis: Crisis;
+  volunteerResponses?: VolunteerResponseEntry[];
+}) {
+  const willing = volunteerResponses.filter((r) => {
+    const q1 = r.questions[0];
+    if (!q1) return false;
+    const ans = r.answers[q1.id];
+    return ans === "Yes" || (Array.isArray(ans) && ans.includes("Yes"));
+  });
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <h2 className="font-bold text-foreground mb-1">Volunteer Coordination</h2>
-      <p className="text-xs text-muted-foreground mb-4">Coordinating relief efforts and volunteer deployment</p>
-      <div className="bg-muted/40 rounded-xl p-5 border border-border">
-        <h3 className="font-semibold text-foreground text-sm mb-3">Volunteer Needs</h3>
-        <p className="text-xs font-medium text-muted-foreground mb-2">Expected volunteer work:</p>
-        <ul className="text-xs text-muted-foreground space-y-1 mb-5">
-          <li>• Distributing food, water, and clothing</li>
-          <li>• Providing emotional support and psychological first aid</li>
-          <li>• Loading and unloading supplies</li>
-          <li>• Cleaning up debris or damaged areas</li>
-          <li>• Packing emergency kits and supplies</li>
-          <li>• Conducting wellness checks on vulnerable individuals</li>
-        </ul>
-        <button className="inline-flex items-center gap-2 bg-[#00C48C] hover:bg-[#00a876] text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">
-          🙋 Sign up to Volunteer
-        </button>
+    <div className="bg-card rounded-xl border border-border p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-bold text-foreground">Volunteer Coordination</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Survey responses from registered volunteers</p>
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-bold text-foreground">{willing.length}</p>
+          <p className="text-xs text-muted-foreground">willing volunteer{willing.length !== 1 ? "s" : ""}</p>
+        </div>
       </div>
-      <div className="mt-3 text-xs text-muted-foreground text-right">
-        {crisis.volunteers} volunteer{crisis.volunteers !== 1 ? "s" : ""} registered
-      </div>
+      {volunteerResponses.length === 0 ? (
+        <div className="bg-muted/40 rounded-xl p-6 text-center border border-border">
+          <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="text-sm font-medium text-muted-foreground">No volunteer responses yet</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">Responses will appear here once stakeholders complete the volunteer survey.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {volunteerResponses.map((r) => {
+            const q1 = r.questions[0];
+            const isWilling = q1
+              ? r.answers[q1.id] === "Yes" || (Array.isArray(r.answers[q1.id]) && (r.answers[q1.id] as string[]).includes("Yes"))
+              : false;
+
+            return (
+              <div key={r.id} className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-950/40 flex items-center justify-center flex-shrink-0">
+                      <Users className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{r.stakeholder_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(r.created_at).toLocaleString("en-PH", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  </div>
+                  {isWilling ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 px-2 py-0.5 rounded-full">
+                      <CheckCircle2 className="h-3 w-3" />Willing
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground bg-muted border border-border px-2 py-0.5 rounded-full">
+                      <XCircle className="h-3 w-3" />Not willing
+                    </span>
+                  )}
+                </div>
+
+                {isWilling && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-10">
+                    {r.questions.slice(1).map((q) => {
+                      const ans = r.answers[q.id];
+                      if (!ans || (Array.isArray(ans) && ans.length === 0)) return null;
+                      return (
+                        <div key={q.id} className="text-xs">
+                          <p className="font-medium text-muted-foreground mb-0.5">{q.text}</p>
+                          <p className="text-foreground">
+                            {Array.isArray(ans) ? ans.join(", ") : ans}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

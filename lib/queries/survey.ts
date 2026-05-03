@@ -2,6 +2,23 @@
 import { createClient } from '@/lib/supabase/server';
 import { Survey, SurveyResponse } from '@/types/database';
 
+interface SurveyQuestion {
+  id: string;
+  text: string;
+  type: 'text' | 'radio' | 'checkbox';
+  options?: string[];
+}
+
+export interface VolunteerResponseEntry {
+  id: string;
+  survey_id: string;
+  stakeholder_id: string;
+  stakeholder_name: string;
+  answers: Record<string, string | string[]>;
+  created_at: string;
+  questions: SurveyQuestion[];
+}
+
 export async function getSurveys(filters?: {
   crisis_id?: string;
   status?: string;
@@ -54,4 +71,61 @@ export async function getStakeholderRespondedSurveyIds(stakeholderId: string): P
   const { data, error } = await supabase.from('survey_response').select('survey_id').eq('stakeholder_id', stakeholderId);
   if (error) { console.error('Error fetching responded surveys:', error); return []; }
   return (data || []).map((r) => r.survey_id);
+}
+
+function parseJson<T>(raw: unknown, fallback: T): T {
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : (raw as T) ?? fallback;
+  } catch (_e) {
+    return fallback;
+  }
+}
+
+export async function getVolunteerResponsesForCrisis(crisisId: string): Promise<VolunteerResponseEntry[]> {
+  const supabase = await createClient();
+
+  const { data: surveys } = await supabase
+    .from('survey')
+    .select('id, questions')
+    .eq('crisis_id', crisisId)
+    .eq('survey_type', 'volunteer');
+
+  if (!surveys || surveys.length === 0) return [];
+
+  const surveyIds = surveys.map((s) => s.id);
+  const questionMap: Record<string, SurveyQuestion[]> = {};
+  for (const s of surveys) {
+    questionMap[s.id] = parseJson<SurveyQuestion[]>(s.questions, []);
+  }
+
+  const { data: responses } = await supabase
+    .from('survey_response')
+    .select('*')
+    .in('survey_id', surveyIds)
+    .order('created_at', { ascending: false });
+
+  if (!responses || responses.length === 0) return [];
+
+  const stakeholderIds = [...new Set(responses.map((r) => r.stakeholder_id))];
+  const { data: stakeholders } = await supabase
+    .from('stakeholder')
+    .select('id, name')
+    .in('id', stakeholderIds);
+
+  const nameMap: Record<string, string> = {};
+  for (const s of stakeholders || []) nameMap[s.id] = s.name;
+
+  return responses.map((r) => {
+    const answers = parseJson<Record<string, string | string[]>>(r.answers, {});
+    const resolvedName = (answers['__stake_name'] as string) || nameMap[r.stakeholder_id] || 'Unknown';
+    return {
+      id: r.id,
+      survey_id: r.survey_id,
+      stakeholder_id: r.stakeholder_id,
+      stakeholder_name: resolvedName,
+      answers,
+      created_at: r.created_at,
+      questions: questionMap[r.survey_id] || [],
+    };
+  });
 }

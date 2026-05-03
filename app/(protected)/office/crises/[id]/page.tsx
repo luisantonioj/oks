@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Crisis } from "@/components/crisis/crisis.types";
 import { getCrisisById } from "@/lib/queries/crisis";
 import { getAnnouncements } from "@/lib/queries/announcement";        
-import { getSurveys } from "@/lib/queries/survey";
+import { getSurveys, getVolunteerResponsesForCrisis } from "@/lib/queries/survey";
 import { SeverityBadge, StatusBadge, formatDateTime } from "@/components/crisis/CrisisBadges";
 import {
   CrisisSurveySection, CrisisHelpRequestsSection, CrisisAnnouncementsSection,
@@ -21,7 +21,10 @@ export default async function CrisisDetailPage({ params }: { params: Promise<{ i
   const features = crisis.features || {};
 
   const dbAnnouncements = await getAnnouncements(id);
-  const dbSurveys = await getSurveys({ crisis_id: id });
+  const [dbSurveys, volunteerResponses] = await Promise.all([
+    getSurveys({ crisis_id: id }),
+    getVolunteerResponsesForCrisis(id),
+  ]);
   const announcements = dbAnnouncements.map((ann) => ({
     id: ann.id,
     title: ann.title,
@@ -118,7 +121,7 @@ export default async function CrisisDetailPage({ params }: { params: Promise<{ i
         <CrisisAnnouncementsSection crisis={{ ...crisis, announcements }} />
         {features.progress    && <CrisisProgressSection crisis={{ ...crisis, progress_updates: crisis.progress_updates || [] }} />}
         {features.donation    && <CrisisDonationsSection />}
-        {features.volunteer   && <CrisisVolunteerSection crisis={crisis} />}
+        {features.volunteer   && <CrisisVolunteerSection crisis={crisis} volunteerResponses={volunteerResponses} />}
 
         <div className="flex flex-wrap gap-3 pt-2">
           <Link href="/office/announcements"

@@ -99,6 +99,9 @@ export async function submitSurveyResponse(
       }
     });
 
+    const stakeName = formData.get('__stake_name') as string | null;
+    if (stakeName) answers['__stake_name'] = stakeName;
+
     const { error } = await supabase.from('survey_response').insert({
       survey_id,
       stakeholder_id: user.id,
