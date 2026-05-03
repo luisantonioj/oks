@@ -110,8 +110,9 @@ export default async function StakeholderSurveyDetailPage({ params }: PageProps)
           surveyId={survey.id}
           questions={questions}
           isVolunteerSurvey={survey.survey_type === 'volunteer'}
+          isDonationSurvey={survey.survey_type === 'donation'}
           stakeholderProfile={
-            survey.survey_type === 'volunteer'
+            survey.survey_type === 'volunteer' || survey.survey_type === 'donation'
               ? {
                   name: (profile as any).name ?? '',
                   email: profile.email ?? '',

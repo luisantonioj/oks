@@ -22,6 +22,76 @@ interface SurveyBuilderProps {
   onSubmit: (prevState: SurveyActionState, formData: FormData) => Promise<SurveyActionState>;
 }
 
+function generateDonationTemplate(): SurveyQuestion[] {
+  return [
+    {
+      id: crypto.randomUUID(),
+      text: "Are you willing to make a donation?",
+      type: "radio",
+      options: ["Yes", "No"],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "Are you donating on your own behalf, or on behalf of someone else?",
+      type: "radio",
+      options: ["Yes, myself", "No, on behalf of someone else"],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "If donating on behalf of someone else, please provide their name:",
+      type: "text",
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "Would you like your donation to remain anonymous?",
+      type: "radio",
+      options: ["Yes, keep my donation anonymous", "No, you may record my name"],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "Type of donation:",
+      type: "radio",
+      options: ["Monetary Donation", "In-Kind Donation (Goods and supplies)"],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "Reference Number / Transaction ID:",
+      type: "text",
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "Select items to donate:",
+      type: "checkbox",
+      options: [
+        "Rice / Grain",
+        "Canned Goods / Preserved Food",
+        "Drinking Water / Water Containers",
+        "Ready-to-eat Meals / Snacks",
+        "Clothing (Adults)",
+        "Clothing (Children)",
+        "Blankets / Sleeping Bags",
+        "Hygiene Kits",
+        "First Aid Kits",
+        "Medicines / Medical Supplies",
+        "Baby / Infant Supplies",
+        "School Supplies",
+        "Tools & Equipment",
+        "Other",
+      ],
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "Quantity and description of donated items:",
+      type: "text",
+    },
+    {
+      id: crypto.randomUUID(),
+      text: "Preferred handover date:",
+      type: "text",
+    },
+  ];
+}
+
 function generateVolunteerTemplate(): SurveyQuestion[] {
   return [
     {
@@ -94,6 +164,8 @@ export function SurveyBuilder({ crises, onSubmit }: SurveyBuilderProps) {
     setSurveyType(newType);
     if (newType === "volunteer") {
       setQuestions(generateVolunteerTemplate());
+    } else if (newType === "donation") {
+      setQuestions(generateDonationTemplate());
     }
   };
 
@@ -176,6 +248,11 @@ export function SurveyBuilder({ crises, onSubmit }: SurveyBuilderProps) {
         {surveyType === "volunteer" && (
           <p className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md px-3 py-2">
             Volunteer template pre-loaded — questions are editable below.
+          </p>
+        )}
+        {surveyType === "donation" && (
+          <p className="text-xs text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/20 border border-pink-200 dark:border-pink-800 rounded-md px-3 py-2">
+            Donation template pre-loaded — questions are editable below. For monetary donations, add payment channel details (GCash, bank transfer, PayPal, etc.) to your survey title or description.
           </p>
         )}
       </div>
