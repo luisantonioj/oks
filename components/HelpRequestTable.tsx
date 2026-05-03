@@ -1,4 +1,4 @@
-//components/HelpRequestTable.tsx
+// components/HelpRequestTable.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -8,12 +8,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
+// Add the extended type so the component knows about the joined objects
+export interface HelpRequestWithDetails extends HelpRequest {
+  crisis?: { id: string; name: string; type: string; severity: string } | null;
+  office?: { id: string; name: string; office_name: string } | null;
+  stakeholder?: {
+    id: string;
+    name: string;
+    age: number | null;
+    contact: string | null;
+    community: string | null;
+    permanent_address: string | null;
+    current_address: string | null;
+  } | null;
+}
+
 interface HelpRequestTableProps {
-  requests: HelpRequest[];
+  requests: HelpRequestWithDetails[]; // Update this prop definition
   viewMode?: "stakeholder" | "office";
 }
 
 const statusConfig = {
+  // ... (keep your existing statusConfig)
   pending: {
     label: "Pending",
     variant: "outline" as const,
@@ -29,6 +45,7 @@ const statusConfig = {
 };
 
 function formatDate(dateStr: string) {
+  // ... (keep existing formatting logic)
   return new Date(dateStr).toLocaleString("en-PH", {
     month: "short",
     day: "numeric",
@@ -42,6 +59,7 @@ export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestT
   const [isPending, startTransition] = useTransition();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  // ... (keep existing handleStatusChange and empty state return)
   const handleStatusChange = (id: string, newStatus: "pending" | "resolved") => {
     setUpdatingId(id);
     startTransition(async () => {
@@ -75,6 +93,7 @@ export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestT
             key={req.id}
             className="rounded-lg border bg-card shadow-sm overflow-hidden transition-all"
           >
+            {/* ... (Keep your existing Header/Summary Section Here) ... */}
             <div className="flex items-center gap-3 p-4">
               <div
                 className={`w-2 h-2 rounded-full flex-shrink-0 ${
@@ -118,28 +137,61 @@ export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestT
             </div>
 
             {isExpanded && (
-              <div className="border-t bg-muted/30 px-4 py-3 space-y-2">
-                <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="border-t bg-muted/30 px-4 py-3 space-y-3">
+                {/* Crisis & Office */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                      Crisis ID
-                    </span>
-                    <p className="font-mono text-xs mt-0.5 text-muted-foreground truncate">{req.crisis_id}</p>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Related Crisis</span>
+                    <p className="text-xs mt-0.5 font-medium truncate">
+                      {req.crisis ? req.crisis.name : req.crisis_id}
+                    </p>
                   </div>
                   {req.office_id && (
                     <div>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                        Assigned Office
-                      </span>
-                      <p className="font-mono text-xs mt-0.5 text-muted-foreground truncate">{req.office_id}</p>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Assigned Office</span>
+                      <p className="text-xs mt-0.5 font-medium truncate">
+                        {req.office ? (req.office.office_name || req.office.name) : req.office_id}
+                      </p>
                     </div>
                   )}
                 </div>
+                {/* Stakeholder Info */}
+                {req.stakeholder && (
+                  <div className="rounded-lg border border-border bg-card px-3 py-2.5 space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Stakeholder Info</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Name</span>
+                        <p className="text-xs font-medium">{req.stakeholder.name}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Age</span>
+                        <p className="text-xs font-medium">{req.stakeholder.age ?? "—"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Contact</span>
+                        <p className="text-xs font-medium">{req.stakeholder.contact || "—"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Community</span>
+                        <p className="text-xs font-medium">{req.stakeholder.community || "—"}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Permanent Address</span>
+                        <p className="text-xs font-medium">{req.stakeholder.permanent_address || "—"}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Current Address</span>
+                        <p className="text-xs font-medium">{req.stakeholder.current_address || "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes */}
                 {req.notes && (
                   <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                      Notes
-                    </span>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Notes</span>
                     <p className="text-sm mt-0.5 leading-relaxed">{req.notes}</p>
                   </div>
                 )}

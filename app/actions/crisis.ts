@@ -74,6 +74,7 @@ export async function createCrisis(
     revalidatePath('/office/dashboard');
     revalidatePath('/portal/dashboard');
     revalidatePath('/stakeholder/dashboard');
+    revalidatePath('/stakeholder/help-requests/new');
     
     redirect(`/office/crises/${data.id}`);
 

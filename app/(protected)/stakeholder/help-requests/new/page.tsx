@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { HelpRequestForm } from '@/components/HelpRequestForm';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   searchParams: Promise<{ crisis_id?: string }>;
 }

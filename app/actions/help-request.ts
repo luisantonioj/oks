@@ -42,6 +42,8 @@ export async function createHelpRequest(
     revalidatePath('/stakeholder/help-requests');
     revalidatePath('/stakeholder/inbox');
     revalidatePath('/office/inbox');
+    revalidatePath('/office/dashboard');
+    revalidatePath('/office/help-requests');
     return { success: true, message: 'Help request submitted successfully' };
   } catch (error) {
     console.error('Unexpected error in createHelpRequest:', error);
