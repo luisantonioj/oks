@@ -101,12 +101,9 @@ export default async function CrisisDetailPage({ params }: { params: Promise<{ i
           <div className="bg-card rounded-xl border border-border p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{crisis.help_requests?.length || 0}</p>
             <p className="text-xs text-muted-foreground mt-1">Help Requests</p>
-            <p className="text-xs text-destructive font-medium mt-0.5">
-              {crisis.help_requests?.filter((r) => r.status === "pending").length || 0} pending
-            </p>
           </div>
           <div className="bg-card rounded-xl border border-border p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{crisis.volunteers || 0}</p>
+            <p className="text-2xl font-bold text-foreground">{volunteerResponses.length}</p>
             <p className="text-xs text-muted-foreground mt-1">Volunteers</p>
           </div>
           <div className="bg-card rounded-xl border border-border p-4 text-center">
