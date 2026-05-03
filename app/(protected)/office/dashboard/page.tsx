@@ -71,7 +71,7 @@ export default async function OfficeDashboard() {
       </div>
 
       {/* ── Emergency Contacts — editable by office staff ── */}
-      <EmergencyContactsEditor />
+      <EmergencyContactsEditor officeId={profile.id} />
 
       {/* ── Main Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">
