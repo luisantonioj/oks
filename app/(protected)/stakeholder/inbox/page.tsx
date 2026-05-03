@@ -4,12 +4,25 @@ import { getInboxThreads } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { MessageSquare, ArrowRight, MapPin } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default async function StakeholderInboxPage() {
   const profile = await getCurrentUserProfile();
   if (!profile || profile.role !== 'stakeholder') redirect('/login');
 
   const threads = await getInboxThreads(profile.id, 'stakeholder');
+
+  const supabase = await createClient();
+  const officeIds = [...new Set(
+    threads.flatMap((t: any) => (t.message ?? []))
+      .filter((m: any) => m.sender_role === 'office' && m.sender_id)
+      .map((m: any) => m.sender_id as string)
+  )];
+  const officeNameMap = new Map<string, string>();
+  if (officeIds.length > 0) {
+    const { data: offices } = await supabase.from('office').select('id, office_name').in('id', officeIds);
+    offices?.forEach(o => officeNameMap.set(o.id, o.office_name));
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -61,7 +74,9 @@ export default async function StakeholderInboxPage() {
                     </div>
                     {lastMessage ? (
                       <p className="text-xs text-muted-foreground truncate">
-                        {lastMessage.sender_role === 'office' ? '🏢 Office: ' : 'You: '}
+                        {lastMessage.sender_role === 'office'
+                          ? `🏢 ${officeNameMap.get(lastMessage.sender_id) ?? 'Office'}: `
+                          : 'You: '}
                         {lastMessage.content}
                       </p>
                     ) : (

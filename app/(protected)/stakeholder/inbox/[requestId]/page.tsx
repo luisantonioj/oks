@@ -30,6 +30,10 @@ export default async function StakeholderChatPage({ params }: PageProps) {
 
   const messages = await getMessages(requestId);
 
+  const officeNames = [...new Set(
+    messages.filter(m => m.sender_role === 'office' && m.sender_name).map(m => m.sender_name!)
+  )];
+
   const statusColor = {
     pending: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/20',
     resolved: 'bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/20',
@@ -44,7 +48,11 @@ export default async function StakeholderChatPage({ params }: PageProps) {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Emergency Request</p>
-            <p className="text-xs text-muted-foreground">Response thread</p>
+            <p className="text-xs text-muted-foreground">
+              {officeNames.length > 0
+                ? `Attended by: ${officeNames.join(', ')}`
+                : 'Awaiting office response'}
+            </p>
           </div>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>
             {request.status}

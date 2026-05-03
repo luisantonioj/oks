@@ -55,10 +55,15 @@ export function InboxThreadCard({
               {timeAgo && <span className="text-[10px] text-muted-foreground">{timeAgo}</span>}
             </div>
           </div>
+          {role === 'office' && (
+            <p className="text-[11px] text-muted-foreground/70 truncate mb-0.5">
+              📍 {location}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground truncate">
             {lastMessage
               ? `${lastMessage.sender_role === 'office' ? '🏢 Office: ' : 'You: '}${lastMessage.content}`
-              : `📍 ${location}`}
+              : role === 'office' ? 'No messages yet' : `📍 ${location}`}
           </p>
         </div>
       </div>

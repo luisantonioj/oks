@@ -20,6 +20,23 @@ export async function sendMessage(formData: FormData) {
     return { error: 'Unauthorized.' };
   }
 
+  let sender_name: string | undefined;
+    if (sender_role === 'office') {
+      const { data: office } = await supabase
+        .from('office')
+        .select('office_name')
+        .eq('id', user.id)
+        .single();
+      sender_name = office?.office_name ?? undefined;
+    } else {
+      const { data: stakeholder } = await supabase
+        .from('stakeholder')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+      sender_name = stakeholder?.name ?? undefined;
+    }
+
   // 2. Insert the message into the database
   const { error } = await supabase
     .from('message')
@@ -27,6 +44,7 @@ export async function sendMessage(formData: FormData) {
       help_request_id,
       sender_id: user.id,
       sender_role,
+      sender_name,
       content,
     });
 
