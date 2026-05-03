@@ -2,12 +2,18 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { createHelpRequest } from "@/app/actions/help-request";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, MapPin, FileText, Loader2, LocateFixed } from "lucide-react";
 import { Crisis } from "@/types/database";
+
+const LocationPickerMap = dynamic(
+  () => import("@/components/LocationPickerMap").then((m) => m.LocationPickerMap),
+  { ssr: false, loading: () => <div className="h-[260px] rounded-md border border-input bg-muted/30 animate-pulse" /> }
+);
 
 interface HelpRequestFormProps {
   crises: Crisis[];
@@ -17,6 +23,7 @@ interface HelpRequestFormProps {
 export function HelpRequestForm({ crises, defaultCrisisId }: HelpRequestFormProps) {
   const [state, formAction, isPending] = useActionState(createHelpRequest, null);
   const [location, setLocation] = useState("");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
   const hasAutoLocated = useRef(false);
@@ -44,8 +51,10 @@ export function HelpRequestForm({ crises, defaultCrisisId }: HelpRequestFormProp
           const data = await res.json();
           const address = data.display_name ?? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
           setLocation(address);
+          setCoords({ lat: latitude, lng: longitude });
         } catch {
           setLocation(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+          setCoords({ lat: latitude, lng: longitude });
         } finally {
           setLocating(false);
         }
@@ -130,10 +139,19 @@ export function HelpRequestForm({ crises, defaultCrisisId }: HelpRequestFormProp
 
       {/* ── Location field ── */}
       <div className="space-y-2">
-        <Label htmlFor="location" className="flex items-center gap-2 text-sm font-semibold">
+        <Label className="flex items-center gap-2 text-sm font-semibold">
           <MapPin className="h-4 w-4 text-blue-500" />
           Your Current Location *
         </Label>
+        <LocationPickerMap
+          lat={coords?.lat ?? null}
+          lng={coords?.lng ?? null}
+          onPick={(lat, lng, address) => {
+            setCoords({ lat, lng });
+            setLocation(address);
+            setLocError(null);
+          }}
+        />
         <div className="flex gap-2">
           <Input
             id="location"
@@ -141,7 +159,7 @@ export function HelpRequestForm({ crises, defaultCrisisId }: HelpRequestFormProp
             required
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder={locating ? "Detecting your location…" : "e.g., Building A, Room 201..."}
+            placeholder={locating ? "Detecting your location…" : "Tap map or type address…"}
             className="h-10 flex-1"
             disabled={locating}
           />
@@ -152,7 +170,7 @@ export function HelpRequestForm({ crises, defaultCrisisId }: HelpRequestFormProp
             className="h-10 w-10 flex-shrink-0"
             onClick={detectLocation}
             disabled={locating}
-            title="Detect my location"
+            title="Use my GPS location"
           >
             {locating ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -161,15 +179,16 @@ export function HelpRequestForm({ crises, defaultCrisisId }: HelpRequestFormProp
             )}
           </Button>
         </div>
+        
         {locError ? (
           <p className="text-xs text-destructive">{locError}</p>
         ) : locating ? (
           <p className="text-xs text-muted-foreground">Detecting your location…</p>
         ) : location ? (
-          <p className="text-xs text-muted-foreground">Location detected. You can edit it if needed.</p>
+          <p className="text-xs text-muted-foreground">Location set. You can edit the address or re-tap the map.</p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Be as specific as possible so responders can find you quickly.
+            Tap the map to pin your location, or use the GPS button.
           </p>
         )}
       </div>

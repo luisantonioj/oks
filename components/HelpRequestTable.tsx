@@ -2,11 +2,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { updateHelpRequestStatus } from "@/app/actions/help-request";
 import { HelpRequest } from "@/types/database";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+
+const RequestLocationMap = dynamic(
+  () => import("@/components/RequestLocationMap").then((m) => m.RequestLocationMap),
+  { ssr: false, loading: () => <div className="h-[180px] rounded-md border border-input bg-muted/30 animate-pulse" /> }
+);
 
 // Add the extended type so the component knows about the joined objects
 export interface HelpRequestWithDetails extends HelpRequest {
@@ -193,6 +199,16 @@ export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestT
                   <div>
                     <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Notes</span>
                     <p className="text-sm mt-0.5 leading-relaxed">{req.notes}</p>
+                  </div>
+                )}
+
+                {/* Location map */}
+                {req.location && (
+                  <div>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Map</span>
+                    <div className="mt-1">
+                      <RequestLocationMap address={req.location} />
+                    </div>
                   </div>
                 )}
               </div>
