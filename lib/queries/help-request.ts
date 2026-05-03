@@ -56,7 +56,8 @@ export async function getAllHelpRequests(filters?: {
     .select(`
       *,
       crisis:crisis_id(id, name, type, severity),
-      office:office_id(id, name, office_name)
+      office:office_id(id, name, office_name),
+      stakeholder:stakeholder_id(id, name, age, contact, community, permanent_address, current_address)
     `)
     .order('created_at', { ascending: false });
 
