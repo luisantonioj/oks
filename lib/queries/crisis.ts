@@ -65,7 +65,7 @@ export async function getCrisisById(id: string): Promise<Crisis | null> {
     .select(`
       *,
       announcements:announcement(*),
-      help_requests:help_request(*),
+      help_requests:help_request(id, location, status, created_at, stakeholder:stakeholder_id(name)),
       progress_updates:progress_report(*)
     `)
     .eq('id', id)
@@ -79,7 +79,15 @@ export async function getCrisisById(id: string): Promise<Crisis | null> {
   // Map data and default volunteers/donations to 0
   return {
     ...data,
-    help_requests: data.help_requests || [],
+    help_requests: (data.help_requests || []).map((req: any) => ({
+      id: req.id,
+      name: req.stakeholder?.name || 'Unknown',
+      location: req.location,
+      status: req.status,
+      time: new Date(req.created_at).toLocaleString('en-PH', {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+      }),
+    })),
     volunteers: 0,
     donations_count: 0
   } as unknown as Crisis;

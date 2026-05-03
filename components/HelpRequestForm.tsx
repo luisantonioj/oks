@@ -100,8 +100,8 @@ export function HelpRequestForm({ crises, defaultCrisisId }: HelpRequestFormProp
               <span className="text-[10px] font-bold bg-destructive/15 text-destructive px-1.5 py-0.5 rounded uppercase">
                 {singleCrisis.severity}
               </span>
-              <span className="font-medium">{singleCrisis.type}</span>
-              <span className="text-muted-foreground">— {singleCrisis.affected_areas}</span>
+              <span className="font-medium">{singleCrisis.name}</span>
+              <span className="text-muted-foreground">— {singleCrisis.type}</span>
             </div>
           </div>
         </>
@@ -121,7 +121,7 @@ export function HelpRequestForm({ crises, defaultCrisisId }: HelpRequestFormProp
             <option value="" disabled>Select a crisis...</option>
             {crises.map((crisis) => (
               <option key={crisis.id} value={crisis.id}>
-                [{crisis.severity.toUpperCase()}] {crisis.type} — {crisis.affected_areas}
+                {crisis.name} [{crisis.severity.toUpperCase()}] — {crisis.type}
               </option>
             ))}
           </select>

@@ -113,8 +113,7 @@ export default async function CrisisDetailPage({ params }: { params: Promise<{ i
         </div>
 
         {features.survey      && <CrisisSurveySection crisis={crisis} surveys={dbSurveys} />}
-        {features.help_button && <CrisisHelpRequestsSection crisis={{ ...crisis, help_requests: crisis.help_requests || [] }} />}
-        {/* Issue 7: pass real DB announcements */}
+        <CrisisHelpRequestsSection crisis={{ ...crisis, help_requests: crisis.help_requests || [] }} />
         <CrisisAnnouncementsSection crisis={{ ...crisis, announcements }} />
         {features.progress    && <CrisisProgressSection crisis={{ ...crisis, progress_updates: crisis.progress_updates || [] }} />}
         {features.donation    && <CrisisDonationsSection />}

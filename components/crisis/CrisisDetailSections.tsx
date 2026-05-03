@@ -97,32 +97,42 @@ export function CrisisHelpRequestsSection({ crisis }: { crisis: Crisis }) {
   return (
     <div className="bg-card rounded-xl border border-border p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-bold text-foreground">Help Requests</h2>
+        <div>
+          <h2 className="font-bold text-foreground">Help Requests</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {crisis.help_requests.length} request{crisis.help_requests.length !== 1 ? "s" : ""} linked to this crisis
+          </p>
+        </div>
         <Link href="/office/help-requests" className="text-xs text-[#00C48C] hover:underline font-medium">
           View all →
         </Link>
       </div>
       {crisis.help_requests.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">No help requests yet.</p>
+        <div className="bg-muted/40 rounded-xl p-6 text-center border border-border">
+          <p className="text-sm font-medium text-muted-foreground">No help requests yet</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">Help requests submitted for this crisis will appear here.</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {crisis.help_requests.map((req) => (
-            <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-              <div>
-                <p className="text-sm font-semibold text-foreground">{req.name}</p>
-                <p className="text-xs text-muted-foreground">{req.location}</p>
+            <Link key={req.id} href={`/office/inbox/${req.id}`} className="block group">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border hover:border-primary/30 hover:bg-accent/50 transition-all duration-200">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">{req.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{req.location}</p>
+                </div>
+                <div className="text-right flex-shrink-0 ml-3">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    req.status === "pending"
+                      ? "bg-destructive/10 text-destructive"
+                      : "bg-[#00C48C]/10 text-[#00C48C]"
+                  }`}>
+                    {req.status}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">{req.time}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  req.status === "pending"
-                    ? "bg-destructive/10 text-destructive"
-                    : "bg-[#00C48C]/10 text-[#00C48C]"
-                }`}>
-                  {req.status}
-                </span>
-                <p className="text-xs text-muted-foreground mt-1">{req.time}</p>
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
