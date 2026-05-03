@@ -57,7 +57,7 @@ export function InboxThreadCard({
           </div>
           {role === 'office' && (
             <p className="text-[11px] text-muted-foreground/70 truncate mb-0.5">
-              Crisis: {crisisType} · 📍 {location}
+              📍 {location}
             </p>
           )}
           <p className="text-xs text-muted-foreground truncate">
