@@ -1,16 +1,25 @@
-//lib/queries/help-request.ts
+// lib/queries/help-request.ts
 import { createClient } from '@/lib/supabase/server';
 import { HelpRequest } from '@/types/database';
+
+export interface HelpRequestWithDetails extends HelpRequest {
+  crisis?: { id: string; name: string; type: string; severity: string } | null;
+  office?: { id: string; name: string; office_name: string } | null;
+}
 
 /**
  * Fetch help requests submitted by a specific stakeholder
  */
-export async function getStakeholderHelpRequests(stakeholderId: string): Promise<HelpRequest[]> {
+export async function getStakeholderHelpRequests(stakeholderId: string): Promise<HelpRequestWithDetails[]> {
   const supabase = await createClient();
   
   const { data, error } = await supabase
     .from('help_request')
-    .select('*')
+    .select(`
+      *,
+      crisis:crisis_id(id, name, type, severity),
+      office:office_id(id, name, office_name)
+    `)
     .eq('stakeholder_id', stakeholderId)
     .order('created_at', { ascending: false });
 
@@ -19,7 +28,7 @@ export async function getStakeholderHelpRequests(stakeholderId: string): Promise
     return [];
   }
 
-  return data || [];
+  return data as HelpRequestWithDetails[];
 }
 
 /**
@@ -29,12 +38,16 @@ export async function getStakeholderHelpRequests(stakeholderId: string): Promise
 export async function getAllHelpRequests(filters?: {
   status?: string;
   crisis_id?: string;
-}): Promise<HelpRequest[]> {
+}): Promise<HelpRequestWithDetails[]> {
   const supabase = await createClient();
   
   let query = supabase
     .from('help_request')
-    .select('*')
+    .select(`
+      *,
+      crisis:crisis_id(id, name, type, severity),
+      office:office_id(id, name, office_name)
+    `)
     .order('created_at', { ascending: false });
 
   if (filters?.status) {
@@ -52,5 +65,5 @@ export async function getAllHelpRequests(filters?: {
     return [];
   }
 
-  return data || [];
+  return data as HelpRequestWithDetails[];
 }

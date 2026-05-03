@@ -1,4 +1,4 @@
-//components/HelpRequestTable.tsx
+// components/HelpRequestTable.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -8,12 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
+// Add the extended type so the component knows about the joined objects
+export interface HelpRequestWithDetails extends HelpRequest {
+  crisis?: { id: string; name: string; type: string; severity: string } | null;
+  office?: { id: string; name: string; office_name: string } | null;
+}
+
 interface HelpRequestTableProps {
-  requests: HelpRequest[];
+  requests: HelpRequestWithDetails[]; // Update this prop definition
   viewMode?: "stakeholder" | "office";
 }
 
 const statusConfig = {
+  // ... (keep your existing statusConfig)
   pending: {
     label: "Pending",
     variant: "outline" as const,
@@ -29,6 +36,7 @@ const statusConfig = {
 };
 
 function formatDate(dateStr: string) {
+  // ... (keep existing formatting logic)
   return new Date(dateStr).toLocaleString("en-PH", {
     month: "short",
     day: "numeric",
@@ -42,6 +50,7 @@ export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestT
   const [isPending, startTransition] = useTransition();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  // ... (keep existing handleStatusChange and empty state return)
   const handleStatusChange = (id: string, newStatus: "pending" | "resolved") => {
     setUpdatingId(id);
     startTransition(async () => {
@@ -75,6 +84,7 @@ export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestT
             key={req.id}
             className="rounded-lg border bg-card shadow-sm overflow-hidden transition-all"
           >
+            {/* ... (Keep your existing Header/Summary Section Here) ... */}
             <div className="flex items-center gap-3 p-4">
               <div
                 className={`w-2 h-2 rounded-full flex-shrink-0 ${
@@ -122,16 +132,22 @@ export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestT
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                      Crisis ID
+                      Related Crisis
                     </span>
-                    <p className="font-mono text-xs mt-0.5 text-muted-foreground truncate">{req.crisis_id}</p>
+                    {/* Render the joined Crisis name instead of raw ID */}
+                    <p className="text-xs mt-0.5 font-medium truncate">
+                      {req.crisis ? req.crisis.name : req.crisis_id}
+                    </p>
                   </div>
                   {req.office_id && (
                     <div>
                       <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
                         Assigned Office
                       </span>
-                      <p className="font-mono text-xs mt-0.5 text-muted-foreground truncate">{req.office_id}</p>
+                      {/* Render the joined Office name instead of raw ID */}
+                      <p className="text-xs mt-0.5 font-medium truncate">
+                        {req.office ? (req.office.office_name || req.office.name) : req.office_id}
+                      </p>
                     </div>
                   )}
                 </div>

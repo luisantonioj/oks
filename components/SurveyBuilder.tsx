@@ -19,6 +19,7 @@ type SurveyActionState = { error?: string; success?: boolean; message?: string }
 
 interface SurveyBuilderProps {
   crises: Crisis[];
+  defaultCrisisId?: string;
   onSubmit: (prevState: SurveyActionState, formData: FormData) => Promise<SurveyActionState>;
 }
 
@@ -152,7 +153,7 @@ function generateVolunteerTemplate(): SurveyQuestion[] {
   ];
 }
 
-export function SurveyBuilder({ crises, onSubmit }: SurveyBuilderProps) {
+export function SurveyBuilder({ crises, defaultCrisisId, onSubmit }: SurveyBuilderProps) {
   const [questions, setQuestions] = useState<SurveyQuestion[]>([
     { id: crypto.randomUUID(), text: "", type: "text" },
   ]);
@@ -263,12 +264,21 @@ export function SurveyBuilder({ crises, onSubmit }: SurveyBuilderProps) {
           id="crisis_id"
           name="crisis_id"
           required
+          defaultValue={defaultCrisisId || ""}
           className="flex h-9 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
-          <option value="">Select a crisis...</option>
-          {crises.map((c) => (
-            <option key={c.id} value={c.id}>{c.name || c.type} — {Array.isArray(c.affected_areas) ? c.affected_areas.join(", ") : c.affected_areas}</option>
-          ))}
+          <option value="" disabled>Select a crisis...</option>
+          {crises.map((c) => {
+            const affectedAreas = Array.isArray(c.affected_areas) 
+              ? c.affected_areas.join(", ") 
+              : c.affected_areas || "Unspecified area";
+
+            return (
+              <option key={c.id} value={c.id}>
+                [{c.severity?.toUpperCase() || "UNKNOWN"}] {c.name || c.type} — {affectedAreas}
+              </option>
+            );
+          })}
         </select>
       </div>
 
