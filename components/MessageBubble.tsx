@@ -28,7 +28,9 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
       )}>
         {!isOwn && (
           <p className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wide">
-            {message.sender_role === 'office' ? '🏢 Office' : 'You'}
+            {message.sender_role === 'office'
+              ? `🏢 ${message.sender_name ?? 'Office'}`
+              : (message.sender_name ?? 'Stakeholder')}
           </p>
         )}
         <p>{message.content}</p>
