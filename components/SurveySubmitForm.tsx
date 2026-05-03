@@ -72,24 +72,24 @@ export function SurveySubmitForm({
     if (idx === 0) return true;
     if (!isDonorWilling) return false;
     if (idx === 1) return true;
-    if (idx === 2) return isOnBehalf;
+    if (idx === 2) return !!isOnBehalf;
     if (idx === 3) return true;
     if (idx === 4) return true;
-    if (idx === 5) return isMonetary;
-    if (idx === 6) return isInKind;
-    if (idx === 7) return isInKind;
-    if (idx === 8) return isInKind;
+    if (idx === 5) return !!isMonetary;
+    if (idx === 6) return !!isInKind;
+    if (idx === 7) return !!isInKind;
+    if (idx === 8) return !!isInKind;
     return true;
   };
 
   const isDonationRequired = (idx: number): boolean => {
     if (idx === 0) return true;
     if (!isDonorWilling) return false;
-    if (idx === 2) return isOnBehalf;
+    if (idx === 2) return !!isOnBehalf;
     if (idx === 6) return false; // checkbox, not strictly required
-    if (idx === 5) return isMonetary;
-    if (idx === 7) return isInKind;
-    if (idx === 8) return isInKind;
+    if (idx === 5) return !!isMonetary;
+    if (idx === 7) return !!isInKind;
+    if (idx === 8) return !!isInKind;
     return true;
   };
 
