@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Crisis } from "@/components/crisis/crisis.types";
+import { AffectedAreasMapLoader } from "@/components/AffectedAreasMapLoader";
 import { getCrisisById } from "@/lib/queries/crisis";
 import { getAnnouncements } from "@/lib/queries/announcement";        
-import { getSurveys, getVolunteerResponsesForCrisis } from "@/lib/queries/survey";
+import { getSurveys, getVolunteerResponsesForCrisis, getDonationResponsesForCrisis } from "@/lib/queries/survey";
 import { SeverityBadge, StatusBadge, formatDateTime } from "@/components/crisis/CrisisBadges";
 import {
   CrisisSurveySection, CrisisHelpRequestsSection, CrisisAnnouncementsSection,
@@ -21,9 +22,10 @@ export default async function CrisisDetailPage({ params }: { params: Promise<{ i
   const features = crisis.features || {};
 
   const dbAnnouncements = await getAnnouncements(id);
-  const [dbSurveys, volunteerResponses] = await Promise.all([
+  const [dbSurveys, volunteerResponses, donationResponses] = await Promise.all([
     getSurveys({ crisis_id: id }),
     getVolunteerResponsesForCrisis(id),
+    getDonationResponsesForCrisis(id),
   ]);
   const announcements = dbAnnouncements.map((ann) => ({
     id: ann.id,
@@ -107,16 +109,27 @@ export default async function CrisisDetailPage({ params }: { params: Promise<{ i
             <p className="text-xs text-muted-foreground mt-1">Volunteers</p>
           </div>
           <div className="bg-card rounded-xl border border-border p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{crisis.donations_count || 0}</p>
+            <p className="text-2xl font-bold text-foreground">{donationResponses.length}</p>
             <p className="text-xs text-muted-foreground mt-1">Donations</p>
           </div>
         </div>
+
+        {crisis.affected_areas && crisis.affected_areas.length > 0 && (
+          <AffectedAreasMapLoader
+            affectedAreas={crisis.affected_areas}
+            helpRequests={(crisis.help_requests || []).map((r: any) => ({
+              id: r.id,
+              location: r.location ?? "",
+              status: r.status,
+            }))}
+          />
+        )}
 
         {features.survey      && <CrisisSurveySection crisis={crisis} surveys={dbSurveys} />}
         <CrisisHelpRequestsSection crisis={{ ...crisis, help_requests: crisis.help_requests || [] }} />
         <CrisisAnnouncementsSection crisis={{ ...crisis, announcements }} />
         {features.progress    && <CrisisProgressSection crisis={{ ...crisis, progress_updates: crisis.progress_updates || [] }} />}
-        {features.donation    && <CrisisDonationsSection />}
+        {features.donation    && <CrisisDonationsSection donationResponses={donationResponses} />}
         {features.volunteer   && <CrisisVolunteerSection crisis={crisis} volunteerResponses={volunteerResponses} />}
 
         <div className="flex flex-wrap gap-3 pt-2">

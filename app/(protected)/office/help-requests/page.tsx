@@ -3,6 +3,7 @@ import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getAllHelpRequests } from '@/lib/queries/help-request';
 import { redirect } from 'next/navigation';
 import { HelpRequestTable } from '@/components/HelpRequestTable';
+import { HelpRequestsRealtimeWatcher } from '@/components/HelpRequestsRealtimeWatcher';
 import { AlertTriangle, Activity } from 'lucide-react';
 
 export default async function OfficeHelpRequestsPage() {
@@ -18,6 +19,7 @@ export default async function OfficeHelpRequestsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
+      <HelpRequestsRealtimeWatcher />
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <AlertTriangle className="h-6 w-6 text-red-500" />

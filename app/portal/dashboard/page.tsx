@@ -3,7 +3,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getAllOffices, getAllStakeholders } from "@/lib/queries/user";
-import { getDashboardStats } from "@/lib/queries/crisis";
+import { getDashboardStats, getCrisisBreakdown } from "@/lib/queries/crisis";
+import { getHelpRequestBreakdown } from "@/lib/queries/help-request";
+import { getRecentAuditLogs } from "@/lib/queries/audit";
 
 export default async function AdminDashboard() {
   const cookieStore = await cookies();
@@ -12,11 +14,13 @@ export default async function AdminDashboard() {
     redirect("/login-portal");
   }
 
-  // Fetch all necessary data concurrently from Supabase
-  const [offices, stakeholders, stats] = await Promise.all([
+  const [offices, stakeholders, stats, crisisBreakdown, helpBreakdown, recentLogs] = await Promise.all([
     getAllOffices(),
     getAllStakeholders(),
     getDashboardStats(),
+    getCrisisBreakdown(),
+    getHelpRequestBreakdown(),
+    getRecentAuditLogs(10),
   ]);
 
   const adminName = process.env.ADMIN_NAME || "Administrator";
@@ -44,7 +48,7 @@ export default async function AdminDashboard() {
         </div>
         <p className="text-xs text-muted-foreground">
           <span className="font-semibold text-destructive">Admin session active.</span>{" "}
-          All actions are logged for audit and accountability. Do not share your credentials.
+          Critical actions (crisis management, surveys, help requests) are logged to the audit trail below. Do not share your credentials.
         </p>
       </div>
 
@@ -64,6 +68,138 @@ export default async function AdminDashboard() {
             <p className="text-xs text-muted-foreground mt-1">{card.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* ── Analytics Overview ── */}
+      {stats.totalCrises > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          {/* Crisis Breakdown */}
+          <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+            <div>
+              <p className="text-sm font-semibold">Crisis Breakdown</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Distribution by type and severity</p>
+            </div>
+
+            {Object.keys(crisisBreakdown.byType).length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">By Type</p>
+                {Object.entries(crisisBreakdown.byType).map(([label, count]) => {
+                  const pct = stats.totalCrises > 0 ? Math.round((count / stats.totalCrises) * 100) : 0;
+                  return (
+                    <div key={label} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="capitalize font-medium">{label}</span>
+                        <span className="text-muted-foreground">{count} ({pct}%)</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full bg-orange-500 transition-all duration-500" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {Object.keys(crisisBreakdown.bySeverity).length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">By Severity</p>
+                {Object.entries(crisisBreakdown.bySeverity).map(([label, count]) => {
+                  const pct = stats.totalCrises > 0 ? Math.round((count / stats.totalCrises) * 100) : 0;
+                  const color = label === "high" ? "bg-destructive" : label === "medium" ? "bg-yellow-500" : "bg-green-500";
+                  return (
+                    <div key={label} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="capitalize font-medium">{label}</span>
+                        <span className="text-muted-foreground">{count} ({pct}%)</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Help Request Status */}
+          <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+            <div>
+              <p className="text-sm font-semibold">Help Request Status</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {stats.totalHelpRequests} total SOS requests across all crises
+              </p>
+            </div>
+
+            {Object.keys(helpBreakdown.byStatus).length > 0 ? (
+              <div className="space-y-2">
+                {Object.entries(helpBreakdown.byStatus).map(([label, count]) => {
+                  const pct = stats.totalHelpRequests > 0 ? Math.round((count / stats.totalHelpRequests) * 100) : 0;
+                  const color = label === "pending" ? "bg-yellow-500" : "bg-green-500";
+                  return (
+                    <div key={label} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="capitalize font-medium">{label}</span>
+                        <span className="text-muted-foreground">{count} ({pct}%)</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">No help requests recorded yet.</p>
+            )}
+
+            <div className="pt-2 border-t border-border space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Volunteer pledges</span>
+                <span className="font-semibold">{stats.totalVolunteers}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Donation pledges</span>
+                <span className="font-semibold">{stats.totalDonations}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ── Recent Activity (Audit Log) ── */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-border">
+          <p className="text-sm font-semibold">Recent Activity</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Last 10 logged system actions</p>
+        </div>
+        {recentLogs.length === 0 ? (
+          <div className="px-5 py-6 text-center text-xs text-muted-foreground">
+            No activity recorded yet. Actions will appear here once users interact with the system.
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {recentLogs.map((log) => (
+              <div key={log.id} className="px-5 py-3 flex items-center gap-3 hover:bg-muted/20 transition-colors">
+                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground flex-shrink-0">
+                  {log.actor_name?.[0]?.toUpperCase() ?? log.actor_role[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold truncate">
+                    <span className="text-foreground">{log.actor_name ?? log.actor_role}</span>
+                    {" "}<span className="text-muted-foreground font-normal capitalize">{log.action.replace(/_/g, " ").toLowerCase()}</span>
+                  </p>
+                  <p className="text-[10px] text-muted-foreground capitalize">{log.entity_type.replace(/_/g, " ")}{log.entity_id ? ` · ${log.entity_id.slice(0, 8)}…` : ""}</p>
+                </div>
+                <p className="text-[10px] text-muted-foreground flex-shrink-0">
+                  {new Date(log.created_at).toLocaleString("en-PH", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Main Grid ── */}

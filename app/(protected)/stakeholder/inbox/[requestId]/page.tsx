@@ -2,8 +2,8 @@
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getMessages } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';
-import { MessageBubble } from '@/components/MessageBubble';
 import { ChatInput } from '@/components/ChatInput';
+import { InboxThreadClient } from '@/components/InboxThreadClient';
 import { ArrowLeft, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -64,18 +64,13 @@ export default async function StakeholderChatPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-12 text-center">
-            <p className="text-sm text-muted-foreground">No messages yet.</p>
-            <p className="text-xs text-muted-foreground">An office will respond to your request shortly.</p>
-          </div>
-        ) : (
-          messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} isOwn={msg.sender_id === profile.id} />
-          ))
-        )}
-      </div>
+      <InboxThreadClient
+        initialMessages={messages}
+        requestId={requestId}
+        currentUserId={profile.id}
+        emptyText="No messages yet."
+        emptySubtext="An office will respond to your request shortly."
+      />
 
       <ChatInput helpRequestId={requestId} senderRole="stakeholder" />
     </div>
