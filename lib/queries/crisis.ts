@@ -126,23 +126,31 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending');
 
-  // Get donation count
-  const { count: totalDonations } = await supabase
-    .from('donation')
-    .select('*', { count: 'exact', head: true });
+  // Get volunteer/donation counts from survey responses (survey-driven approach)
+  const { data: typedSurveys } = await supabase
+    .from('survey')
+    .select('id, survey_type')
+    .in('survey_type', ['volunteer', 'donation']);
 
-  // Get volunteer count
-  const { count: totalVolunteers } = await supabase
-    .from('volunteer')
-    .select('*', { count: 'exact', head: true });
+  const volIds = (typedSurveys || []).filter((s) => s.survey_type === 'volunteer').map((s) => s.id);
+  const donIds = (typedSurveys || []).filter((s) => s.survey_type === 'donation').map((s) => s.id);
+
+  const [volResult, donResult] = await Promise.all([
+    volIds.length > 0
+      ? supabase.from('survey_response').select('*', { count: 'exact', head: true }).in('survey_id', volIds)
+      : Promise.resolve({ count: 0 }),
+    donIds.length > 0
+      ? supabase.from('survey_response').select('*', { count: 'exact', head: true }).in('survey_id', donIds)
+      : Promise.resolve({ count: 0 }),
+  ]);
 
   return {
     totalCrises: totalCrises || 0,
     activeCrises: activeCrises || 0,
     totalHelpRequests: totalHelpRequests || 0,
     pendingHelpRequests: pendingHelpRequests || 0,
-    totalDonations: totalDonations || 0,
-    totalVolunteers: totalVolunteers || 0,
+    totalDonations: donResult.count || 0,
+    totalVolunteers: volResult.count || 0,
   };
 }
 

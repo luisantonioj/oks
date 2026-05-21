@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Crisis } from "./crisis.types";
 import { ClipboardList, ShieldAlert, HeartHandshake, Users, Lock, ChevronRight, Plus, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DonationResponseEntry } from "@/lib/queries/survey";
 
 export interface VolunteerResponseEntry {
   id: string;
@@ -202,24 +203,67 @@ export function CrisisProgressSection({ crisis }: { crisis: Crisis }) {
 }
 
 // ── Donations ────────────────────────────────────────────────────────────────
-export function CrisisDonationsSection() {
+export function CrisisDonationsSection({
+  donationResponses = [],
+}: {
+  donationResponses?: DonationResponseEntry[];
+}) {
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <h2 className="font-bold text-foreground mb-4">Donations</h2>
-      <div className="grid grid-cols-3 gap-4 mb-3">
-        {[
-          { icon: "💰", label: "Total Funds Raised", value: "₱0" },
-          { icon: "🥫", label: "Total Food Raised",  value: "0 kg" },
-          { icon: "📦", label: "Other Consumables",  value: "0 kg" },
-        ].map((d) => (
-          <div key={d.label} className="bg-muted/40 rounded-xl p-4 text-center border border-border">
-            <p className="text-2xl mb-1">{d.icon}</p>
-            <p className="text-lg font-bold text-foreground">{d.value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{d.label}</p>
-          </div>
-        ))}
+    <div className="bg-card rounded-xl border border-border p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-bold text-foreground">Donation Pledges</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Survey responses from stakeholders pledging donations</p>
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-bold text-foreground">{donationResponses.length}</p>
+          <p className="text-xs text-muted-foreground">pledge{donationResponses.length !== 1 ? "s" : ""}</p>
+        </div>
       </div>
-      <p className="text-xs text-muted-foreground text-center">Updated in real-time</p>
+      {donationResponses.length === 0 ? (
+        <div className="bg-muted/40 rounded-xl p-6 text-center border border-border">
+          <HeartHandshake className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="text-sm font-medium text-muted-foreground">No donation pledges yet</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">Pledges will appear here once stakeholders complete the donation survey.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {donationResponses.map((r) => (
+            <div key={r.id} className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-950/40 flex items-center justify-center flex-shrink-0">
+                    <HeartHandshake className="h-4 w-4 text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{r.stakeholder_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(r.created_at).toLocaleString("en-PH", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                    </p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-pink-700 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/20 border border-pink-200 dark:border-pink-800 px-2 py-0.5 rounded-full">
+                  <CheckCircle2 className="h-3 w-3" />Pledged
+                </span>
+              </div>
+              {r.questions.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-10">
+                  {r.questions.map((q) => {
+                    const ans = r.answers[q.id];
+                    if (!ans || (Array.isArray(ans) && ans.length === 0)) return null;
+                    return (
+                      <div key={q.id} className="text-xs">
+                        <p className="font-medium text-muted-foreground mb-0.5">{q.text}</p>
+                        <p className="text-foreground">{Array.isArray(ans) ? ans.join(", ") : ans}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

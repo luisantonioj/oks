@@ -105,10 +105,9 @@ export default async function OfficeDashboard() {
                   <div key={req.id} className="px-5 py-3 grid grid-cols-[1fr_120px_80px_70px] gap-3 items-center hover:bg-muted/20 transition-colors">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 ${req.status === "pending" ? "bg-destructive" : "bg-muted-foreground"}`}>
-                        {/* Using an initial as a placeholder until stakeholder profile join is added */}
-                        U
+                        {req.stakeholder?.name?.[0]?.toUpperCase() ?? "?"}
                       </div>
-                      <p className="text-xs font-semibold truncate">User {req.id.slice(0,4).toUpperCase()}</p>
+                      <p className="text-xs font-semibold truncate">{req.stakeholder?.name ?? "Unknown"}</p>
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{req.location || "Location not provided"}</p>
                     <span className={`text-[10px] capitalize font-semibold px-2 py-1 rounded-full w-fit ${
