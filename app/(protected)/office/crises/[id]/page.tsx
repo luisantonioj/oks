@@ -1,13 +1,8 @@
 // app/(protected)/office/crises/[id]/page.tsx
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { Crisis } from "@/components/crisis/crisis.types";
-
-const AffectedAreasMap = dynamic(
-  () => import("@/components/AffectedAreasMap").then((m) => m.AffectedAreasMap),
-  { ssr: false }
-);
+import { AffectedAreasMapLoader } from "@/components/AffectedAreasMapLoader";
 import { getCrisisById } from "@/lib/queries/crisis";
 import { getAnnouncements } from "@/lib/queries/announcement";        
 import { getSurveys, getVolunteerResponsesForCrisis, getDonationResponsesForCrisis } from "@/lib/queries/survey";
@@ -120,7 +115,7 @@ export default async function CrisisDetailPage({ params }: { params: Promise<{ i
         </div>
 
         {crisis.affected_areas && crisis.affected_areas.length > 0 && (
-          <AffectedAreasMap
+          <AffectedAreasMapLoader
             affectedAreas={crisis.affected_areas}
             helpRequests={(crisis.help_requests || []).map((r: any) => ({
               id: r.id,
