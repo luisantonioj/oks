@@ -3,6 +3,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { logAction } from '@/lib/queries/audit';
 
 type SurveyActionState = { error?: string; success?: boolean; message?: string } | null;
 
@@ -43,6 +44,8 @@ export async function createSurvey(
     });
 
     if (error) return { error: error.message || 'Failed to create survey' };
+
+    void logAction({ actor_id: user.id, actor_role: 'office', action: 'CREATE_SURVEY', entity_type: 'survey', metadata: { title, survey_type, crisis_id } });
 
     revalidatePath('/office/surveys');
     revalidatePath('/stakeholder/surveys');
@@ -110,6 +113,8 @@ export async function submitSurveyResponse(
 
     if (error) return { error: error.message || 'Failed to submit response' };
 
+    void logAction({ actor_id: user.id, actor_role: 'stakeholder', action: 'SUBMIT_SURVEY_RESPONSE', entity_type: 'survey_response', entity_id: survey_id });
+
     revalidatePath('/stakeholder/surveys');
     revalidatePath(`/stakeholder/surveys/${survey_id}`);
     return { success: true };
@@ -123,6 +128,10 @@ export async function closeSurvey(surveyId: string) {
     const supabase = await createClient();
     const { error } = await supabase.from('survey').update({ status: 'closed' }).eq('id', surveyId);
     if (error) return { error: error.message };
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) void logAction({ actor_id: user.id, actor_role: 'office', action: 'CLOSE_SURVEY', entity_type: 'survey', entity_id: surveyId });
+
     revalidatePath('/office/surveys');
     revalidatePath(`/office/surveys/${surveyId}`);
     return { success: true };

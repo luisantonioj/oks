@@ -2,6 +2,7 @@
 
 import { createClient } from '../../lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { logAction } from '@/lib/queries/audit';
 
 export async function createAnnouncement(formData: FormData) {
   try {
@@ -40,7 +41,8 @@ export async function createAnnouncement(formData: FormData) {
       return { error: error.message || 'Failed to create announcement' };
     }
 
-    // 4. Refresh dashboards and feeds
+    void logAction({ actor_id: user.id, actor_role: 'office', action: 'CREATE_ANNOUNCEMENT', entity_type: 'announcement', metadata: { title, crisis_id } });
+
     revalidatePath('/office/dashboard');
     revalidatePath('/portal/dashboard');
     revalidatePath('/stakeholder/dashboard');
@@ -64,6 +66,9 @@ export async function deleteAnnouncement(id: string) {
       .eq('id', id);
 
     if (error) return { error: error.message };
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) void logAction({ actor_id: user.id, actor_role: 'office', action: 'DELETE_ANNOUNCEMENT', entity_type: 'announcement', entity_id: id });
 
     revalidatePath('/office/dashboard');
     revalidatePath('/portal/dashboard');

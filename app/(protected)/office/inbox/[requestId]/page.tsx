@@ -2,8 +2,8 @@
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getMessages } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';
-import { MessageBubble } from '@/components/MessageBubble';
 import { ChatInput } from '@/components/ChatInput';
+import { InboxThreadClient } from '@/components/InboxThreadClient';
 import { ArrowLeft, MapPin, AlertTriangle, User, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -109,25 +109,14 @@ export default async function OfficeChatPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-12 text-center">
-            <p className="text-sm text-muted-foreground">No messages yet.</p>
-            <p className="text-xs text-muted-foreground">
-              Send an update to let the stakeholder know help is on the way.
-            </p>
-          </div>
-        ) : (
-          messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              isOwn={msg.sender_id === profile.id}
-            />
-          ))
-        )}
-      </div>
+      {/* Messages — live via Supabase Realtime */}
+      <InboxThreadClient
+        initialMessages={messages}
+        requestId={requestId}
+        currentUserId={profile.id}
+        emptyText="No messages yet."
+        emptySubtext="Send an update to let the stakeholder know help is on the way."
+      />
 
       {/* Input */}
       <ChatInput helpRequestId={requestId} senderRole="office" quickActions={quickActions} />

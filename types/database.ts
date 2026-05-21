@@ -121,6 +121,18 @@ export interface Volunteer {
   updated_at: string;
 }
 
+export interface AuditLog {
+  id: string;
+  actor_id: string;
+  actor_role: string;
+  actor_name: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
 export type UserRole = "admin" | "office" | "stakeholder";
 
 // Generic UserData, adaptable for Office or Stakeholder

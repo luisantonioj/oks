@@ -4,6 +4,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { logAction } from '@/lib/queries/audit';
 
 export type CrisisActionState = {
   error?: string;
@@ -70,12 +71,14 @@ export async function createCrisis(
       return { error: error.message || 'Failed to create crisis' };
     }
 
+    void logAction({ actor_id: user.id, actor_role: 'office', action: 'CREATE_CRISIS', entity_type: 'crisis', entity_id: data.id, metadata: { name, type, severity } });
+
     revalidatePath('/office/crises');
     revalidatePath('/office/dashboard');
     revalidatePath('/portal/dashboard');
     revalidatePath('/stakeholder/dashboard');
     revalidatePath('/stakeholder/help-requests/new');
-    
+
     redirect(`/office/crises/${data.id}`);
 
   } catch (error) {
@@ -140,11 +143,12 @@ export async function updateCrisis(
 
     if (error) return { error: error.message };
 
-    // Refresh pages to show updated data
+    void logAction({ actor_id: user.id, actor_role: 'office', action: 'UPDATE_CRISIS', entity_type: 'crisis', entity_id: id, metadata: { name, type, severity } });
+
     revalidatePath('/office/crises');
     revalidatePath(`/office/crises/${id}`);
     revalidatePath('/office/dashboard');
-    
+
     return { success: true };
   } catch (error) {
     return { error: 'An unexpected error occurred during update' };
@@ -161,12 +165,16 @@ export async function updateCrisisStatus(id: string, status: string, resolution_
       updateData.resolution_notes = resolution_notes;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+
     const { error } = await supabase
       .from('crisis')
       .update(updateData)
       .eq('id', id);
 
     if (error) return { error: error.message };
+
+    if (user) void logAction({ actor_id: user.id, actor_role: 'office', action: 'UPDATE_CRISIS_STATUS', entity_type: 'crisis', entity_id: id, metadata: { status } });
 
     revalidatePath('/office/crises');
     revalidatePath(`/office/crises/${id}`);
@@ -200,10 +208,11 @@ export async function deleteCrisis(id: string) {
       };
     }
 
-    // Refresh pages to reflect the deletion
+    void logAction({ actor_id: user.id, actor_role: 'office', action: 'DELETE_CRISIS', entity_type: 'crisis', entity_id: id });
+
     revalidatePath('/office/crises');
     revalidatePath('/office/dashboard');
-    
+
     return { success: true };
   } catch (error) {
     return { error: 'An unexpected error occurred while deleting' };

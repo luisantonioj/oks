@@ -155,6 +155,31 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 /**
+ * Get crisis breakdown by type, severity, and status for analytics
+ */
+export async function getCrisisBreakdown(): Promise<{
+  byType: Record<string, number>;
+  bySeverity: Record<string, number>;
+  byStatus: Record<string, number>;
+}> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('crisis').select('type, severity, status');
+  if (error || !data) return { byType: {}, bySeverity: {}, byStatus: {} };
+
+  const byType: Record<string, number> = {};
+  const bySeverity: Record<string, number> = {};
+  const byStatus: Record<string, number> = {};
+
+  for (const row of data) {
+    if (row.type) byType[row.type] = (byType[row.type] || 0) + 1;
+    if (row.severity) bySeverity[row.severity] = (bySeverity[row.severity] || 0) + 1;
+    if (row.status) byStatus[row.status] = (byStatus[row.status] || 0) + 1;
+  }
+
+  return { byType, bySeverity, byStatus };
+}
+
+/**
  * Get crisis summary for dashboard cards
  */
 export async function getCrisisSummary() {

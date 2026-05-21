@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { cookies } from 'next/headers';
+import { logAction } from '@/lib/queries/audit';
 
 // Mock DLSL validation
 function mockDLSLValidation(email: string): boolean {
@@ -204,9 +205,11 @@ export async function signUpStakeholder(
       return { error: insertError.message || 'Profile creation failed' };
     }
 
-    return { 
-      success: true, 
-      message: 'Account created! Please check your email to confirm.' 
+    void logAction({ actor_id: userId, actor_role: 'stakeholder', actor_name: name, action: 'STAKEHOLDER_SIGNUP', entity_type: 'stakeholder', entity_id: userId });
+
+    return {
+      success: true,
+      message: 'Account created! Please check your email to confirm.',
     };
   } catch (error) {
     console.error('Signup error:', error);

@@ -78,3 +78,18 @@ export async function getAllHelpRequests(filters?: {
 
   return data as HelpRequestWithDetails[];
 }
+
+/**
+ * Get help request counts grouped by status for analytics
+ */
+export async function getHelpRequestBreakdown(): Promise<{ byStatus: Record<string, number> }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('help_request').select('status');
+  if (error || !data) return { byStatus: {} };
+
+  const byStatus: Record<string, number> = {};
+  for (const row of data) {
+    if (row.status) byStatus[row.status] = (byStatus[row.status] || 0) + 1;
+  }
+  return { byStatus };
+}

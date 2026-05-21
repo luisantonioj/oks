@@ -3,6 +3,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { logAction } from '@/lib/queries/audit';
 
 type HelpRequestState = { error?: string; success?: boolean; message?: string } | null;
 
@@ -39,6 +40,8 @@ export async function createHelpRequest(
       return { error: error.message || 'Failed to submit request' };
     }
 
+    void logAction({ actor_id: user.id, actor_role: 'stakeholder', action: 'SUBMIT_HELP_REQUEST', entity_type: 'help_request', metadata: { crisis_id, location } });
+
     revalidatePath('/stakeholder/help-requests');
     revalidatePath('/stakeholder/inbox');
     revalidatePath('/office/inbox');
@@ -64,6 +67,9 @@ export async function updateHelpRequestStatus(id: string, status: 'pending' | 'r
       .eq('id', id);
 
     if (error) return { error: error.message };
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) void logAction({ actor_id: user.id, actor_role: 'office', action: 'UPDATE_HELP_REQUEST_STATUS', entity_type: 'help_request', entity_id: id, metadata: { status } });
 
     revalidatePath('/office/dashboard');
     revalidatePath('/office/inbox');
