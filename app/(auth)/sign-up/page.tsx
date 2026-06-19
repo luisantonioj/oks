@@ -1,6 +1,7 @@
 // app/(auth)/sign-up/page.tsx
 import { SignUpFormEnhanced } from "@/components/sign-up-form-enhanced";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default function Page() {
   return (
@@ -61,7 +62,9 @@ export default function Page() {
             </div>
 
             {/* Form */}
-            <SignUpFormEnhanced />
+            <Suspense fallback={<div className="text-center text-xs text-muted-foreground p-4">Loading form...</div>}>
+              <SignUpFormEnhanced />
+            </Suspense>
 
           </div>
         </div>
