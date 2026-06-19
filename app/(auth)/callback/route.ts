@@ -1,12 +1,13 @@
 // app/(auth)/callback/route.ts
 import { createServerClient } from '@supabase/ssr';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getCurrentUserProfile } from '@/lib/queries/user';
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
 
 function mockDLSLValidation(email: string): boolean {
+  if (process.env.NODE_ENV === 'development') {
+    return true; // Loosen restriction for local development testing
+  }
   return email.endsWith('@dlsl.edu.ph') || email.includes('dlsl');
 }
 
@@ -17,10 +18,14 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code');
   const next = requestUrl.searchParams.get('next') ?? '';
 
-  const cookieStore = await cookies();
-  
-  // Track cookies set during authentication to set them on final redirect response
-  const responseCookies: { name: string; value: string; options: any }[] = [];
+  // Determine the target role from query parameter OR cookie
+  const role = requestUrl.searchParams.get('role')
+    || request.cookies.get('oks_oauth_role')?.value
+    || 'stakeholder';
+
+  // ── Build a Supabase client that tracks every cookie it sets ──
+  // We'll replay those cookies onto the final redirect response.
+  const pendingCookies: { name: string; value: string; options: any }[] = [];
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,82 +33,89 @@ export async function GET(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll();
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            // Write to current request/server context for immediate reading
-            try {
-              cookieStore.set(name, value, options);
-            } catch {
-              // Ignore
-            }
-            // Save for the final NextResponse redirect
-            responseCookies.push({ name, value, options });
+            pendingCookies.push({ name, value, options });
           });
         },
       },
     }
   );
 
-  // Helper function to build NextResponse.redirect with auth cookies appended
+  // Helper: redirect and replay auth cookies
   const redirectWithCookies = (dest: string | URL) => {
-    const redirectUrl = new URL(dest, request.url);
-    const res = NextResponse.redirect(redirectUrl);
-    responseCookies.forEach(({ name, value, options }) => {
+    const url = typeof dest === 'string' ? new URL(dest, requestUrl.origin) : dest;
+    const res = NextResponse.redirect(url);
+    for (const { name, value, options } of pendingCookies) {
       res.cookies.set(name, value, options);
-    });
+    }
+    // Clean up the temporary role cookie
+    res.cookies.set('oks_oauth_role', '', { path: '/', maxAge: 0 });
     return res;
   };
 
-  // Determine the target role from query parameter OR cookie
-  const role = requestUrl.searchParams.get('role') || cookieStore.get('oks_oauth_role')?.value || 'stakeholder';
+  // Helper: redirect to login page with error
+  const redirectToLoginWithError = (errorKey: string, message?: string) => {
+    const loginPath = role === 'office' ? '/login-office' : '/login';
+    const url = new URL(loginPath, requestUrl.origin);
+    url.searchParams.set('error', errorKey);
+    if (message) url.searchParams.set('message', message);
+    return redirectWithCookies(url);
+  };
+
+  // ─── Exchange the code or verify OTP ───
+  let sessionUser: any = null;
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      console.error('Code exchange failed:', error);
-      const redirectUrl = new URL(role === 'office' ? '/login-office' : '/login', request.url);
-      redirectUrl.searchParams.set('error', 'auth_failed');
-      redirectUrl.searchParams.set('message', error.message);
-      return redirectWithCookies(redirectUrl);
+      console.error('Code exchange failed:', error.message);
+      return redirectToLoginWithError('auth_failed', error.message);
     }
+    sessionUser = data.user;
   } else if (token_hash && type) {
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       token_hash,
       type: type as any,
     });
-
     if (error) {
-      console.error('OTP verification failed:', error);
-      const redirectUrl = new URL('/login', request.url);
-      redirectUrl.searchParams.set('error', 'confirmation_failed');
-      redirectUrl.searchParams.set('message', error.message || 'Link expired or invalid');
-      return redirectWithCookies(redirectUrl);
+      console.error('OTP verification failed:', error.message);
+      return redirectToLoginWithError('confirmation_failed', error.message || 'Link expired or invalid');
     }
+    sessionUser = data.user;
   } else {
-    const redirectUrl = new URL('/login', request.url);
-    redirectUrl.searchParams.set('error', 'invalid_link');
-    return redirectWithCookies(redirectUrl);
+    return redirectToLoginWithError('invalid_link');
   }
 
-  // Retrieve user details
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    console.error('No authenticated user found after session exchange');
-    const redirectUrl = new URL(role === 'office' ? '/login-office' : '/login', request.url);
-    redirectUrl.searchParams.set('error', 'auth_failed');
-    redirectUrl.searchParams.set('message', 'User authentication failed');
-    return redirectWithCookies(redirectUrl);
+  // Use the user from the session data directly (avoids stale cookie reads)
+  if (!sessionUser) {
+    console.error('No user returned from session exchange');
+    return redirectToLoginWithError('auth_failed', 'User authentication failed');
   }
 
-  // Check if profile exists
-  const profile = await getCurrentUserProfile();
+  // ─── Determine existing role ───
+  let userRole = sessionUser.app_metadata?.role || null;
 
-  if (profile) {
+  if (!userRole) {
+    // Check both tables for an existing profile
+    const adminClient = createAdminClient();
+    const [shRes, officeRes] = await Promise.all([
+      adminClient.from('stakeholder').select('role').eq('id', sessionUser.id).maybeSingle(),
+      adminClient.from('office').select('role').eq('id', sessionUser.id).maybeSingle(),
+    ]);
+    if (shRes.data?.role) {
+      userRole = shRes.data.role;
+    } else if (officeRes.data?.role) {
+      userRole = officeRes.data.role;
+    }
+  }
+
+  // ─── Existing user — redirect to dashboard ───
+  if (userRole) {
     let redirectPath = '/stakeholder/dashboard';
-    switch (profile.role) {
+    switch (userRole) {
       case 'admin':
         redirectPath = '/portal/dashboard';
         break;
@@ -117,50 +129,47 @@ export async function GET(request: NextRequest) {
     return redirectWithCookies(next || redirectPath);
   }
 
-  // New Google OAuth user or user without a database profile
+  // ─── New Google OAuth user without a database profile ───
+
+  // Office users must be pre-created by admin
   if (role === 'office') {
-    console.error(`Office profile not found for user: ${user.email}`);
+    console.error(`Office profile not found for user: ${sessionUser.email}`);
     await supabase.auth.signOut();
-    const redirectUrl = new URL('/login-office', request.url);
-    redirectUrl.searchParams.set('error', 'office_profile_not_found');
-    return redirectWithCookies(redirectUrl);
+    return redirectToLoginWithError('office_profile_not_found');
   }
 
   // Stakeholder auto-provisioning
-  const email = user.email;
+  const email = sessionUser.email;
   if (!email || !mockDLSLValidation(email)) {
     console.error(`Invalid email domain for stakeholder signup: ${email}`);
     await supabase.auth.signOut();
-    const redirectUrl = new URL('/login', request.url);
-    redirectUrl.searchParams.set('error', 'dlsl_email_required');
-    return redirectWithCookies(redirectUrl);
+    return redirectToLoginWithError('dlsl_email_required');
   }
 
-  const name = user.user_metadata?.full_name || user.user_metadata?.name || 'Google User';
+  const name = sessionUser.user_metadata?.full_name
+    || sessionUser.user_metadata?.name
+    || 'Google User';
 
   try {
     const adminClient = createAdminClient();
 
     // Set role in app_metadata
     const { error: metadataError } = await adminClient.auth.admin.updateUserById(
-      user.id,
+      sessionUser.id,
       { app_metadata: { role: 'stakeholder' } }
     );
 
     if (metadataError) {
       console.error('Failed to set stakeholder role in metadata:', metadataError);
       await supabase.auth.signOut();
-      const redirectUrl = new URL('/login', request.url);
-      redirectUrl.searchParams.set('error', 'profile_creation_failed');
-      redirectUrl.searchParams.set('message', 'Failed to configure role');
-      return redirectWithCookies(redirectUrl);
+      return redirectToLoginWithError('profile_creation_failed', 'Failed to configure role');
     }
 
     // Insert new stakeholder profile
     const { error: insertError } = await adminClient
       .from('stakeholder')
       .insert({
-        id: user.id,
+        id: sessionUser.id,
         name,
         email,
         role: 'stakeholder',
@@ -169,10 +178,7 @@ export async function GET(request: NextRequest) {
     if (insertError) {
       console.error('Profile creation failed:', insertError);
       await supabase.auth.signOut();
-      const redirectUrl = new URL('/login', request.url);
-      redirectUrl.searchParams.set('error', 'profile_creation_failed');
-      redirectUrl.searchParams.set('message', insertError.message);
-      return redirectWithCookies(redirectUrl);
+      return redirectToLoginWithError('profile_creation_failed', insertError.message);
     }
 
     console.log(`Stakeholder profile auto-created for: ${email}`);
@@ -180,9 +186,6 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Unexpected profile provisioning error:', error);
     await supabase.auth.signOut();
-    const redirectUrl = new URL('/login', request.url);
-    redirectUrl.searchParams.set('error', 'profile_creation_failed');
-    redirectUrl.searchParams.set('message', error.message || 'Server error');
-    return redirectWithCookies(redirectUrl);
+    return redirectToLoginWithError('profile_creation_failed', error.message || 'Server error');
   }
 }

@@ -48,12 +48,14 @@ export function LoginForm({
       document.cookie = "oks_oauth_role=stakeholder; path=/; max-age=600; SameSite=Lax";
       const supabase = createClient();
       const redirectTo = `${window.location.origin}/callback?role=stakeholder`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo,
         },
       });
+
       if (error) {
         setIsGooglePending(false);
         console.error("Google Sign-In Error:", error);

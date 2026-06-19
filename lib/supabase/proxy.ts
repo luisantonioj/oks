@@ -48,12 +48,19 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  if (
-    request.nextUrl.pathname !== "/" &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/sign-up")
-  ) {
+  const { pathname } = request.nextUrl;
+  const isAuthPage =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/login-office") ||
+    pathname.startsWith("/sign-up") ||
+    pathname.startsWith("/callback") ||
+    pathname.startsWith("/confirm") ||
+    pathname.startsWith("/error") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/update-password") ||
+    pathname === "/";
+
+  if (!user && !isAuthPage) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/login";
