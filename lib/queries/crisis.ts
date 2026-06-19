@@ -106,25 +106,23 @@ export async function getActiveCrises(): Promise<Crisis[]> {
 export async function getDashboardStats(): Promise<DashboardStats> {
   const supabase = await createClient();
 
-  // Get crisis counts
-  const { count: totalCrises } = await supabase
-    .from('crisis')
-    .select('*', { count: 'exact', head: true });
+  // Get counts concurrently
+  const [
+    totalCrisesRes,
+    activeCrisesRes,
+    totalHelpRequestsRes,
+    pendingHelpRequestsRes
+  ] = await Promise.all([
+    supabase.from('crisis').select('*', { count: 'exact', head: true }),
+    supabase.from('crisis').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('help_request').select('*', { count: 'exact', head: true }),
+    supabase.from('help_request').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+  ]);
 
-  const { count: activeCrises } = await supabase
-    .from('crisis')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active');
-
-  // Get help request counts
-  const { count: totalHelpRequests } = await supabase
-    .from('help_request')
-    .select('*', { count: 'exact', head: true });
-
-  const { count: pendingHelpRequests } = await supabase
-    .from('help_request')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'pending');
+  const totalCrises = totalCrisesRes.count;
+  const activeCrises = activeCrisesRes.count;
+  const totalHelpRequests = totalHelpRequestsRes.count;
+  const pendingHelpRequests = pendingHelpRequestsRes.count;
 
   // Get volunteer/donation counts from survey responses (survey-driven approach)
   const { data: typedSurveys } = await supabase

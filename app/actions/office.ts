@@ -2,9 +2,15 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { getCurrentUserProfile } from '@/lib/queries/user';
 
 export async function updateEmergencyContacts(officeId: string, contacts: any[]) {
   if (!officeId) return { error: "Office ID is missing" };
+
+  const profile = await getCurrentUserProfile();
+  if (!profile || (profile.role !== 'office' && profile.role !== 'admin') || (profile.role === 'office' && profile.id !== officeId)) {
+    return { error: 'Unauthorized' };
+  }
   
   const supabase = await createClient();
   

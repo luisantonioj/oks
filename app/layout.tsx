@@ -11,7 +11,7 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Operation Keep Safe (OKS!)",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  description: "Operation Keep Safe (OKS!) is a centralized campus crisis management system designed for De La Salle Lipa to enhance safety reporting and emergency coordination.",
 };
 
 const geistSans = Geist({

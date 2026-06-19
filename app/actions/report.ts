@@ -3,6 +3,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { getCurrentUserProfile } from '@/lib/queries/user';
 
 export async function createProgressReport(data: {
   crisis_id: string;
@@ -10,12 +11,13 @@ export async function createProgressReport(data: {
   content: string;
   icon: string;
 }) {
+  const profile = await getCurrentUserProfile();
+  if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+    throw new Error('Unauthorized');
+  }
+
   const supabase = await createClient();
   
-  // Get the current user to attach their office_id
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData?.user) throw new Error('Not authenticated');
-
   const { error } = await supabase
     .from('progress_report')
     .insert({
@@ -23,7 +25,7 @@ export async function createProgressReport(data: {
       title: data.title,
       content: data.content,
       icon: data.icon,
-      office_id: userData.user.id
+      office_id: profile.id
     });
 
   if (error) throw new Error(error.message);
@@ -41,10 +43,12 @@ export async function updateProgressReport(
     icon: string;
   }
 ) {
-  const supabase = await createClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const profile = await getCurrentUserProfile();
+  if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+    throw new Error('Unauthorized');
+  }
 
-  if (userError || !userData?.user) throw new Error('Not authenticated');
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from('progress_report')
@@ -55,7 +59,7 @@ export async function updateProgressReport(
       icon: data.icon,
     })
     .eq('id', reportId)
-    .eq('office_id', userData.user.id); // Extra security: ensure they own it
+    .eq('office_id', profile.id); // Extra security: ensure they own it
 
   if (error) throw new Error(error.message);
 

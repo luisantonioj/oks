@@ -3,17 +3,17 @@
 import { createClient } from '../../lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { logAction } from '@/lib/queries/audit';
+import { getCurrentUserProfile } from '@/lib/queries/user';
 
 export async function createAnnouncement(formData: FormData) {
   try {
     const supabase = await createClient();
     
-    // 1. Verify user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { error: 'Unauthorized' };
-
-    // Note: In a production app, you might also want to verify the user's role here 
-    // to strictly ensure they are an 'office' or 'admin'.
+    // 1. Verify user is authenticated and is office/admin
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
 
     // 2. Extract data
     const title = formData.get('title') as string;
@@ -33,7 +33,7 @@ export async function createAnnouncement(formData: FormData) {
         content,
         priority: priority || 'normal',
         crisis_id,
-        office_id: user.id // The office creating the announcement
+        office_id: profile.id // The office creating the announcement
       });
 
     if (error) {
@@ -41,7 +41,7 @@ export async function createAnnouncement(formData: FormData) {
       return { error: error.message || 'Failed to create announcement' };
     }
 
-    void logAction({ actor_id: user.id, actor_role: 'office', action: 'CREATE_ANNOUNCEMENT', entity_type: 'announcement', metadata: { title, crisis_id } });
+    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'CREATE_ANNOUNCEMENT', entity_type: 'announcement', metadata: { title, crisis_id } });
 
     revalidatePath('/office/dashboard');
     revalidatePath('/portal/dashboard');
@@ -58,6 +58,11 @@ export async function createAnnouncement(formData: FormData) {
 
 export async function deleteAnnouncement(id: string) {
   try {
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
+
     const supabase = await createClient();
     
     const { error } = await supabase
@@ -67,8 +72,7 @@ export async function deleteAnnouncement(id: string) {
 
     if (error) return { error: error.message };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) void logAction({ actor_id: user.id, actor_role: 'office', action: 'DELETE_ANNOUNCEMENT', entity_type: 'announcement', entity_id: id });
+    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'DELETE_ANNOUNCEMENT', entity_type: 'announcement', entity_id: id });
 
     revalidatePath('/office/dashboard');
     revalidatePath('/portal/dashboard');
@@ -82,10 +86,12 @@ export async function deleteAnnouncement(id: string) {
 
 export async function updateAnnouncement(formData: FormData) {
   try {
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
+
     const supabase = await createClient();
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: 'Unauthorized' };
 
     const id = formData.get('id') as string;
     const title = formData.get('title') as string;
@@ -107,7 +113,7 @@ export async function updateAnnouncement(formData: FormData) {
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .eq('office_id', user.id); // Extra security check to ensure they own it
+      .eq('office_id', profile.id); // Extra security check to ensure they own it
 
     if (error) {
       console.error('Failed to update announcement:', error);

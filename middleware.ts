@@ -2,7 +2,7 @@
 import { updateSession } from "@/lib/supabase/proxy";
 import { type NextRequest, NextResponse } from "next/server";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 1. Strictly Protect Admin Routes

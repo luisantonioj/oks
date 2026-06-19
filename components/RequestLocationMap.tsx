@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import { Loader2, MapPin } from "lucide-react";
+import { geocodeAddress } from "@/lib/geocoding";
 
 const pinIcon = L.divIcon({
   html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ef4444" width="32" height="32" style="filter:drop-shadow(0 2px 3px rgba(0,0,0,0.4))">
@@ -25,33 +26,31 @@ export function RequestLocationMap({ address }: Props) {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (!address) { setLoading(false); return; }
-
-    // Check if address is raw coordinates
-    const coordMatch = address.match(/^(-?\d+\.\d+),\s*(-?\d+\.\d+)$/);
-    if (coordMatch) {
-      setCoords([parseFloat(coordMatch[1]), parseFloat(coordMatch[2])]);
+    if (!address) {
       setLoading(false);
       return;
     }
 
     let cancelled = false;
-    fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`
-    )
-      .then((r) => r.json())
-      .then((data) => {
+    geocodeAddress(address)
+      .then((resCoords) => {
         if (cancelled) return;
-        if (data?.[0]) {
-          setCoords([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+        if (resCoords) {
+          setCoords(resCoords);
         } else {
           setFailed(true);
         }
       })
-      .catch(() => { if (!cancelled) setFailed(true); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [address]);
 
   if (loading) {
