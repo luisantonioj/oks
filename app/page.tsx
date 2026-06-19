@@ -7,7 +7,19 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { Button } from "@/components/ui/button";
 
-export default async function Home() {
+interface PageProps {
+  searchParams: Promise<{ code?: string; error?: string; error_description?: string }>;
+}
+
+export default async function Home({ searchParams }: PageProps) {
+  const params = await searchParams;
+  if (params.code) {
+    redirect(`/callback?code=${params.code}`);
+  }
+  if (params.error) {
+    redirect(`/login?error=auth_failed&message=${encodeURIComponent(params.error_description || params.error)}`);
+  }
+
   // 1. Redirect if Admin is already logged in
   const cookieStore = await cookies();
   if (cookieStore.get("oks_admin_session")?.value === "authenticated") {
