@@ -7,7 +7,16 @@ import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";
 import { Suspense } from "react";
 
-export default async function LoginOfficePage() {
+export default async function LoginOfficePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string }>;
+}) {
+  const params = await searchParams;
+  if (params.code) {
+    redirect(`/callback?code=${params.code}`);
+  }
+
   const cookieStore = await cookies();
   if (cookieStore.get("oks_admin_session")?.value === "authenticated") {
     redirect("/portal/dashboard");

@@ -9,7 +9,16 @@ import { Suspense } from "react";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import { hasEnvVars } from "@/lib/utils";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string }>;
+}) {
+  const params = await searchParams;
+  if (params.code) {
+    redirect(`/callback?code=${params.code}`);
+  }
+
   // Session Checks — UNCHANGED
   const cookieStore = await cookies();
   if (cookieStore.get("oks_admin_session")?.value === "authenticated") {

@@ -43,6 +43,7 @@ export function SignUpFormEnhanced({
   const handleGoogleSignUp = async () => {
     try {
       setIsGooglePending(true);
+      document.cookie = "oks_oauth_role=stakeholder; path=/; max-age=600; SameSite=Lax";
       const supabase = createClient();
       const redirectTo = `${window.location.origin}/callback?role=stakeholder`;
       const { error } = await supabase.auth.signInWithOAuth({

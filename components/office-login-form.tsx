@@ -44,6 +44,7 @@ export function OfficeLoginForm({
   const handleGoogleSignIn = async () => {
     try {
       setIsGooglePending(true);
+      document.cookie = "oks_oauth_role=office; path=/; max-age=600; SameSite=Lax";
       const supabase = createClient();
       const redirectTo = `${window.location.origin}/callback?role=office`;
       const { error } = await supabase.auth.signInWithOAuth({
