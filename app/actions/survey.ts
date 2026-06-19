@@ -4,6 +4,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { logAction } from '@/lib/queries/audit';
+import { getCurrentUserProfile } from '@/lib/queries/user';
 
 type SurveyActionState = { error?: string; success?: boolean; message?: string } | null;
 
@@ -12,9 +13,11 @@ export async function createSurvey(
   formData: FormData
 ): Promise<SurveyActionState> {
   try {
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { error: 'Unauthorized' };
 
     const title = formData.get('title') as string;
     const crisis_id = formData.get('crisis_id') as string;
@@ -39,13 +42,13 @@ export async function createSurvey(
       survey_type,
       crisis_id,
       questions: JSON.stringify(validQuestions),
-      office_id: user.id,
+      office_id: profile.id,
       status: 'active',
     });
 
     if (error) return { error: error.message || 'Failed to create survey' };
 
-    void logAction({ actor_id: user.id, actor_role: 'office', action: 'CREATE_SURVEY', entity_type: 'survey', metadata: { title, survey_type, crisis_id } });
+    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'CREATE_SURVEY', entity_type: 'survey', metadata: { title, survey_type, crisis_id } });
 
     revalidatePath('/office/surveys');
     revalidatePath('/stakeholder/surveys');
@@ -125,12 +128,16 @@ export async function submitSurveyResponse(
 
 export async function closeSurvey(surveyId: string) {
   try {
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
+
     const supabase = await createClient();
     const { error } = await supabase.from('survey').update({ status: 'closed' }).eq('id', surveyId);
     if (error) return { error: error.message };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) void logAction({ actor_id: user.id, actor_role: 'office', action: 'CLOSE_SURVEY', entity_type: 'survey', entity_id: surveyId });
+    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'CLOSE_SURVEY', entity_type: 'survey', entity_id: surveyId });
 
     revalidatePath('/office/surveys');
     revalidatePath(`/office/surveys/${surveyId}`);

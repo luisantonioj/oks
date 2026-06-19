@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { logAction } from '@/lib/queries/audit';
+import { getCurrentUserProfile } from '@/lib/queries/user';
 
 export type CrisisActionState = {
   error?: string;
@@ -18,10 +19,11 @@ export async function createCrisis(
   formData: FormData
 ): Promise<CrisisActionState> {
   try {
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
     const supabase = await createClient();
-    
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { error: 'Unauthorized' };
 
     const name = formData.get('name') as string;
     const type = formData.get('type') as string;
@@ -61,7 +63,7 @@ export async function createCrisis(
         required_actions,
         features,
         status: 'active',
-        office_id: user.id
+        office_id: profile.id
       })
       .select() 
       .single();
@@ -71,7 +73,7 @@ export async function createCrisis(
       return { error: error.message || 'Failed to create crisis' };
     }
 
-    void logAction({ actor_id: user.id, actor_role: 'office', action: 'CREATE_CRISIS', entity_type: 'crisis', entity_id: data.id, metadata: { name, type, severity } });
+    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'CREATE_CRISIS', entity_type: 'crisis', entity_id: data.id, metadata: { name, type, severity } });
 
     revalidatePath('/office/crises');
     revalidatePath('/office/dashboard');
@@ -95,9 +97,11 @@ export async function updateCrisis(
   formData: FormData
 ): Promise<CrisisActionState> {
   try {
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: 'Unauthorized' };
 
     const id = formData.get('id') as string;
     if (!id) return { error: 'Crisis ID is missing' };
@@ -143,7 +147,7 @@ export async function updateCrisis(
 
     if (error) return { error: error.message };
 
-    void logAction({ actor_id: user.id, actor_role: 'office', action: 'UPDATE_CRISIS', entity_type: 'crisis', entity_id: id, metadata: { name, type, severity } });
+    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'UPDATE_CRISIS', entity_type: 'crisis', entity_id: id, metadata: { name, type, severity } });
 
     revalidatePath('/office/crises');
     revalidatePath(`/office/crises/${id}`);
@@ -158,14 +162,17 @@ export async function updateCrisis(
 // Update Crisis Status (Kept unchanged)
 export async function updateCrisisStatus(id: string, status: string, resolution_notes?: string) {
   try {
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
+
     const supabase = await createClient();
     
     const updateData: any = { status, updated_at: new Date().toISOString() };
     if (resolution_notes) {
       updateData.resolution_notes = resolution_notes;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
 
     const { error } = await supabase
       .from('crisis')
@@ -174,7 +181,7 @@ export async function updateCrisisStatus(id: string, status: string, resolution_
 
     if (error) return { error: error.message };
 
-    if (user) void logAction({ actor_id: user.id, actor_role: 'office', action: 'UPDATE_CRISIS_STATUS', entity_type: 'crisis', entity_id: id, metadata: { status } });
+    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'UPDATE_CRISIS_STATUS', entity_type: 'crisis', entity_id: id, metadata: { status } });
 
     revalidatePath('/office/crises');
     revalidatePath(`/office/crises/${id}`);
@@ -187,11 +194,13 @@ export async function updateCrisisStatus(id: string, status: string, resolution_
 
 export async function deleteCrisis(id: string) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) return { error: 'Unauthorized' };
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
 
+    const supabase = await createClient();
+    
     // ADDED .select() to verify the row was actually deleted
     const { data, error } = await supabase
       .from('crisis')
@@ -208,7 +217,7 @@ export async function deleteCrisis(id: string) {
       };
     }
 
-    void logAction({ actor_id: user.id, actor_role: 'office', action: 'DELETE_CRISIS', entity_type: 'crisis', entity_id: id });
+    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'DELETE_CRISIS', entity_type: 'crisis', entity_id: id });
 
     revalidatePath('/office/crises');
     revalidatePath('/office/dashboard');

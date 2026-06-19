@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { Loader2, MapPin } from "lucide-react";
+import { geocodeAddress } from "@/lib/geocoding";
 
 const areaIcon = L.divIcon({
   html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f97316" width="32" height="32" style="filter:drop-shadow(0 2px 3px rgba(0,0,0,0.4))">
@@ -56,21 +57,7 @@ interface Props {
 const COORD_REGEX = /^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/;
 const PH_CENTER: [number, number] = [12.8797, 121.774];
 
-async function geocode(address: string): Promise<[number, number] | null> {
-  const m = address.match(COORD_REGEX);
-  if (m) return [parseFloat(m[1]), parseFloat(m[2])];
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
-      { headers: { "Accept-Language": "en" } }
-    );
-    const data = await res.json();
-    if (data?.[0]) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-  } catch {
-    // skip unresolvable
-  }
-  return null;
-}
+// Local geocoding function removed in favor of shared geocoding utility
 
 export function AffectedAreasMap({ affectedAreas, helpRequests = [] }: Props) {
   const [areaPoints, setAreaPoints] = useState<GeocodedPoint[]>([]);
@@ -81,18 +68,24 @@ export function AffectedAreasMap({ affectedAreas, helpRequests = [] }: Props) {
     let cancelled = false;
 
     async function geocodeAll() {
-      const areas: GeocodedPoint[] = [];
-      for (const area of affectedAreas) {
-        const coords = await geocode(area);
-        if (coords) areas.push({ label: area, lat: coords[0], lng: coords[1] });
-      }
+      // Resolve areas in parallel
+      const areaCoords = await Promise.all(
+        affectedAreas.map(async (area) => {
+          const coords = await geocodeAddress(area);
+          return coords ? { label: area, lat: coords[0], lng: coords[1] } : null;
+        })
+      );
+      const areas = areaCoords.filter(Boolean) as GeocodedPoint[];
 
-      const reqs: (GeocodedPoint & { status: string })[] = [];
-      for (const req of helpRequests) {
-        if (!req.location) continue;
-        const coords = await geocode(req.location);
-        if (coords) reqs.push({ label: req.location, lat: coords[0], lng: coords[1], status: req.status });
-      }
+      // Resolve help requests in parallel
+      const reqCoords = await Promise.all(
+        helpRequests.map(async (req) => {
+          if (!req.location) return null;
+          const coords = await geocodeAddress(req.location);
+          return coords ? { label: req.location, lat: coords[0], lng: coords[1], status: req.status } : null;
+        })
+      );
+      const reqs = reqCoords.filter(Boolean) as (GeocodedPoint & { status: string })[];
 
       if (!cancelled) {
         setAreaPoints(areas);
@@ -102,7 +95,9 @@ export function AffectedAreasMap({ affectedAreas, helpRequests = [] }: Props) {
     }
 
     geocodeAll();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [affectedAreas, helpRequests]);
 
   const allPoints = [...areaPoints, ...reqPoints];

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default async function LoginOfficePage() {
   const cookieStore = await cookies();
@@ -82,7 +83,9 @@ export default async function LoginOfficePage() {
 
             {/* Form */}
             <div className="mb-4">
-              <OfficeLoginForm />
+              <Suspense fallback={<div className="text-center text-xs text-muted-foreground p-4">Loading form...</div>}>
+                <OfficeLoginForm />
+              </Suspense>
             </div>
 
             {/* Switch link */}

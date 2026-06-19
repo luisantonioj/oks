@@ -31,30 +31,17 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
     if (!role) {
       console.log('[getCurrentUserProfile] Role missing in metadata, checking tables...');
       
-      // Check stakeholder table
-      const { data: shData, error: shError } = await supabase
-        .from('stakeholder')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
+      const [shRes, officeRes] = await Promise.all([
+        supabase.from('stakeholder').select('role').eq('id', user.id).maybeSingle(),
+        supabase.from('office').select('role').eq('id', user.id).maybeSingle(),
+      ]);
 
-      if (!shError && shData?.role) {
-        role = shData.role as UserRole;
+      if (!shRes.error && shRes.data?.role) {
+        role = shRes.data.role as UserRole;
         console.log('[getCurrentUserProfile] Role found in stakeholder table:', role);
-      } else {
-        console.log('[getCurrentUserProfile] Not in stakeholder table, checking office table...');
-        
-        // Check office table
-        const { data: officeData, error: officeError } = await supabase
-          .from('office')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (!officeError && officeData?.role) {
-          role = officeData.role as UserRole;
-          console.log('[getCurrentUserProfile] Role found in office table:', role);
-        }
+      } else if (!officeRes.error && officeRes.data?.role) {
+        role = officeRes.data.role as UserRole;
+        console.log('[getCurrentUserProfile] Role found in office table:', role);
       }
     }
 

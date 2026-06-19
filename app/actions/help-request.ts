@@ -4,6 +4,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { logAction } from '@/lib/queries/audit';
+import { getCurrentUserProfile } from '@/lib/queries/user';
 
 type HelpRequestState = { error?: string; success?: boolean; message?: string } | null;
 
@@ -56,6 +57,11 @@ export async function createHelpRequest(
 
 export async function updateHelpRequestStatus(id: string, status: 'pending' | 'resolved', office_id?: string) {
   try {
+    const profile = await getCurrentUserProfile();
+    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
+      return { error: 'Unauthorized' };
+    }
+
     const supabase = await createClient();
     
     const updateData: { status: string; office_id?: string } = { status };
@@ -68,8 +74,7 @@ export async function updateHelpRequestStatus(id: string, status: 'pending' | 'r
 
     if (error) return { error: error.message };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) void logAction({ actor_id: user.id, actor_role: 'office', action: 'UPDATE_HELP_REQUEST_STATUS', entity_type: 'help_request', entity_id: id, metadata: { status } });
+    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'UPDATE_HELP_REQUEST_STATUS', entity_type: 'help_request', entity_id: id, metadata: { status } });
 
     revalidatePath('/office/dashboard');
     revalidatePath('/office/inbox');
