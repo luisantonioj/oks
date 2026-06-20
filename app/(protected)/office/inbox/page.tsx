@@ -14,16 +14,20 @@ export default async function OfficeInboxPage() {
 
   const supabase = await createClient();
 
-  const threadsWithNames = await Promise.all(
-    threads.map(async (thread: any) => {
-      const { data: stakeholder } = await supabase
-        .from('stakeholder')
-        .select('name')
-        .eq('id', thread.stakeholder_id)
-        .single();
-      return { ...thread, stakeholderName: stakeholder?.name ?? 'Unknown' };
-    })
-  );
+  const stakeholderIds = [...new Set(threads.map((t: any) => t.stakeholder_id))];
+  const stakeholderNameMap = new Map<string, string>();
+  if (stakeholderIds.length > 0) {
+    const { data: stakeholders } = await supabase
+      .from('stakeholder')
+      .select('id, name')
+      .in('id', stakeholderIds);
+    stakeholders?.forEach((s) => stakeholderNameMap.set(s.id, s.name));
+  }
+
+  const threadsWithNames = threads.map((thread: any) => ({
+    ...thread,
+    stakeholderName: stakeholderNameMap.get(thread.stakeholder_id) ?? 'Unknown'
+  }));
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">

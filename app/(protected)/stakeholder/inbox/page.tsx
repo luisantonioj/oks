@@ -4,7 +4,7 @@ import { getInboxThreads } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { MessageSquare, ArrowRight, MapPin } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function StakeholderInboxPage() {
   const profile = await getCurrentUserProfile();

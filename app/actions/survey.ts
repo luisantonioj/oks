@@ -108,6 +108,41 @@ export async function submitSurveyResponse(
     const stakeName = formData.get('__stake_name') as string | null;
     if (stakeName) answers['__stake_name'] = stakeName;
 
+    // Handle donation receipt file upload
+    const receiptFile = formData.get('__receipt') as File | null;
+    if (receiptFile && receiptFile.size > 0 && receiptFile.name !== 'undefined') {
+      try {
+        const bytes = await receiptFile.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const fileExt = receiptFile.name.split('.').pop() || 'png';
+        const path = `${user.id}/${Date.now()}_receipt.${fileExt}`;
+
+        // Ensure storage bucket exists
+        await supabase.storage.createBucket('receipts', { public: true });
+
+        const { error: uploadError } = await supabase.storage
+          .from('receipts')
+          .upload(path, buffer, {
+            contentType: receiptFile.type,
+            duplex: 'half'
+          });
+
+        if (uploadError) {
+          console.error('[submitSurveyResponse] Storage upload error:', uploadError);
+          return { error: 'Failed to upload payment receipt.' };
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('receipts')
+          .getPublicUrl(path);
+
+        answers['__receipt'] = publicUrl;
+      } catch (uploadErr) {
+        console.error('[submitSurveyResponse] Receipt upload failed:', uploadErr);
+        return { error: 'Failed to process payment receipt.' };
+      }
+    }
+
     const { error } = await supabase.from('survey_response').insert({
       survey_id,
       stakeholder_id: user.id,
