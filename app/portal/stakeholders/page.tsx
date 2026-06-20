@@ -1,6 +1,5 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getAllStakeholders } from '@/lib/queries/user';
+import { getAllStakeholders, getCurrentUserProfile } from '@/lib/queries/user';
 import { Users, Mail, Calendar, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -9,8 +8,8 @@ function formatDate(dateStr: string) {
 }
 
 export default async function AdminStakeholdersPage() {
-  const cookieStore = await cookies();
-  if (cookieStore.get('oks_admin_session')?.value !== 'authenticated') redirect('/login-portal');
+  const profile = await getCurrentUserProfile();
+  if (!profile || profile.role !== 'admin') redirect('/login-portal');
 
   const stakeholders = await getAllStakeholders();
 

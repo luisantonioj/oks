@@ -5,6 +5,7 @@ import { getAllHelpRequests } from "@/lib/queries/help-request";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { EmergencyContactsEditor } from "@/components/emergency-contacts-editor";
+import { createClient } from "@/lib/supabase/server";
 
 // Helper for displaying "5m ago", "2h ago", etc.
 function getRelativeTime(dateString: string) {
@@ -27,11 +28,14 @@ export default async function OfficeDashboard() {
     redirect("/login-office");
   }
 
+  const supabase = await createClient();
+
   // Fetch all required data concurrently for the dashboard
-  const [stats, activeCrisesList, recentRequests] = await Promise.all([
+  const [stats, activeCrisesList, recentRequests, { data: dbContacts }] = await Promise.all([
     getDashboardStats(),
     getCrisisSummary(),
-    getAllHelpRequests()
+    getAllHelpRequests(),
+    supabase.from('emergency_contact').select('*').eq('office_id', profile.id).order('created_at', { ascending: true })
   ]);
 
   // Grab the 5 most recent requests for the preview grid
@@ -71,7 +75,7 @@ export default async function OfficeDashboard() {
       </div>
 
       {/* ── Emergency Contacts — editable by office staff ── */}
-      <EmergencyContactsEditor officeId={profile.id} />
+      <EmergencyContactsEditor officeId={profile.id} initialContacts={dbContacts ?? []} />
 
       {/* ── Main Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">

@@ -64,6 +64,23 @@ export async function deleteAnnouncement(id: string) {
     }
 
     const supabase = await createClient();
+
+    // Verify ownership if role is office
+    if (profile.role === 'office') {
+      const { data: announcement, error: announcementError } = await supabase
+        .from('announcement')
+        .select('office_id')
+        .eq('id', id)
+        .single();
+
+      if (announcementError || !announcement) {
+        return { error: 'Announcement not found' };
+      }
+
+      if (announcement.office_id !== profile.id) {
+        return { error: 'Unauthorized: You do not own this announcement' };
+      }
+    }
     
     const { error } = await supabase
       .from('announcement')
@@ -103,7 +120,7 @@ export async function updateAnnouncement(formData: FormData) {
       return { error: 'Missing required fields' };
     }
 
-    const { error } = await supabase
+    let query = supabase
       .from('announcement')
       .update({
         title,
@@ -112,8 +129,13 @@ export async function updateAnnouncement(formData: FormData) {
         crisis_id,
         updated_at: new Date().toISOString()
       })
-      .eq('id', id)
-      .eq('office_id', profile.id); // Extra security check to ensure they own it
+      .eq('id', id);
+
+    if (profile.role === 'office') {
+      query = query.eq('office_id', profile.id);
+    }
+
+    const { error } = await query;
 
     if (error) {
       console.error('Failed to update announcement:', error);

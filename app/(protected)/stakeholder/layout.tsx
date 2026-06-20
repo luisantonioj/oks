@@ -2,6 +2,7 @@
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
 import { StakeholderNavbar } from "@/components/stakeholder-navbar";
+import { DashboardRealtimeWatcher } from "@/components/DashboardRealtimeWatcher";
 
 export default async function StakeholderLayout({
   children,
@@ -19,6 +20,7 @@ export default async function StakeholderLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <DashboardRealtimeWatcher />
       <StakeholderNavbar firstName={firstName} />
       <main className="w-full">{children}</main>
     </div>

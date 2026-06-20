@@ -1,6 +1,5 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getAllOffices } from '@/lib/queries/user';
+import { getAllOffices, getCurrentUserProfile } from '@/lib/queries/user';
 import Link from 'next/link';
 import { Building2, Plus, Mail, User, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,8 +10,8 @@ function formatDate(dateStr: string) {
 }
 
 export default async function AdminOfficesPage() {
-  const cookieStore = await cookies();
-  if (cookieStore.get('oks_admin_session')?.value !== 'authenticated') redirect('/login-portal');
+  const profile = await getCurrentUserProfile();
+  if (!profile || profile.role !== 'admin') redirect('/login-portal');
 
   const offices = await getAllOffices();
 

@@ -20,22 +20,12 @@ export default async function Home({ searchParams }: PageProps) {
     redirect(`/login?error=auth_failed&message=${encodeURIComponent(params.error_description || params.error)}`);
   }
 
-  // 1. Redirect if Admin is already logged in
-  const cookieStore = await cookies();
-  if (cookieStore.get("oks_admin_session")?.value === "authenticated") {
-    redirect("/portal/dashboard");
-  }
-
-  // 2. Redirect if Stakeholder/Office is already logged in
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    const profile = await getCurrentUserProfile();
-    if (profile?.role === "office") redirect("/office/dashboard");
-    if (profile?.role === "stakeholder") redirect("/stakeholder/dashboard");
+  // Redirect if any user is already logged in
+  const profile = await getCurrentUserProfile();
+  if (profile) {
+    if (profile.role === "admin") redirect("/portal/dashboard");
+    if (profile.role === "office") redirect("/office/dashboard");
+    if (profile.role === "stakeholder") redirect("/stakeholder/dashboard");
   }
 
   // 3. Render Public Landing Page

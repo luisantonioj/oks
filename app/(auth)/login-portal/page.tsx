@@ -1,13 +1,15 @@
 // app/(auth)/login-portal/page.tsx
 import { AdminLoginForm } from "@/components/admin-login-form";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getCurrentUserProfile } from "@/lib/queries/user";
 
 export default async function LoginPortalPage() {
-  const cookieStore = await cookies();
-  if (cookieStore.get("oks_admin_session")?.value === "authenticated") {
-    redirect("/portal/dashboard");
+  const profile = await getCurrentUserProfile();
+  if (profile) {
+    if (profile.role === "admin") redirect("/portal/dashboard");
+    if (profile.role === "office") redirect("/office/dashboard");
+    if (profile.role === "stakeholder") redirect("/stakeholder/dashboard");
   }
 
   return (

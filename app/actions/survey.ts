@@ -134,6 +134,24 @@ export async function closeSurvey(surveyId: string) {
     }
 
     const supabase = await createClient();
+
+    // Verify ownership if role is office
+    if (profile.role === 'office') {
+      const { data: survey, error: surveyError } = await supabase
+        .from('survey')
+        .select('office_id')
+        .eq('id', surveyId)
+        .single();
+
+      if (surveyError || !survey) {
+        return { error: 'Survey not found' };
+      }
+
+      if (survey.office_id !== profile.id) {
+        return { error: 'Unauthorized: You do not own this survey' };
+      }
+    }
+
     const { error } = await supabase.from('survey').update({ status: 'closed' }).eq('id', surveyId);
     if (error) return { error: error.message };
 

@@ -171,10 +171,9 @@ export async function getOfficeProfile(userId: string) {
 
 // Admin-only: Get all offices
 export async function getAllOffices() {
-  const cookieStore = await cookies();
-  const adminSession = cookieStore.get('oks_admin_session')?.value;
+  const profile = await getCurrentUserProfile();
 
-  if (adminSession !== 'authenticated') {
+  if (!profile || profile.role !== 'admin') {
     throw new Error('Unauthorized: Admin only');
   }
 
@@ -196,10 +195,9 @@ export async function getAllOffices() {
 
 // Admin-only: Get all stakeholders
 export async function getAllStakeholders() {
-  const cookieStore = await cookies();
-  const adminSession = cookieStore.get('oks_admin_session')?.value;
+  const profile = await getCurrentUserProfile();
 
-  if (adminSession !== 'authenticated') {
+  if (!profile || profile.role !== 'admin') {
     throw new Error('Unauthorized: Admin only');
   }
 

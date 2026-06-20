@@ -1,13 +1,12 @@
 // app/admin/create-office/page.tsx
-import { cookies } from 'next/headers';
 import { redirect } from "next/navigation";
 import { CreateOfficeForm } from "@/components/create-office-form";
+import { getCurrentUserProfile } from "@/lib/queries/user";
 
 export default async function CreateOfficePage() {
-  const cookieStore = await cookies();
-  const adminSession = cookieStore.get('oks_admin_session')?.value;
+  const profile = await getCurrentUserProfile();
 
-  if (adminSession !== 'authenticated') {
+  if (!profile || profile.role !== 'admin') {
     redirect('/login-portal');
   }
 

@@ -1,16 +1,14 @@
 // app/portal/dashboard/page.tsx
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getAllOffices, getAllStakeholders } from "@/lib/queries/user";
+import { getAllOffices, getAllStakeholders, getCurrentUserProfile } from "@/lib/queries/user";
 import { getDashboardStats, getCrisisBreakdown } from "@/lib/queries/crisis";
 import { getHelpRequestBreakdown } from "@/lib/queries/help-request";
 import { getRecentAuditLogs } from "@/lib/queries/audit";
 
 export default async function AdminDashboard() {
-  const cookieStore = await cookies();
-  const adminSession = cookieStore.get("oks_admin_session")?.value;
-  if (adminSession !== "authenticated") {
+  const profile = await getCurrentUserProfile();
+  if (!profile || profile.role !== "admin") {
     redirect("/login-portal");
   }
 

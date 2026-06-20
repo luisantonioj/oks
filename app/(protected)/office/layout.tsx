@@ -2,6 +2,7 @@
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
 import { OfficeNavbar } from "@/components/office-navbar";
+import { DashboardRealtimeWatcher } from "@/components/DashboardRealtimeWatcher";
 
 export default async function OfficeLayout({
   children,
@@ -20,6 +21,7 @@ export default async function OfficeLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <DashboardRealtimeWatcher />
       <OfficeNavbar firstName={firstName} officeName={officeName} />
       <main className="w-full">{children}</main>
     </div>
