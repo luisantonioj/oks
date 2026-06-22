@@ -1,4 +1,4 @@
-// app/(protected)/stakeholder/announcements/StakeholderAnnouncementsClient.tsx
+// features/announcements/StakeholderAnnouncementsClient.tsx
 "use client";
 
 import { useState } from "react";

@@ -3,7 +3,7 @@ import { getCurrentUserProfile } from "@/lib/queries/user";
 import { getAnnouncements } from "@/lib/queries/announcement";
 import { getCrises } from "@/lib/queries/crisis";
 import { redirect } from "next/navigation";
-import StakeholderAnnouncementsClient from "./StakeholderAnnouncementsClient";
+import StakeholderAnnouncementsClient from "@/features/announcements/StakeholderAnnouncementsClient";
 
 export default async function StakeholderAnnouncementsPage() {
   // 1. Verify user is authenticated
