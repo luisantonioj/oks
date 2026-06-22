@@ -1,16 +1,40 @@
-import { required } from "zod/mini";
-
 // types/database.ts
+export type UserRole = "admin" | "office" | "stakeholder";
+export type CrisisStatus = "active" | "resolved";
+export type HelpRequestStatus = "pending" | "resolved";
+export type SurveyStatus = "active" | "closed";
+export type SurveyType = "safety" | "donation" | "volunteer";
+
+export interface CrisisFeatures {
+  survey: boolean;
+  help_button: boolean;
+  progress: boolean;
+  donation: boolean;
+  volunteer: boolean;
+  notify_stakeholders: boolean;
+  sound_alarm: boolean;
+  request_backup: boolean;
+  lockdown_areas: boolean;
+}
+
+export interface SurveyQuestion {
+  id: string;
+  text: string;
+  type: "text" | "radio" | "checkbox";
+  options?: string[];
+}
+
+export type SurveyAnswers = Record<string, string | string[]>;
+
 export interface Office {
   id: string;
   name: string;
   email: string;
-  password: string;
-  role: string;
+  role: "office";
   office_name: string;
-  age: number;
-  gender: string;
-  contact: string;
+  age: number | null;
+  gender: string | null;
+  contact: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,13 +43,12 @@ export interface Stakeholder {
   id: string;
   name: string;
   email: string;
-  password: string;
-  role: string;
-  age: number;
-  community: string;
-  contact: string;
-  permanent_address: string;
-  current_address: string;
+  role: "stakeholder";
+  age: number | null;
+  community: string | null;
+  contact: string | null;
+  permanent_address: string | null;
+  current_address: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -34,16 +57,21 @@ export interface Crisis {
   id: string;
   name: string;
   type: string;
-  summary: string;
+  summary: string | null;
   affected_areas: string[];
   severity: string;
-  status: string;
+  status: CrisisStatus;
   office_id: string;
   created_at: string;
   updated_at: string;
-  required_actions?: string;
-  resolution_notes?: string; 
-  features?: any;
+  required_actions?: string | null;
+  resolution_notes?: string | null;
+  features?: Partial<CrisisFeatures>;
+  help_requests?: Array<{ id: string; name?: string; location?: string; status?: HelpRequestStatus; time?: string }>;
+  announcements?: Announcement[];
+  progress_updates?: ProgressReport[];
+  volunteers?: number;
+  donations_count?: number;
 }
 
 export interface Announcement {
@@ -60,11 +88,11 @@ export interface Announcement {
 export interface Survey {
   id: string;
   title: string;
-  survey_type: string; // 'safety' | 'donation' | 'volunteer'  
+  survey_type: SurveyType;
   questions: string; 
   crisis_id: string;
   office_id: string;
-  status: string;
+  status: SurveyStatus;
   created_at: string;
   updated_at: string;
 }
@@ -73,7 +101,7 @@ export interface SurveyResponse {
   id: string;
   survey_id: string;
   stakeholder_id: string;
-  answers: string; // Likely JSON string
+  answers: string;
   created_at: string;
 }
 
@@ -81,10 +109,10 @@ export interface HelpRequest {
   id: string;
   stakeholder_id: string;
   location: string;
-  status: string; // Note: schema has two 'status', assuming one
-  notes: string;
+  status: HelpRequestStatus;
+  notes: string | null;
   crisis_id: string;
-  office_id: string;
+  office_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -132,8 +160,6 @@ export interface AuditLog {
   metadata: Record<string, unknown> | null;
   created_at: string;
 }
-
-export type UserRole = "admin" | "office" | "stakeholder";
 
 // Generic UserData, adaptable for Office or Stakeholder
 export type UserData = {
