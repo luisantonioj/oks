@@ -1,4 +1,4 @@
-//app/components/SurveyBuilder.tsx
+// features/surveys/SurveyBuilder.tsx
 "use client";
 
 import { useState, useActionState } from "react";

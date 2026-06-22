@@ -1,4 +1,4 @@
-//components/SurveySubmitForm.tsx
+// features/surveys/SurveySubmitForm.tsx
 "use client";
 
 import { useState } from "react";

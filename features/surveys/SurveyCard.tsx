@@ -1,4 +1,4 @@
-// components/SurveyCard.tsx
+// features/surveys/SurveyCard.tsx
 import Link from "next/link";
 import { Survey } from "@/types/database";
 import { Badge } from "@/components/ui/badge";

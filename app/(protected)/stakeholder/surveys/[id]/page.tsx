@@ -4,7 +4,7 @@ import { getSurveyById, getStakeholderSurveyResponse } from '@/lib/queries/surve
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ClipboardList, CheckCircle2, Lock } from 'lucide-react';
-import { SurveySubmitForm } from '@/components/SurveySubmitForm'; // <-- Import new form
+import { SurveySubmitForm } from '@/features/surveys/SurveySubmitForm';
 
 interface PageProps {
   params: Promise<{ id: string }>;

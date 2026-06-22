@@ -1,9 +1,9 @@
-// app/(protected)/office/surveys/OfficeSurveysClient.tsx
+// features/surveys/OfficeSurveysClient.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { SurveyCard } from "@/components/SurveyCard";
+import { SurveyCard } from "@/features/surveys/SurveyCard";
 import { Button } from "@/components/ui/button";
 import { Survey } from "@/types/database";
 import { 
