@@ -1,4 +1,4 @@
-//components/RequestLocationMap.tsx
+// features/help-requests/RequestLocationMap.tsx
 "use client";
 
 import { useEffect, useState } from "react";

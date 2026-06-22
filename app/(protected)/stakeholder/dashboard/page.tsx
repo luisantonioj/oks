@@ -5,7 +5,7 @@ import { getAnnouncements } from "@/lib/queries/announcement";
 import { getSurveys, getStakeholderRespondedSurveyIds } from "@/lib/queries/survey";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { SOSButton } from "@/components/SOSButton";
+import { SOSButton } from "@/features/help-requests/SOSButton";
 import { createClient } from "@/lib/supabase/server";
 
 interface EmergencyContactCard {

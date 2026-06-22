@@ -1,7 +1,7 @@
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getInboxThreads } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';
-import { InboxThreadCard } from '@/components/InboxThreadCard';
+import { InboxThreadCard } from '@/features/inbox/InboxThreadCard';
 import { MessageSquare } from 'lucide-react';
 
 export default async function StakeholderInboxPage() {

@@ -3,8 +3,8 @@ import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getStakeholderHelpRequests } from '@/lib/queries/help-request';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { HelpRequestTable } from '@/components/HelpRequestTable';
-import { SOSButton } from '@/components/SOSButton';
+import { HelpRequestTable } from '@/features/help-requests/HelpRequestTable';
+import { SOSButton } from '@/features/help-requests/SOSButton';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Plus } from 'lucide-react';
 

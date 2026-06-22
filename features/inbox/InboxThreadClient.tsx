@@ -1,9 +1,9 @@
-// components/InboxThreadClient.tsx
+// features/inbox/InboxThreadClient.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { MessageBubble } from "@/components/MessageBubble";
+import { MessageBubble } from "@/features/inbox/MessageBubble";
 import type { Message } from "@/lib/queries/message";
 
 interface Props {

@@ -1,4 +1,4 @@
-//components/ChatInput.tsx
+// features/inbox/ChatInput.tsx
 'use client';
 
 import { useRef, useState, useTransition } from 'react';

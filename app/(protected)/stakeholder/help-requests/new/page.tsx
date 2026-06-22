@@ -3,7 +3,7 @@ import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getActiveCrises } from '@/lib/queries/crisis';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { HelpRequestForm } from '@/components/HelpRequestForm';
+import { HelpRequestForm } from '@/features/help-requests/HelpRequestForm';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 
 export const dynamic = "force-dynamic";

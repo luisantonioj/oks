@@ -1,4 +1,4 @@
-//app/components/SOSButton.tsx
+// features/help-requests/SOSButton.tsx
 "use client";
 
 import { useState } from "react";
