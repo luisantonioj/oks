@@ -1,6 +1,6 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getAllOffices } from '@/lib/queries/user';
+import { getCurrentUserProfile } from '@/lib/queries/user';
+import { getAllOfficesForAdmin } from '@/lib/queries/admin-users';
 import Link from 'next/link';
 import { Building2, Plus, Mail, User, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,10 @@ function formatDate(dateStr: string) {
 }
 
 export default async function AdminOfficesPage() {
-  const cookieStore = await cookies();
-  if (cookieStore.get('oks_admin_session')?.value !== 'authenticated') redirect('/login-portal');
+  const profile = await getCurrentUserProfile();
+  if (!profile || profile.role !== 'admin') redirect('/login-portal');
 
-  const offices = await getAllOffices();
+  const offices = await getAllOfficesForAdmin();
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -50,7 +50,7 @@ export default async function AdminOfficesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {offices.map((office: any) => (
+                {offices.map((office) => (
                   <tr key={office.id} className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

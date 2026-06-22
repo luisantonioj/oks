@@ -52,6 +52,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage =
     pathname.startsWith("/login") ||
     pathname.startsWith("/login-office") ||
+    pathname.startsWith("/login-portal") ||
     pathname.startsWith("/sign-up") ||
     pathname.startsWith("/callback") ||
     pathname.startsWith("/confirm") ||
@@ -60,25 +61,63 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/update-password") ||
     pathname === "/";
 
+  // 1. If not logged in and trying to access protected paths:
   if (!user && !isAuthPage) {
-    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    if (pathname.startsWith("/portal")) {
+      url.pathname = "/login-portal";
+    } else if (pathname.startsWith("/office")) {
+      url.pathname = "/login-office";
+    } else {
+      url.pathname = "/login";
+    }
     return NextResponse.redirect(url);
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is.
-  // If you're creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
+  // 2. If logged in, enforce RBAC
+  if (user) {
+    const role = user.app_metadata?.role;
+
+    // Admin routing
+    if (pathname.startsWith("/portal") && role !== "admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login-portal";
+      url.searchParams.set("error", "unauthorized");
+      return NextResponse.redirect(url);
+    }
+
+    // Office routing
+    if (pathname.startsWith("/office") && role !== "office") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login-office";
+      url.searchParams.set("error", "unauthorized");
+      return NextResponse.redirect(url);
+    }
+
+    // Stakeholder routing
+    if (pathname.startsWith("/stakeholder") && role !== "stakeholder") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("error", "unauthorized");
+      return NextResponse.redirect(url);
+    }
+
+    // If they are on an auth page, redirect them to their dashboard
+    if (isAuthPage && pathname !== "/callback" && pathname !== "/confirm") {
+      const url = request.nextUrl.clone();
+      if (role === "admin") {
+        url.pathname = "/portal/dashboard";
+      } else if (role === "office") {
+        url.pathname = "/office/dashboard";
+      } else if (role === "stakeholder") {
+        url.pathname = "/stakeholder/dashboard";
+      } else {
+        url.pathname = "/login";
+      }
+      return NextResponse.redirect(url);
+    }
+  }
 
   return supabaseResponse;
 }
+

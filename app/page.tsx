@@ -1,9 +1,7 @@
 // app/page.tsx
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { Button } from "@/components/ui/button";
 
@@ -20,22 +18,12 @@ export default async function Home({ searchParams }: PageProps) {
     redirect(`/login?error=auth_failed&message=${encodeURIComponent(params.error_description || params.error)}`);
   }
 
-  // 1. Redirect if Admin is already logged in
-  const cookieStore = await cookies();
-  if (cookieStore.get("oks_admin_session")?.value === "authenticated") {
-    redirect("/portal/dashboard");
-  }
-
-  // 2. Redirect if Stakeholder/Office is already logged in
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    const profile = await getCurrentUserProfile();
-    if (profile?.role === "office") redirect("/office/dashboard");
-    if (profile?.role === "stakeholder") redirect("/stakeholder/dashboard");
+  // Redirect if any user is already logged in
+  const profile = await getCurrentUserProfile();
+  if (profile) {
+    if (profile.role === "admin") redirect("/portal/dashboard");
+    if (profile.role === "office") redirect("/office/dashboard");
+    if (profile.role === "stakeholder") redirect("/stakeholder/dashboard");
   }
 
   // 3. Render Public Landing Page
@@ -104,7 +92,7 @@ export default async function Home({ searchParams }: PageProps) {
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link href="/login">
             <Button size="lg" className="rounded-xl px-8 text-base">
-              I'm a Student / Faculty
+              I&apos;m a Student / Faculty
             </Button>
           </Link>
           <Link href="/login-office">

@@ -41,7 +41,7 @@ export function DeleteCrisisModal({ crisisId, crisisName, onClose, onSuccess }: 
       <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md border border-border p-6 relative">
         <h2 className="text-xl font-bold text-foreground mb-2">Delete Crisis?</h2>
         <p className="text-sm text-muted-foreground mb-6">
-          Are you sure you want to delete <span className="font-semibold text-foreground">"{crisisName}"</span>? This action cannot be undone and will remove all associated data.
+          Are you sure you want to delete <span className="font-semibold text-foreground">&quot;{crisisName}&quot;</span>? This action cannot be undone and will remove all associated data.
         </p>
 
         {error && (

@@ -4,7 +4,7 @@ import { getCrises } from '@/lib/queries/crisis';
 import { createSurvey } from '@/app/actions/survey';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { SurveyBuilder } from '@/components/SurveyBuilder';
+import { SurveyBuilder } from '@/features/surveys/SurveyBuilder';
 import { ArrowLeft, ClipboardList } from 'lucide-react';
 
 export default async function NewSurveyPage() {

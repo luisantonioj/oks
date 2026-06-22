@@ -1,6 +1,6 @@
 // lib/queries/crisis.ts
 import { createClient } from '@/lib/supabase/server';
-import { Crisis } from '@/types/database';
+import { Crisis, HelpRequestStatus } from '@/types/database';
 
 export interface DashboardStats {
   totalCrises: number;
@@ -10,6 +10,22 @@ export interface DashboardStats {
   totalDonations: number;
   totalVolunteers: number;
 }
+
+type CrisisListRow = Omit<Crisis, 'help_requests'> & {
+  help_requests?: Array<{ id: string }>;
+};
+
+type CrisisDetailHelpRequestRow = {
+  id: string;
+  location: string;
+  status: HelpRequestStatus;
+  created_at: string;
+  stakeholder?: { name?: string | null } | null;
+};
+
+type CrisisDetailRow = Omit<Crisis, 'help_requests'> & {
+  help_requests?: CrisisDetailHelpRequestRow[];
+};
 
 /**
  * Get all crises with optional filtering
@@ -44,13 +60,15 @@ export async function getCrises(filters?: {
     throw error;
   }
 
+  const rows = (data || []) as CrisisListRow[];
+
   // Map data and default volunteers/donations to 0 to satisfy TypeScript UI
-  return (data || []).map((row: any) => ({
+  return rows.map((row) => ({
     ...row,
     help_requests: row.help_requests || [],
     volunteers: 0, 
     donations_count: 0
-  })) as unknown as Crisis[];
+  }));
 }
 
 /**
@@ -76,10 +94,12 @@ export async function getCrisisById(id: string): Promise<Crisis | null> {
     return null;
   }
 
+  const row = data as CrisisDetailRow;
+
   // Map data and default volunteers/donations to 0
   return {
-    ...data,
-    help_requests: (data.help_requests || []).map((req: any) => ({
+    ...row,
+    help_requests: (row.help_requests || []).map((req) => ({
       id: req.id,
       name: req.stakeholder?.name || 'Unknown',
       location: req.location,
@@ -90,7 +110,7 @@ export async function getCrisisById(id: string): Promise<Crisis | null> {
     })),
     volunteers: 0,
     donations_count: 0
-  } as unknown as Crisis;
+  };
 }
 
 /**
@@ -199,8 +219,10 @@ export async function getCrisisSummary() {
     return [];
   }
 
+  const rows = (data || []) as CrisisListRow[];
+
   // Map data and default volunteers/donations to 0
-  return (data || []).map((row: any) => ({
+  return rows.map((row) => ({
     ...row,
     help_requests: row.help_requests || [],
     volunteers: 0,

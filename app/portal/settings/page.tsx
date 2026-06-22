@@ -1,12 +1,12 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Settings, Shield, Database, Bell, Key, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { adminSignOut } from '@/app/actions/auth';
+import { getCurrentUserProfile } from '@/lib/queries/user';
 
 export default async function AdminSettingsPage() {
-  const cookieStore = await cookies();
-  if (cookieStore.get('oks_admin_session')?.value !== 'authenticated') redirect('/login-portal');
+  const profile = await getCurrentUserProfile();
+  if (!profile || profile.role !== 'admin') redirect('/login-portal');
 
   const adminName = process.env.ADMIN_NAME || 'Administrator';
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@dlsl.edu.ph';

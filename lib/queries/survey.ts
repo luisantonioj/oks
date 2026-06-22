@@ -1,20 +1,23 @@
 //lib/queries/survey.ts
 import { createClient } from '@/lib/supabase/server';
-import { Survey, SurveyResponse } from '@/types/database';
+import { Survey, SurveyAnswers, SurveyQuestion, SurveyResponse } from '@/types/database';
 
-interface SurveyQuestion {
+type SurveyResponseWithContextRow = {
   id: string;
-  text: string;
-  type: 'text' | 'radio' | 'checkbox';
-  options?: string[];
-}
+  survey_id: string;
+  stakeholder_id: string;
+  answers: string;
+  created_at: string;
+  survey?: { questions?: string | SurveyQuestion[] | null } | null;
+  stakeholder?: { name?: string | null } | null;
+};
 
 export interface VolunteerResponseEntry {
   id: string;
   survey_id: string;
   stakeholder_id: string;
   stakeholder_name: string;
-  answers: Record<string, string | string[]>;
+  answers: SurveyAnswers;
   created_at: string;
   questions: SurveyQuestion[];
 }
@@ -76,7 +79,7 @@ export async function getStakeholderRespondedSurveyIds(stakeholderId: string): P
 function parseJson<T>(raw: unknown, fallback: T): T {
   try {
     return typeof raw === 'string' ? JSON.parse(raw) : (raw as T) ?? fallback;
-  } catch (_e) {
+  } catch {
     return fallback;
   }
 }
@@ -86,7 +89,7 @@ export interface DonationResponseEntry {
   survey_id: string;
   stakeholder_id: string;
   stakeholder_name: string;
-  answers: Record<string, string | string[]>;
+  answers: SurveyAnswers;
   created_at: string;
   questions: SurveyQuestion[];
 }
@@ -111,8 +114,10 @@ export async function getDonationResponsesForCrisis(crisisId: string): Promise<D
 
   if (error || !responses || responses.length === 0) return [];
 
-  return responses.map((r: any) => {
-    const answers = parseJson<Record<string, string | string[]>>(r.answers, {});
+  const rows = responses as SurveyResponseWithContextRow[];
+
+  return rows.map((r) => {
+    const answers = parseJson<SurveyAnswers>(r.answers, {});
     const resolvedName = (answers['__stake_name'] as string) || r.stakeholder?.name || 'Unknown';
     const questions = parseJson<SurveyQuestion[]>(r.survey?.questions, []);
     return {
@@ -147,8 +152,10 @@ export async function getVolunteerResponsesForCrisis(crisisId: string): Promise<
 
   if (error || !responses || responses.length === 0) return [];
 
-  return responses.map((r: any) => {
-    const answers = parseJson<Record<string, string | string[]>>(r.answers, {});
+  const rows = responses as SurveyResponseWithContextRow[];
+
+  return rows.map((r) => {
+    const answers = parseJson<SurveyAnswers>(r.answers, {});
     const resolvedName = (answers['__stake_name'] as string) || r.stakeholder?.name || 'Unknown';
     const questions = parseJson<SurveyQuestion[]>(r.survey?.questions, []);
     return {

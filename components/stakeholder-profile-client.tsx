@@ -1,7 +1,8 @@
 "use client";
 
 // components/stakeholder-profile-client.tsx
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { updateStakeholderProfile } from "@/app/actions/profile";
 
 interface ProfileData {
   name: string;
@@ -24,8 +25,9 @@ export function StakeholderProfileClient({ initialData }: Props) {
   const [editing, setEditing] = useState(false);
   const [data, setData] = useState<ProfileData>(initialData);
   const [draft, setDraft] = useState<ProfileData>(initialData);
-  const [saving, setSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const firstName = data.name.split(" ")[0];
 
@@ -36,17 +38,30 @@ export function StakeholderProfileClient({ initialData }: Props) {
   function handleCancel() {
     setDraft(data);
     setEditing(false);
+    setError(null);
   }
 
-  async function handleSave() {
-    setSaving(true);
-    // Simulate save delay (replace with real server action call)
-    await new Promise((r) => setTimeout(r, 600));
-    setData(draft);
-    setSaving(false);
-    setEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  function handleSave() {
+    setError(null);
+    startTransition(async () => {
+      const result = await updateStakeholderProfile({
+        name: draft.name,
+        age: draft.age ? parseInt(draft.age, 10) : null,
+        contact: draft.contact,
+        permanent_address: draft.permanent_address,
+        current_address: draft.current_address,
+      });
+
+      if (result.error) {
+        setError(result.error);
+      } else {
+        const now = new Date().toISOString();
+        setData({ ...draft, updated_at: now });
+        setEditing(false);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    });
   }
 
   const memberSince = new Date(data.created_at).toLocaleDateString("en-US", {
@@ -82,10 +97,10 @@ export function StakeholderProfileClient({ initialData }: Props) {
             </button>
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={isPending}
               className="text-sm font-semibold bg-foreground text-background px-4 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60"
             >
-              {saving ? "Saving…" : "Save Changes"}
+              {isPending ? "Saving…" : "Save Changes"}
             </button>
           </div>
         )}
@@ -94,6 +109,12 @@ export function StakeholderProfileClient({ initialData }: Props) {
       {saved && (
         <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3">
           <span className="text-green-600 dark:text-green-400 text-sm font-medium">✓ Profile updated successfully.</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-3">
+          <span className="text-destructive text-sm font-medium">✗ {error}</span>
         </div>
       )}
 

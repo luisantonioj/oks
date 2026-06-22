@@ -1,4 +1,4 @@
-//app/components/SOSButton.tsx
+// features/help-requests/SOSButton.tsx
 "use client";
 
 import { useState } from "react";
@@ -56,7 +56,7 @@ export function SOSButton({ crisisId, variant = "full" }: SOSButtonProps) {
           hover:bg-red-700 hover:scale-105
           active:scale-95 active:shadow-[0_0_0_2px_#fca5a5]
           transition-all duration-200 ease-out
-          ${isPressed ? "scale-95 bg-red-800" : ""}
+          ${isPressed ? "scale-95 opacity-80" : ""}
         `}
       >
         <span className="relative z-10 flex flex-col items-center gap-1">

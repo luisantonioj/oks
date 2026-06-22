@@ -1,79 +1,47 @@
 // app/actions/crisis.ts
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { logAction } from '@/lib/queries/audit';
-import { getCurrentUserProfile } from '@/lib/queries/user';
+import { ZodError } from 'zod';
+import { requireAnyRole } from '@/lib/auth/guards';
+import {
+  createCrisisForProfile,
+  deleteCrisisForProfile,
+  updateCrisisForProfile,
+  updateCrisisStatusForProfile,
+} from '@/lib/services/crisis-service';
+import {
+  crisisInputFromFormData,
+  crisisStatusSchema,
+  crisisUpdateInputFromFormData,
+} from '@/lib/validation/crisis';
 
 export type CrisisActionState = {
   error?: string;
   success?: boolean;
 };
 
-// app/actions/crisis.ts
+function validationErrorMessage(error: unknown) {
+  if (error instanceof ZodError) {
+    return error.issues[0]?.message ?? 'Invalid form data';
+  }
+
+  return 'Invalid form data';
+}
 
 export async function createCrisis(
   prevState: CrisisActionState, 
   formData: FormData
 ): Promise<CrisisActionState> {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
-    const supabase = await createClient();
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
 
-    const name = formData.get('name') as string;
-    const type = formData.get('type') as string;
-    const severity = formData.get('severity') as string;
-    const summary = formData.get('summary') as string;
-    const required_actions = formData.get('required_actions') as string;
-
-    const areasInput = formData.get('affected_areas') as string;
-    const affected_areas = areasInput 
-      ? areasInput.split(',').map(area => area.trim()).filter(Boolean) 
-      : [];
-
-    const features = {
-      survey:               formData.get("feature_survey")      === "on",
-      help_button:          formData.get("feature_help_button") === "on",
-      progress:             formData.get("feature_progress")    === "on",
-      donation:             formData.get("feature_donation")    === "on",
-      volunteer:            formData.get("feature_volunteer")   === "on",
-      notify_stakeholders:  formData.get("feature_notify")      === "on",
-      sound_alarm:          formData.get("feature_alarm")       === "on",
-      request_backup:       formData.get("feature_backup")      === "on",
-      lockdown_areas:       formData.get("feature_lockdown")    === "on",
-    };
-
-    if (!name || !type || !severity) {
-      return { error: 'Name, Type, and Severity are required.' };
-    }
-
-    const { data, error } = await supabase
-      .from('crisis')
-      .insert({
-        name,
-        type,
-        summary,
-        affected_areas,
-        severity,
-        required_actions,
-        features,
-        status: 'active',
-        office_id: profile.id
-      })
-      .select() 
-      .single();
-
-    if (error) {
-      console.error('Failed to create crisis:', error);
-      return { error: error.message || 'Failed to create crisis' };
-    }
-
-    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'CREATE_CRISIS', entity_type: 'crisis', entity_id: data.id, metadata: { name, type, severity } });
+    const input = crisisInputFromFormData(formData);
+    const result = await createCrisisForProfile(auth.profile, input);
+    if (result.error) return { error: result.error };
+    if (!result.data) return { error: 'Failed to create crisis' };
 
     revalidatePath('/office/crises');
     revalidatePath('/office/dashboard');
@@ -81,12 +49,15 @@ export async function createCrisis(
     revalidatePath('/stakeholder/dashboard');
     revalidatePath('/stakeholder/help-requests/new');
 
-    redirect(`/office/crises/${data.id}`);
+    redirect(`/office/crises/${result.data.id}`);
 
   } catch (error) {
     console.error('Unexpected error in createCrisis:', error);
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
       throw error; 
+    }
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
     }
     return { error: 'An unexpected error occurred' };
   }
@@ -97,133 +68,60 @@ export async function updateCrisis(
   formData: FormData
 ): Promise<CrisisActionState> {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
-    const supabase = await createClient();
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
 
-    const id = formData.get('id') as string;
-    if (!id) return { error: 'Crisis ID is missing' };
-
-    const name = formData.get('name') as string;
-    const type = formData.get('type') as string;
-    const severity = formData.get('severity') as string;
-    const summary = formData.get('summary') as string;
-    const required_actions = formData.get('required_actions') as string;
-
-    const areasInput = formData.get('affected_areas') as string;
-    const affected_areas = areasInput 
-      ? areasInput.split(',').map(area => area.trim()).filter(Boolean) 
-      : [];
-
-    const features = {
-      survey:               formData.get("feature_survey")      === "on",
-      help_button:          formData.get("feature_help_button") === "on",
-      progress:             formData.get("feature_progress")    === "on",
-      donation:             formData.get("feature_donation")    === "on",
-      volunteer:            formData.get("feature_volunteer")   === "on",
-      notify_stakeholders:  formData.get("feature_notify")      === "on",
-      sound_alarm:          formData.get("feature_alarm")       === "on",
-      request_backup:       formData.get("feature_backup")      === "on",
-      lockdown_areas:       formData.get("feature_lockdown")    === "on",
-    };
-
-    if (!name || !type || !severity) return { error: 'Name, Type, and Severity are required.' };
-
-    const { error } = await supabase
-      .from('crisis')
-      .update({
-        name,
-        type,
-        summary,
-        affected_areas,
-        severity,
-        required_actions,
-        features,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id); // Ensure it only updates this specific crisis!
-
-    if (error) return { error: error.message };
-
-    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'UPDATE_CRISIS', entity_type: 'crisis', entity_id: id, metadata: { name, type, severity } });
+    const input = crisisUpdateInputFromFormData(formData);
+    const result = await updateCrisisForProfile(auth.profile, input);
+    if (result.error) return { error: result.error };
 
     revalidatePath('/office/crises');
-    revalidatePath(`/office/crises/${id}`);
+    revalidatePath(`/office/crises/${input.id}`);
     revalidatePath('/office/dashboard');
 
     return { success: true };
   } catch (error) {
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
+    }
     return { error: 'An unexpected error occurred during update' };
   }
 }
 
-// Update Crisis Status (Kept unchanged)
 export async function updateCrisisStatus(id: string, status: string, resolution_notes?: string) {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
 
-    const supabase = await createClient();
-    
-    const updateData: any = { status, updated_at: new Date().toISOString() };
-    if (resolution_notes) {
-      updateData.resolution_notes = resolution_notes;
-    }
-
-    const { error } = await supabase
-      .from('crisis')
-      .update(updateData)
-      .eq('id', id);
-
-    if (error) return { error: error.message };
-
-    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'UPDATE_CRISIS_STATUS', entity_type: 'crisis', entity_id: id, metadata: { status } });
+    const parsedStatus = crisisStatusSchema.parse(status);
+    const result = await updateCrisisStatusForProfile(auth.profile, id, parsedStatus, resolution_notes);
+    if (result.error) return { error: result.error };
 
     revalidatePath('/office/crises');
     revalidatePath(`/office/crises/${id}`);
     revalidatePath('/office/dashboard');
     return { success: true };
   } catch (error) {
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
+    }
     return { error: 'An unexpected error occurred' };
   }
 }
 
 export async function deleteCrisis(id: string) {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
 
-    const supabase = await createClient();
-    
-    // ADDED .select() to verify the row was actually deleted
-    const { data, error } = await supabase
-      .from('crisis')
-      .delete()
-      .eq('id', id)
-      .select();
-
-    if (error) return { error: error.message };
-
-    // NEW: If data is empty, RLS blocked it or the ID didn't match.
-    if (!data || data.length === 0) {
-      return { 
-        error: 'Delete blocked by Database. Please check your Supabase RLS Policies for the crisis table.' 
-      };
-    }
-
-    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'DELETE_CRISIS', entity_type: 'crisis', entity_id: id });
+    const result = await deleteCrisisForProfile(auth.profile, id);
+    if (result.error) return { error: result.error };
 
     revalidatePath('/office/crises');
     revalidatePath('/office/dashboard');
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { error: 'An unexpected error occurred while deleting' };
   }
 }

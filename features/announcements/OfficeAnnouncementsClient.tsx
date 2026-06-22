@@ -1,4 +1,4 @@
-// app/(protected)/office/announcements/AnnouncementsClient.tsx
+// features/announcements/OfficeAnnouncementsClient.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -14,18 +14,17 @@ function PriorityBadge({ priority }: { priority: string }) {
   );
 }
 
-interface AnnouncementsClientProps {
+interface OfficeAnnouncementsClientProps {
   initialAnnouncements: Announcement[];
   crises: Crisis[];
 }
 
-export default function AnnouncementsClient({ initialAnnouncements, crises }: AnnouncementsClientProps) {
+export default function OfficeAnnouncementsClient({ initialAnnouncements, crises }: OfficeAnnouncementsClientProps) {
   const [showCompose, setShowCompose] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filterCrisis, setFilterCrisis] = useState("all");
   
-  // NEW: Track if we are editing an existing announcement
   const [editId, setEditId] = useState<string | null>(null);
   
   const [form, setForm] = useState({ title: "", content: "", crisis_id: "", priority: "normal" });

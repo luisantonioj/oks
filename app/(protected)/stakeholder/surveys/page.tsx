@@ -3,7 +3,11 @@ import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getSurveys, getStakeholderRespondedSurveyIds } from '@/lib/queries/survey';
 import { getCrises } from '@/lib/queries/crisis';
 import { redirect } from 'next/navigation';
-import { StakeholderSurveysClient, MappedSurvey, SurveyType } from './StakeholderSurveysClient';
+import {
+  StakeholderSurveysClient,
+  MappedSurvey,
+  SurveyType,
+} from '@/features/surveys/StakeholderSurveysClient';
 
 export default async function StakeholderSurveysPage() {
   const profile = await getCurrentUserProfile();

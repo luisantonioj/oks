@@ -1,7 +1,7 @@
 // app/(protected)/office/announcements/page.tsx
 import { getAnnouncements } from "@/lib/queries/announcement";
 import { getActiveCrises } from "@/lib/queries/crisis";
-import AnnouncementsClient from "./AnnouncementsClient";
+import OfficeAnnouncementsClient from "@/features/announcements/OfficeAnnouncementsClient";
 
 export default async function OfficeAnnouncementsPage() {
   // Fetch real data from the database securely on the server
@@ -9,7 +9,7 @@ export default async function OfficeAnnouncementsPage() {
   const crises = await getActiveCrises();
 
   return (
-    <AnnouncementsClient 
+    <OfficeAnnouncementsClient 
       initialAnnouncements={announcements} 
       crises={crises} 
     />

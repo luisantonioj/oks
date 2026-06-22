@@ -20,6 +20,22 @@ export async function sendMessage(formData: FormData) {
     return { error: 'Unauthorized.' };
   }
 
+  // 1.5 Verify authorization: if stakeholder, must own the help request
+  const { data: helpRequest, error: reqError } = await supabase
+    .from('help_request')
+    .select('stakeholder_id')
+    .eq('id', help_request_id)
+    .single();
+
+  if (reqError || !helpRequest) {
+    return { error: 'Help request not found.' };
+  }
+
+  const userRole = user.app_metadata?.role;
+  if (userRole === 'stakeholder' && helpRequest.stakeholder_id !== user.id) {
+    return { error: 'Unauthorized.' };
+  }
+
   let sender_name: string | undefined;
     if (sender_role === 'office') {
       const { data: office } = await supabase

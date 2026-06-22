@@ -2,7 +2,7 @@
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getInboxThreads } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';
-import { InboxThreadCard } from '@/components/InboxThreadCard';
+import { InboxThreadCard } from '@/features/inbox/InboxThreadCard';
 import { MessageSquare } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 
@@ -14,16 +14,20 @@ export default async function OfficeInboxPage() {
 
   const supabase = await createClient();
 
-  const threadsWithNames = await Promise.all(
-    threads.map(async (thread: any) => {
-      const { data: stakeholder } = await supabase
-        .from('stakeholder')
-        .select('name')
-        .eq('id', thread.stakeholder_id)
-        .single();
-      return { ...thread, stakeholderName: stakeholder?.name ?? 'Unknown' };
-    })
-  );
+  const stakeholderIds = [...new Set(threads.map((t) => t.stakeholder_id))];
+  const stakeholderNameMap = new Map<string, string>();
+  if (stakeholderIds.length > 0) {
+    const { data: stakeholders } = await supabase
+      .from('stakeholder')
+      .select('id, name')
+      .in('id', stakeholderIds);
+    stakeholders?.forEach((s) => stakeholderNameMap.set(s.id, s.name));
+  }
+
+  const threadsWithNames = threads.map((thread) => ({
+    ...thread,
+    stakeholderName: stakeholderNameMap.get(thread.stakeholder_id) ?? 'Unknown'
+  }));
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
@@ -47,7 +51,7 @@ export default async function OfficeInboxPage() {
             </p>
           </div>
         ) : (
-          threadsWithNames.map((thread: any) => {
+          threadsWithNames.map((thread) => {
             const messages = thread.message ?? [];
             const lastMessage = messages.length > 0
               ? messages[messages.length - 1]

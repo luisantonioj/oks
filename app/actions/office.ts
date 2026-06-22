@@ -4,7 +4,14 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserProfile } from '@/lib/queries/user';
 
-export async function updateEmergencyContacts(officeId: string, contacts: any[]) {
+interface EmergencyContactInput {
+  label: string;
+  number: string;
+  note: string;
+  icon: string;
+}
+
+export async function updateEmergencyContacts(officeId: string, contacts: EmergencyContactInput[]) {
   if (!officeId) return { error: "Office ID is missing" };
 
   const profile = await getCurrentUserProfile();
@@ -27,7 +34,7 @@ export async function updateEmergencyContacts(officeId: string, contacts: any[])
 
   // 2. Insert the fresh list of contacts
   if (contacts && contacts.length > 0) {
-    const newContacts = contacts.map(contact => ({
+    const newContacts = contacts.map((contact) => ({
       office_id: officeId,
       label: contact.label,
       number: contact.number,

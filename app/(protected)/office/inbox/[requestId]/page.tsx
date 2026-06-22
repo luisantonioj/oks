@@ -2,8 +2,8 @@
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getMessages } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';
-import { ChatInput } from '@/components/ChatInput';
-import { InboxThreadClient } from '@/components/InboxThreadClient';
+import { ChatInput } from '@/features/inbox/ChatInput';
+import { InboxThreadClient } from '@/features/inbox/InboxThreadClient';
 import { ArrowLeft, MapPin, AlertTriangle, User, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';

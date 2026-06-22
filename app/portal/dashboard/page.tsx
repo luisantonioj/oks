@@ -1,22 +1,22 @@
 // app/portal/dashboard/page.tsx
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getAllOffices, getAllStakeholders } from "@/lib/queries/user";
+import { getCurrentUserProfile } from "@/lib/queries/user";
+import { getAllOfficesForAdmin, getAllStakeholdersForAdmin } from "@/lib/queries/admin-users";
 import { getDashboardStats, getCrisisBreakdown } from "@/lib/queries/crisis";
 import { getHelpRequestBreakdown } from "@/lib/queries/help-request";
 import { getRecentAuditLogs } from "@/lib/queries/audit";
+import { Office } from "@/types/database";
 
 export default async function AdminDashboard() {
-  const cookieStore = await cookies();
-  const adminSession = cookieStore.get("oks_admin_session")?.value;
-  if (adminSession !== "authenticated") {
+  const profile = await getCurrentUserProfile();
+  if (!profile || profile.role !== "admin") {
     redirect("/login-portal");
   }
 
   const [offices, stakeholders, stats, crisisBreakdown, helpBreakdown, recentLogs] = await Promise.all([
-    getAllOffices(),
-    getAllStakeholders(),
+    getAllOfficesForAdmin(),
+    getAllStakeholdersForAdmin(),
     getDashboardStats(),
     getCrisisBreakdown(),
     getHelpRequestBreakdown(),
@@ -227,7 +227,7 @@ export default async function AdminDashboard() {
                 No office accounts found.
               </div>
             ) : (
-              offices.slice(0, 5).map((officer: any) => (
+              (offices as Office[]).slice(0, 5).map((officer) => (
                 <div key={officer.id} className="px-5 py-3 grid grid-cols-[1fr_180px_80px_60px] gap-3 items-center hover:bg-muted/20 transition-colors">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-7 h-7 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-[11px] font-bold text-blue-600 dark:text-blue-400 flex-shrink-0">

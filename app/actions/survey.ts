@@ -3,57 +3,51 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { logAction } from '@/lib/queries/audit';
-import { getCurrentUserProfile } from '@/lib/queries/user';
+import { ZodError } from 'zod';
+import { requireAnyRole } from '@/lib/auth/guards';
+import {
+  closeSurveyForProfile,
+  createSurveyForProfile,
+  submitSurveyResponseForStakeholder,
+} from '@/lib/services/survey-service';
+import {
+  createSurveyInputFromFormData,
+  surveyResponseInputFromFormData,
+} from '@/lib/validation/survey';
 
 type SurveyActionState = { error?: string; success?: boolean; message?: string } | null;
+
+function validationErrorMessage(error: unknown) {
+  if (error instanceof ZodError) {
+    return error.issues[0]?.message ?? 'Invalid form data';
+  }
+
+  if (error instanceof Error && error.message === 'Invalid questions format') {
+    return error.message;
+  }
+
+  return 'Invalid form data';
+}
 
 export async function createSurvey(
   prevState: SurveyActionState,
   formData: FormData
 ): Promise<SurveyActionState> {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
-    const supabase = await createClient();
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
 
-    const title = formData.get('title') as string;
-    const crisis_id = formData.get('crisis_id') as string;
-    const questionsRaw = formData.get('questions') as string;
-
-    const survey_type = formData.get('survey_type') as string;
-    if (!title || !crisis_id || !questionsRaw || !survey_type) 
-      return { error: 'Title, type, crisis, and questions are required' };
-
-    let questions;
-    try {
-      questions = JSON.parse(questionsRaw);
-    } catch {
-      return { error: 'Invalid questions format' };
-    }
-
-    const validQuestions = questions.filter((q: { text: string }) => q.text?.trim());
-    if (validQuestions.length === 0) return { error: 'At least one question with text is required' };
-
-    const { error } = await supabase.from('survey').insert({
-      title,
-      survey_type,
-      crisis_id,
-      questions: JSON.stringify(validQuestions),
-      office_id: profile.id,
-      status: 'active',
-    });
-
-    if (error) return { error: error.message || 'Failed to create survey' };
-
-    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'CREATE_SURVEY', entity_type: 'survey', metadata: { title, survey_type, crisis_id } });
+    const input = createSurveyInputFromFormData(formData);
+    const result = await createSurveyForProfile(auth.profile, input);
+    if (result.error) return { error: result.error };
 
     revalidatePath('/office/surveys');
     revalidatePath('/stakeholder/surveys');
     return { success: true, message: 'Survey created and published successfully' };
-  } catch {
+  } catch (error) {
+    if (error instanceof ZodError || error instanceof Error) {
+      return { error: validationErrorMessage(error) };
+    }
     return { error: 'An unexpected error occurred' };
   }
 }
@@ -69,75 +63,28 @@ export async function submitSurveyResponse(
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return { error: 'Unauthorized' };
 
-    const survey_id = formData.get('survey_id') as string;
-    if (!survey_id) return { error: 'Survey ID is required' };
-
-    const { data: surveyData } = await supabase
-      .from('survey')
-      .select('status')
-      .eq('id', survey_id)
-      .single();
-
-    if (!surveyData || surveyData.status !== 'active')
-      return { error: 'This survey is no longer accepting responses.' };
-
-    const { data: existing } = await supabase
-      .from('survey_response')
-      .select('id')
-      .eq('survey_id', survey_id)
-      .eq('stakeholder_id', user.id)
-      .maybeSingle();
-
-    if (existing) return { error: 'You have already responded to this survey' };
-
-    const answers: Record<string, string | string[]> = {};
-    formData.forEach((value, key) => {
-      if (key.startsWith('q_')) {
-        const questionId = key.replace('q_', '');
-        const existing = answers[questionId];
-        if (existing) {
-          answers[questionId] = Array.isArray(existing)
-            ? [...existing, value as string]
-            : [existing as string, value as string];
-        } else {
-          answers[questionId] = value as string;
-        }
-      }
-    });
-
-    const stakeName = formData.get('__stake_name') as string | null;
-    if (stakeName) answers['__stake_name'] = stakeName;
-
-    const { error } = await supabase.from('survey_response').insert({
-      survey_id,
-      stakeholder_id: user.id,
-      answers: JSON.stringify(answers),
-    });
-
-    if (error) return { error: error.message || 'Failed to submit response' };
-
-    void logAction({ actor_id: user.id, actor_role: 'stakeholder', action: 'SUBMIT_SURVEY_RESPONSE', entity_type: 'survey_response', entity_id: survey_id });
+    const input = surveyResponseInputFromFormData(formData);
+    const result = await submitSurveyResponseForStakeholder(user.id, input);
+    if (result.error) return { error: result.error };
 
     revalidatePath('/stakeholder/surveys');
-    revalidatePath(`/stakeholder/surveys/${survey_id}`);
+    revalidatePath(`/stakeholder/surveys/${input.survey_id}`);
     return { success: true };
-  } catch {
+  } catch (error) {
+    if (error instanceof ZodError || error instanceof Error) {
+      return { error: validationErrorMessage(error) };
+    }
     return { error: 'An unexpected error occurred' };
   }
 }
 
 export async function closeSurvey(surveyId: string) {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
 
-    const supabase = await createClient();
-    const { error } = await supabase.from('survey').update({ status: 'closed' }).eq('id', surveyId);
-    if (error) return { error: error.message };
-
-    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'CLOSE_SURVEY', entity_type: 'survey', entity_id: surveyId });
+    const result = await closeSurveyForProfile(auth.profile, surveyId);
+    if (result.error) return { error: result.error };
 
     revalidatePath('/office/surveys');
     revalidatePath(`/office/surveys/${surveyId}`);

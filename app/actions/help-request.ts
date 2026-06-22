@@ -3,10 +3,26 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { logAction } from '@/lib/queries/audit';
-import { getCurrentUserProfile } from '@/lib/queries/user';
+import { ZodError } from 'zod';
+import { requireAnyRole } from '@/lib/auth/guards';
+import {
+  createHelpRequestForStakeholder,
+  updateHelpRequestStatusForProfile,
+} from '@/lib/services/help-request-service';
+import {
+  helpRequestInputFromFormData,
+  helpRequestStatusSchema,
+} from '@/lib/validation/help-request';
 
 type HelpRequestState = { error?: string; success?: boolean; message?: string } | null;
+
+function validationErrorMessage(error: unknown) {
+  if (error instanceof ZodError) {
+    return error.issues[0]?.message ?? 'Invalid form data';
+  }
+
+  return 'Invalid form data';
+}
 
 export async function createHelpRequest(
   prevState: HelpRequestState,
@@ -18,30 +34,9 @@ export async function createHelpRequest(
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return { error: 'Unauthorized' };
 
-    const location = formData.get('location') as string;
-    const crisis_id = formData.get('crisis_id') as string;
-    const notes = formData.get('notes') as string;
-
-    if (!location || !crisis_id) {
-      return { error: 'Location and Crisis ID are required' };
-    }
-
-    const { error } = await supabase
-      .from('help_request')
-      .insert({
-        stakeholder_id: user.id,
-        crisis_id,
-        location,
-        notes,
-        status: 'pending',
-      });
-
-    if (error) {
-      console.error('Failed to create help request:', error);
-      return { error: error.message || 'Failed to submit request' };
-    }
-
-    void logAction({ actor_id: user.id, actor_role: 'stakeholder', action: 'SUBMIT_HELP_REQUEST', entity_type: 'help_request', metadata: { crisis_id, location } });
+    const input = helpRequestInputFromFormData(formData);
+    const result = await createHelpRequestForStakeholder(user.id, input);
+    if (result.error) return { error: result.error };
 
     revalidatePath('/stakeholder/help-requests');
     revalidatePath('/stakeholder/inbox');
@@ -51,36 +46,30 @@ export async function createHelpRequest(
     return { success: true, message: 'Help request submitted successfully' };
   } catch (error) {
     console.error('Unexpected error in createHelpRequest:', error);
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
+    }
     return { error: 'An unexpected error occurred' };
   }
 }
 
 export async function updateHelpRequestStatus(id: string, status: 'pending' | 'resolved', office_id?: string) {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
 
-    const supabase = await createClient();
-    
-    const updateData: { status: string; office_id?: string } = { status };
-    if (office_id) updateData.office_id = office_id;
-
-    const { error } = await supabase
-      .from('help_request')
-      .update(updateData)
-      .eq('id', id);
-
-    if (error) return { error: error.message };
-
-    void logAction({ actor_id: profile.id, actor_role: profile.role, action: 'UPDATE_HELP_REQUEST_STATUS', entity_type: 'help_request', entity_id: id, metadata: { status } });
+    const parsedStatus = helpRequestStatusSchema.parse(status);
+    const result = await updateHelpRequestStatusForProfile(auth.profile, id, parsedStatus, office_id);
+    if (result.error) return { error: result.error };
 
     revalidatePath('/office/dashboard');
     revalidatePath('/office/inbox');
     revalidatePath('/stakeholder/inbox');
     return { success: true };
   } catch (error) {
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
+    }
     return { error: 'An unexpected error occurred' };
   }
 }

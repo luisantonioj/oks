@@ -54,7 +54,6 @@ interface Props {
   helpRequests?: HelpRequestPin[];
 }
 
-const COORD_REGEX = /^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/;
 const PH_CENTER: [number, number] = [12.8797, 121.774];
 
 // Local geocoding function removed in favor of shared geocoding utility

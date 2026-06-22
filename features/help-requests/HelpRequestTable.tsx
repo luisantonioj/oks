@@ -1,4 +1,4 @@
-// components/HelpRequestTable.tsx
+// features/help-requests/HelpRequestTable.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Clock, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 const RequestLocationMap = dynamic(
-  () => import("@/components/RequestLocationMap").then((m) => m.RequestLocationMap),
+  () => import("@/features/help-requests/RequestLocationMap").then((m) => m.RequestLocationMap),
   { ssr: false, loading: () => <div className="h-[180px] rounded-md border border-input bg-muted/30 animate-pulse" /> }
 );
 
@@ -62,7 +62,7 @@ function formatDate(dateStr: string) {
 
 export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestTableProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   // ... (keep existing handleStatusChange and empty state return)

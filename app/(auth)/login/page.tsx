@@ -1,8 +1,6 @@
 // app/(auth)/login/page.tsx
 import { LoginForm } from "@/components/login-form";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -19,17 +17,12 @@ export default async function LoginPage({
     redirect(`/callback?code=${params.code}`);
   }
 
-  // Session Checks — UNCHANGED
-  const cookieStore = await cookies();
-  if (cookieStore.get("oks_admin_session")?.value === "authenticated") {
-    redirect("/portal/dashboard");
-  }
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const profile = await getCurrentUserProfile();
-    if (profile?.role === "office") redirect("/office/dashboard");
-    if (profile?.role === "stakeholder") redirect("/stakeholder/dashboard");
+  // Session Checks
+  const profile = await getCurrentUserProfile();
+  if (profile) {
+    if (profile.role === "admin") redirect("/portal/dashboard");
+    if (profile.role === "office") redirect("/office/dashboard");
+    if (profile.role === "stakeholder") redirect("/stakeholder/dashboard");
   }
 
   return (
@@ -130,7 +123,7 @@ export default async function LoginPage({
             </p>
             <div className="flex gap-2">
               <div className="flex-1 bg-destructive text-white text-xs font-semibold py-2.5 rounded-lg text-center">I Need Help</div>
-              <div className="flex-1 bg-muted text-foreground text-xs font-semibold py-2.5 rounded-lg text-center">I'm Safe</div>
+              <div className="flex-1 bg-muted text-foreground text-xs font-semibold py-2.5 rounded-lg text-center">I&apos;m Safe</div>
             </div>
           </div>
 

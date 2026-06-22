@@ -1,5 +1,6 @@
 //lib/queries/message.ts
 import { createClient } from '@/lib/supabase/server';
+import { HelpRequestStatus } from '@/types/database';
 
 export interface Message {
   id: string;
@@ -9,6 +10,24 @@ export interface Message {
   sender_name?: string;
   content: string;
   created_at: string;
+}
+
+export interface InboxMessage {
+  id: string;
+  content: string;
+  created_at: string;
+  sender_role: 'stakeholder' | 'office';
+  sender_id: string;
+}
+
+export interface InboxThread {
+  id: string;
+  stakeholder_id: string;
+  crisis_id: string;
+  location: string;
+  status: HelpRequestStatus;
+  created_at: string;
+  message?: InboxMessage[];
 }
 
 export async function getMessages(helpRequestId: string): Promise<Message[]> {
@@ -28,7 +47,7 @@ export async function getMessages(helpRequestId: string): Promise<Message[]> {
   return data || [];
 }
 
-export async function getInboxThreads(userId: string, role: 'stakeholder' | 'office') {
+export async function getInboxThreads(userId: string, role: 'stakeholder' | 'office'): Promise<InboxThread[]> {
   const supabase = await createClient();
 
   // Start the base query
@@ -38,7 +57,6 @@ export async function getInboxThreads(userId: string, role: 'stakeholder' | 'off
     .order('created_at', { ascending: false });
 
   // If it's a stakeholder, strictly show their own requests.
-  // If it's an office, we DO NOT filter by office_id so they can see all incoming requests.
   if (role === 'stakeholder') {
     query = query.eq('stakeholder_id', userId);
   }
@@ -50,23 +68,5 @@ export async function getInboxThreads(userId: string, role: 'stakeholder' | 'off
     return [];
   }
 
-  const messages: Message[] = data || [];
-  const officeIds = [...new Set(messages.filter(m => m.sender_role === 'office').map(m => m.sender_id))];
-
-  if (officeIds.length > 0) {
-    const { data: offices } = await supabase
-      .from('office')
-      .select('id, office_name')
-      .in('id', officeIds);
-    if (offices) {
-      const nameMap = new Map(offices.map(o => [o.id, o.office_name as string]));
-      return messages.map(m =>
-        m.sender_role === 'office'
-          ? { ...m, sender_name: nameMap.get(m.sender_id) ?? 'Office' }
-          : m
-      );
-    }
-  }
-
-  return messages;
+  return (data || []) as InboxThread[];
 }

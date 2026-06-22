@@ -19,7 +19,7 @@ type FormState = {
   message?: string;
 };
 
-// ── ADMIN LOGIN (Hardcoded check with secure cookie - NO SUPABASE) ──
+// ── ADMIN LOGIN (Supabase Auth checking role === 'admin') ──
 export async function adminSignIn(
   prevState: FormState,
   formData: FormData
@@ -34,31 +34,27 @@ export async function adminSignIn(
       return { error: 'Email and password required' };
     }
 
-    // Load admin credentials from environment variables
-    const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    const supabase = await createClient();
 
-    if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-      console.error('[adminSignIn] ADMIN_EMAIL or ADMIN_PASSWORD not set in environment');
-      return { error: 'Server configuration error. Please contact support.' };
-    }
-
-    if (email.toLowerCase().trim() !== ADMIN_EMAIL.toLowerCase() || password !== ADMIN_PASSWORD) {
-      console.log('[adminSignIn] Invalid credentials provided');
-      return { error: 'Invalid admin credentials' };
-    }
-
-    // Set cookie for admin session (NO Supabase involved)
-    const cookieStore = await cookies();
-    cookieStore.set('oks_admin_session', 'authenticated', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24, // 24 hours
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    console.log('[adminSignIn] ✓ Admin authenticated, cookie set, redirecting...');
+    if (error || !data.user) {
+      console.error('[adminSignIn] Auth error:', error);
+      return { error: 'Invalid login credentials' };
+    }
+
+    // Check if the user is designated as admin in app_metadata
+    const role = data.user.app_metadata?.role;
+    if (role !== 'admin') {
+      console.error('[adminSignIn] User is not an admin, actual role:', role);
+      await supabase.auth.signOut();
+      return { error: 'Unauthorized: Admin access required' };
+    }
+
+    console.log('[adminSignIn] ✓ Admin authenticated, redirecting...');
 
     // Redirect to admin dashboard
     redirect('/portal/dashboard');
@@ -71,6 +67,7 @@ export async function adminSignIn(
     return { error: 'An unexpected error occurred' };
   }
 }
+
 
 // ── OFFICE LOGIN ──
 export async function officeSignIn(
@@ -269,6 +266,8 @@ export async function signOut() {
 
 // ── ADMIN SIGN OUT ──
 export async function adminSignOut() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
   const cookieStore = await cookies();
   cookieStore.delete('oks_admin_session');
   redirect('/login-portal');
@@ -282,11 +281,10 @@ export async function createOffice(
   try {
     console.log('[createOffice] Starting office creation...');
 
-    // Verify admin session via cookie
-    const cookieStore = await cookies();
-    const adminSession = cookieStore.get('oks_admin_session')?.value;
+    // Verify admin session via Supabase profile
+    const profile = await getCurrentUserProfile();
 
-    if (adminSession !== 'authenticated') {
+    if (!profile || profile.role !== 'admin') {
       console.error('[createOffice] Unauthorized access attempt');
       return { error: 'Unauthorized: Admin only' };
     }

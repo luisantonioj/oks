@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SurveyAnswers } from '@/types/database';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -240,6 +241,59 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
           </div>
         ))}
       </div>
+
+      {/* Donation Pledges & Receipts Auditing Section */}
+      {survey.survey_type === 'donation' && (
+        <div className="space-y-4 pt-4 border-t border-border">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+            <HeartHandshake className="h-4 w-4 text-pink-500" />Received Pledges & Proof of Payments
+          </h2>
+          <div className="bg-card border border-border rounded-lg overflow-hidden shadow-sm">
+            <div className="divide-y divide-border">
+              {responses.length === 0 ? (
+                <p className="text-sm text-muted-foreground p-5 text-center italic">No pledges received yet.</p>
+              ) : (
+                responses.map((r) => {
+                  let ans: SurveyAnswers = {};
+                  try {
+                    ans = typeof r.answers === 'string' ? JSON.parse(r.answers) : (r.answers || {});
+                  } catch {}
+
+                  const receiptAnswer = ans['__receipt'];
+                  const nameAnswer = ans['__stake_name'];
+                  const receiptUrl = typeof receiptAnswer === 'string' ? receiptAnswer : undefined;
+                  const donorName = typeof nameAnswer === 'string' ? nameAnswer : 'Anonymous Donor';
+
+                  return (
+                    <div key={r.id} className="p-4 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{donorName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Submitted on {new Date(r.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <div>
+                        {receiptUrl ? (
+                          <a 
+                            href={receiptUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-pink-600 hover:text-pink-700 dark:text-pink-400 border border-pink-200 dark:border-pink-900 bg-pink-50 dark:bg-pink-950/20 px-3 py-1.5 rounded-lg hover:bg-pink-100 transition-colors"
+                          >
+                            View Receipt
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">No receipt uploaded</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,8 +2,8 @@
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getAllHelpRequests } from '@/lib/queries/help-request';
 import { redirect } from 'next/navigation';
-import { HelpRequestTable } from '@/components/HelpRequestTable';
-import { HelpRequestsRealtimeWatcher } from '@/components/HelpRequestsRealtimeWatcher';
+import { HelpRequestTable } from '@/features/help-requests/HelpRequestTable';
+import { HelpRequestsRealtimeWatcher } from '@/features/help-requests/HelpRequestsRealtimeWatcher';
 import { AlertTriangle, Activity } from 'lucide-react';
 
 export default async function OfficeHelpRequestsPage() {

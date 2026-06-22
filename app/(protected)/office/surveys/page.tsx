@@ -3,7 +3,7 @@ import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getSurveys, getSurveyResponseCountMap } from '@/lib/queries/survey';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { OfficeSurveysClient } from './OfficeSurveysClient';
+import { OfficeSurveysClient } from '@/features/surveys/OfficeSurveysClient';
 
 export default async function OfficeSurveysPage() {
   const profile = await getCurrentUserProfile();

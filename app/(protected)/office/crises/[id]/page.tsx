@@ -117,7 +117,7 @@ export default async function CrisisDetailPage({ params }: { params: Promise<{ i
         {crisis.affected_areas && crisis.affected_areas.length > 0 && (
           <AffectedAreasMapLoader
             affectedAreas={crisis.affected_areas}
-            helpRequests={(crisis.help_requests || []).map((r: any) => ({
+            helpRequests={(crisis.help_requests || []).map((r) => ({
               id: r.id,
               location: r.location ?? "",
               status: r.status,

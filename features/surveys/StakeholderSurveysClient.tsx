@@ -1,4 +1,4 @@
-// app/(protected)/stakeholder/surveys/StakeholderSurveysClient.tsx
+// features/surveys/StakeholderSurveysClient.tsx
 "use client";
 
 import { useState } from "react";

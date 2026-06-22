@@ -1,4 +1,4 @@
-//components/HelpRequestForm.tsx
+// features/help-requests/HelpRequestForm.tsx
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
@@ -11,7 +11,7 @@ import { AlertTriangle, MapPin, FileText, Loader2, LocateFixed } from "lucide-re
 import { Crisis } from "@/types/database";
 
 const LocationPickerMap = dynamic(
-  () => import("@/components/LocationPickerMap").then((m) => m.LocationPickerMap),
+  () => import("@/features/help-requests/LocationPickerMap").then((m) => m.LocationPickerMap),
   { ssr: false, loading: () => <div className="h-[260px] rounded-md border border-input bg-muted/30 animate-pulse" /> }
 );
 

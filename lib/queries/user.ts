@@ -2,7 +2,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { UserProfile, UserRole } from '@/types/user';
-import { cookies } from 'next/headers';
 
 // Get current authenticated user with role information
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
@@ -167,56 +166,6 @@ export async function getOfficeProfile(userId: string) {
 
   if (error) throw error;
   return data;
-}
-
-// Admin-only: Get all offices
-export async function getAllOffices() {
-  const cookieStore = await cookies();
-  const adminSession = cookieStore.get('oks_admin_session')?.value;
-
-  if (adminSession !== 'authenticated') {
-    throw new Error('Unauthorized: Admin only');
-  }
-
-  try {
-    const adminSupabase = createAdminClient();
-    
-    const { data, error } = await adminSupabase
-      .from('office')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data ?? [];
-  } catch (error) {
-    console.error("Backend not connected yet. Returning empty offices for UI.", error);
-    return [];
-  }
-}
-
-// Admin-only: Get all stakeholders
-export async function getAllStakeholders() {
-  const cookieStore = await cookies();
-  const adminSession = cookieStore.get('oks_admin_session')?.value;
-
-  if (adminSession !== 'authenticated') {
-    throw new Error('Unauthorized: Admin only');
-  }
-
-  try {
-    const adminSupabase = createAdminClient();
-    
-    const { data, error } = await adminSupabase
-      .from('stakeholder')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data ?? [];
-  } catch (error) {
-    console.error("Backend not connected yet. Returning empty stakeholders for UI.", error);
-    return [];
-  }
 }
 
 // Delete user (self-delete for office/stakeholder; admin can delete others)

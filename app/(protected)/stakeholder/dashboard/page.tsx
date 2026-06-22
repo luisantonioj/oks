@@ -5,7 +5,24 @@ import { getAnnouncements } from "@/lib/queries/announcement";
 import { getSurveys, getStakeholderRespondedSurveyIds } from "@/lib/queries/survey";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { SOSButton } from "@/components/SOSButton";
+import { SOSButton } from "@/features/help-requests/SOSButton";
+import { createClient } from "@/lib/supabase/server";
+
+interface EmergencyContactCard {
+  label: string;
+  number: string;
+  note: string;
+  icon: string;
+  color: string;
+  numColor: string;
+}
+
+interface EmergencyContactRow {
+  label: string;
+  number: string;
+  note: string;
+  icon: string;
+}
 
 export default async function StakeholderDashboard() {
   const profile = await getCurrentUserProfile();
@@ -13,17 +30,21 @@ export default async function StakeholderDashboard() {
     redirect("/login");
   }
 
+  const supabase = await createClient();
+
   // Fetch all dashboard data concurrently
   const [
     activeCrises,
     allAnnouncements,
     allActiveSurveys,
-    respondedSurveyIds
+    respondedSurveyIds,
+    { data: dbContacts }
   ] = await Promise.all([
     getActiveCrises(),
     getAnnouncements(),
     getSurveys({ status: 'active' }),
-    getStakeholderRespondedSurveyIds(profile.id)
+    getStakeholderRespondedSurveyIds(profile.id),
+    supabase.from('emergency_contact').select('*').order('created_at', { ascending: true })
   ]);
 
   const name = profile.name ?? "Stakeholder";
@@ -134,25 +155,51 @@ export default async function StakeholderDashboard() {
         </div>
         <div className="p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[
-              { label: "DLSL Security Office",    number: "109",            note: "On-campus security & emergency dispatch",       icon: "🏫", color: "bg-blue-500/10 border-blue-500/20",      numColor: "text-blue-600 dark:text-blue-400"   },
-              { label: "DLSL Health Services",    number: "110",            note: "Medical assistance & first aid on campus",      icon: "🏥", color: "bg-green-500/10 border-green-500/20",    numColor: "text-green-600 dark:text-green-400" },
-              { label: "ISESSO Hotline",          number: "112",            note: "Institutional Safety & Emergency Services",     icon: "🛡️", color: "bg-orange-500/10 border-orange-500/20",  numColor: "text-orange-600 dark:text-orange-400" },
-              { label: "Lipa City Fire Station",  number: "(043) 756-2873", note: "Fire emergencies in Lipa City",                icon: "🚒", color: "bg-red-500/10 border-red-500/20",        numColor: "text-destructive"                   },
-              { label: "Lipa City Police Station",number: "(043) 756-0099", note: "Law enforcement & public safety",              icon: "🚔", color: "bg-indigo-500/10 border-indigo-500/20",  numColor: "text-indigo-600 dark:text-indigo-400" },
-              { label: "National Emergency",      number: "911",            note: "Police, fire & medical emergencies",           icon: "📞", color: "bg-destructive/10 border-destructive/25", numColor: "text-destructive"                   },
-            ].map((c) => (
-              <div key={c.label} className={`rounded-xl border p-4 ${c.color}`}>
-                <div className="flex items-start gap-3">
-                  <span className="text-xl flex-shrink-0 mt-0.5">{c.icon}</span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold mb-0.5">{c.label}</p>
-                    <p className={`text-lg font-black tracking-tight leading-none ${c.numColor}`}>{c.number}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">{c.note}</p>
+            {(() => {
+              const DEFAULT_CONTACTS: EmergencyContactCard[] = [
+                { label: "DLSL Security Office",    number: "109",            note: "On-campus security & emergency dispatch",       icon: "🏫", color: "bg-blue-500/10 border-blue-500/20",      numColor: "text-blue-600 dark:text-blue-400"   },
+                { label: "DLSL Health Services",    number: "110",            note: "Medical assistance & first aid on campus",      icon: "🏥", color: "bg-green-500/10 border-green-500/20",    numColor: "text-green-600 dark:text-green-400" },
+                { label: "ISESSO Hotline",          number: "112",            note: "ISESSO Safety & Emergency Services",            icon: "🛡️", color: "bg-orange-500/10 border-orange-500/20",  numColor: "text-orange-600 dark:text-orange-400" },
+                { label: "Lipa City Fire Station",  number: "(043) 756-2873", note: "Fire emergencies in Lipa City",                icon: "🚒", color: "bg-red-500/10 border-red-500/20",        numColor: "text-destructive"                   },
+                { label: "Lipa City Police Station",number: "(043) 756-0099", note: "Law enforcement & public safety",              icon: "🚔", color: "bg-indigo-500/10 border-indigo-500/20",  numColor: "text-indigo-600 dark:text-indigo-400" },
+                { label: "National Emergency",      number: "911",            note: "Police, fire & medical emergencies",           icon: "📞", color: "bg-destructive/10 border-destructive/25", numColor: "text-destructive"                   },
+              ];
+
+              const contacts = dbContacts && dbContacts.length > 0
+                ? (dbContacts as EmergencyContactRow[]).map((c, index) => {
+                    const colors = [
+                      { color: "bg-blue-500/10 border-blue-500/20", numColor: "text-blue-600 dark:text-blue-400" },
+                      { color: "bg-green-500/10 border-green-500/20", numColor: "text-green-600 dark:text-green-400" },
+                      { color: "bg-orange-500/10 border-orange-500/20", numColor: "text-orange-600 dark:text-orange-400" },
+                      { color: "bg-red-500/10 border-red-500/20", numColor: "text-destructive" },
+                      { color: "bg-indigo-500/10 border-indigo-500/20", numColor: "text-indigo-600 dark:text-indigo-400" },
+                      { color: "bg-destructive/10 border-destructive/25", numColor: "text-destructive" }
+                    ];
+                    const colorSet = colors[index % colors.length];
+                    return {
+                      label: c.label,
+                      number: c.number,
+                      note: c.note,
+                      icon: c.icon,
+                      color: colorSet.color,
+                      numColor: colorSet.numColor
+                    };
+                  })
+                : DEFAULT_CONTACTS;
+
+              return contacts.map((c) => (
+                <div key={c.label} className={`rounded-xl border p-4 ${c.color}`}>
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl flex-shrink-0 mt-0.5">{c.icon}</span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold mb-0.5">{c.label}</p>
+                      <p className={`text-lg font-black tracking-tight leading-none ${c.numColor}`}>{c.number}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">{c.note}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
           <p className="text-[10px] text-muted-foreground mt-4 flex items-center gap-1.5">
             <svg width="11" height="11" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">

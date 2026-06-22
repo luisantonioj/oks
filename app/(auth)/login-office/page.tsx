@@ -1,8 +1,6 @@
 // app/(auth)/login-office/page.tsx
 import { OfficeLoginForm } from "@/components/office-login-form";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -17,16 +15,11 @@ export default async function LoginOfficePage({
     redirect(`/callback?code=${params.code}`);
   }
 
-  const cookieStore = await cookies();
-  if (cookieStore.get("oks_admin_session")?.value === "authenticated") {
-    redirect("/portal/dashboard");
-  }
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const profile = await getCurrentUserProfile();
-    if (profile?.role === "office") redirect("/office/dashboard");
-    if (profile?.role === "stakeholder") redirect("/stakeholder/dashboard");
+  const profile = await getCurrentUserProfile();
+  if (profile) {
+    if (profile.role === "admin") redirect("/portal/dashboard");
+    if (profile.role === "office") redirect("/office/dashboard");
+    if (profile.role === "stakeholder") redirect("/stakeholder/dashboard");
   }
 
   return (

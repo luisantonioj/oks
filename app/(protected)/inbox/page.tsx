@@ -1,7 +1,7 @@
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getInboxThreads } from '@/lib/queries/message';
 import { redirect } from 'next/navigation';
-import { InboxThreadCard } from '@/components/InboxThreadCard';
+import { InboxThreadCard } from '@/features/inbox/InboxThreadCard';
 import { MessageSquare } from 'lucide-react';
 
 export default async function StakeholderInboxPage() {
@@ -32,7 +32,7 @@ export default async function StakeholderInboxPage() {
             </p>
           </div>
         ) : (
-          threads.map((thread: any) => {
+          threads.map((thread) => {
             const messages = thread.message ?? [];
             const lastMessage = messages.length > 0
               ? messages[messages.length - 1]
