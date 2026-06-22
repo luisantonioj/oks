@@ -3,17 +3,16 @@
 import { createClient } from '../../lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { logAction } from '@/lib/queries/audit';
-import { getCurrentUserProfile } from '@/lib/queries/user';
+import { requireAnyRole } from '@/lib/auth/guards';
+import { assertCanManageAnnouncement } from '@/lib/auth/policies';
 
 export async function createAnnouncement(formData: FormData) {
   try {
     const supabase = await createClient();
     
-    // 1. Verify user is authenticated and is office/admin
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
+    const { profile } = auth;
 
     // 2. Extract data
     const title = formData.get('title') as string;
@@ -58,29 +57,14 @@ export async function createAnnouncement(formData: FormData) {
 
 export async function deleteAnnouncement(id: string) {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
+    const { profile } = auth;
 
     const supabase = await createClient();
 
-    // Verify ownership if role is office
-    if (profile.role === 'office') {
-      const { data: announcement, error: announcementError } = await supabase
-        .from('announcement')
-        .select('office_id')
-        .eq('id', id)
-        .single();
-
-      if (announcementError || !announcement) {
-        return { error: 'Announcement not found' };
-      }
-
-      if (announcement.office_id !== profile.id) {
-        return { error: 'Unauthorized: You do not own this announcement' };
-      }
-    }
+    const policy = await assertCanManageAnnouncement(profile, id);
+    if (!policy.ok) return { error: policy.error };
     
     const { error } = await supabase
       .from('announcement')
@@ -103,10 +87,9 @@ export async function deleteAnnouncement(id: string) {
 
 export async function updateAnnouncement(formData: FormData) {
   try {
-    const profile = await getCurrentUserProfile();
-    if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-      return { error: 'Unauthorized' };
-    }
+    const auth = await requireAnyRole(['office', 'admin']);
+    if (!auth.ok) return { error: auth.error };
+    const { profile } = auth;
 
     const supabase = await createClient();
 
@@ -120,7 +103,10 @@ export async function updateAnnouncement(formData: FormData) {
       return { error: 'Missing required fields' };
     }
 
-    let query = supabase
+    const policy = await assertCanManageAnnouncement(profile, id);
+    if (!policy.ok) return { error: policy.error };
+
+    const { error } = await supabase
       .from('announcement')
       .update({
         title,
@@ -130,12 +116,6 @@ export async function updateAnnouncement(formData: FormData) {
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
-
-    if (profile.role === 'office') {
-      query = query.eq('office_id', profile.id);
-    }
-
-    const { error } = await query;
 
     if (error) {
       console.error('Failed to update announcement:', error);

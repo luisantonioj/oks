@@ -1,4 +1,5 @@
 import { logAction } from "@/lib/queries/audit";
+import { assertCanManageSurvey } from "@/lib/auth/policies";
 import { createClient } from "@/lib/supabase/server";
 import { CreateSurveyInput, SubmitSurveyResponseInput } from "@/lib/validation/survey";
 import { UserProfile } from "@/types/user";
@@ -127,21 +128,8 @@ export async function submitSurveyResponseForStakeholder(
 export async function closeSurveyForProfile(profile: UserProfile, surveyId: string): Promise<ServiceResult> {
   const supabase = await createClient();
 
-  if (profile.role === "office") {
-    const { data: survey, error: surveyError } = await supabase
-      .from("survey")
-      .select("office_id")
-      .eq("id", surveyId)
-      .single();
-
-    if (surveyError || !survey) {
-      return { error: "Survey not found" };
-    }
-
-    if (survey.office_id !== profile.id) {
-      return { error: "Unauthorized: You do not own this survey" };
-    }
-  }
+  const policy = await assertCanManageSurvey(profile, surveyId);
+  if (!policy.ok) return { error: policy.error };
 
   const { error } = await supabase.from("survey").update({ status: "closed" }).eq("id", surveyId);
   if (error) return { error: error.message };
