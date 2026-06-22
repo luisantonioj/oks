@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Crisis, CrisisFeatures } from "@/components/crisis/crisis.types";
 import { ActiveCrisisCard, ResolvedCrisisCard } from "@/components/crisis/CrisisCard";
 import { CrisisModal, CrisisFormState } from "@/components/crisis/CrisisModal";
-import { DeleteCrisisModal } from "@/components/crisis/DeleteCrisisModal";
 
 // Default states
 const defaultFeatures: CrisisFeatures = {
@@ -24,7 +23,6 @@ export function CrisisDashboardClient({ crises }: { crises: Crisis[] }) {
 
   const activeCrises = crises.filter((c) => c.status === "active");
   const resolvedCrises = crises.filter((c) => c.status === "resolved");
-  const [crisisToDelete, setCrisisToDelete] = useState<{id: string, name: string} | null>(null);
 
   function openCreate() {
     setForm(emptyForm);
@@ -49,10 +47,6 @@ export function CrisisDashboardClient({ crises }: { crises: Crisis[] }) {
   function closeModal() {
     setModalMode(null);
     setForm(emptyForm);
-  }
-
-  function openDelete(id: string, name: string) {
-    setCrisisToDelete({ id, name });
   }
 
   return (
@@ -122,15 +116,6 @@ export function CrisisDashboardClient({ crises }: { crises: Crisis[] }) {
           onClose={closeModal}
           onFormChange={(updates) => setForm((prev) => ({ ...prev, ...updates }))}
           onToggleFeature={(key) => setFeatures((prev) => ({ ...prev, [key]: !prev[key] }))}
-        />
-      )}
-
-      {crisisToDelete && (
-        <DeleteCrisisModal
-          crisisId={crisisToDelete.id}
-          crisisName={crisisToDelete.name}
-          onClose={() => setCrisisToDelete(null)}
-          onSuccess={() => setCrisisToDelete(null)} // Closes modal and lets revalidatePath update the list
         />
       )}
     </div>

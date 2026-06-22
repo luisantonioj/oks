@@ -44,41 +44,55 @@ function timeAgo(dateStr: string): string {
 }
 
 export function NotificationItem({ notification, onMarkRead }: NotificationItemProps) {
-  const Wrapper = notification.link ? "a" : "div";
-  const wrapperProps = notification.link ? { href: notification.link } : {};
+  const className = `
+    block rounded-lg border transition-all duration-200
+    ${notification.read ? "bg-card" : bgMap[notification.type]}
+    ${notification.link ? "hover:border-primary/30 hover:shadow-sm cursor-pointer" : ""}
+  `;
+
+  const content = (
+    <div className="flex gap-3 p-4">
+      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border ${
+        notification.read ? "bg-muted border-border" : "bg-white dark:bg-background border-border/50 shadow-sm"
+      }`}>
+        {iconMap[notification.type]}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h4 className={`text-sm font-semibold leading-tight ${!notification.read ? "text-foreground" : "text-muted-foreground"}`}>
+              {notification.title}
+            </h4>
+            {!notification.read && (
+              <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+            )}
+          </div>
+          <span className="text-xs text-muted-foreground flex-shrink-0">{timeAgo(notification.created_at)}</span>
+        </div>
+        <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{notification.message}</p>
+      </div>
+    </div>
+  );
+
+  if (notification.link) {
+    return (
+      <a
+        href={notification.link}
+        className={className}
+        onClick={() => !notification.read && onMarkRead?.(notification.id)}
+      >
+        {content}
+      </a>
+    );
+  }
 
   return (
-    <Wrapper
-      {...(wrapperProps as any)}
-      className={`
-        block rounded-lg border transition-all duration-200
-        ${notification.read ? "bg-card" : bgMap[notification.type]}
-        ${notification.link ? "hover:border-primary/30 hover:shadow-sm cursor-pointer" : ""}
-      `}
+    <div
+      className={className}
       onClick={() => !notification.read && onMarkRead?.(notification.id)}
     >
-      <div className="flex gap-3 p-4">
-        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border ${
-          notification.read ? "bg-muted border-border" : "bg-white dark:bg-background border-border/50 shadow-sm"
-        }`}>
-          {iconMap[notification.type]}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className={`text-sm font-semibold leading-tight ${!notification.read ? "text-foreground" : "text-muted-foreground"}`}>
-                {notification.title}
-              </h4>
-              {!notification.read && (
-                <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
-              )}
-            </div>
-            <span className="text-xs text-muted-foreground flex-shrink-0">{timeAgo(notification.created_at)}</span>
-          </div>
-          <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{notification.message}</p>
-        </div>
-      </div>
-    </Wrapper>
+      {content}
+    </div>
   );
 }
 

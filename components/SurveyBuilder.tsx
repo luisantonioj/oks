@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useActionState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -217,7 +218,7 @@ export function SurveyBuilder({ crises, defaultCrisisId, onSubmit }: SurveyBuild
         </div>
         <h3 className="text-xl font-bold text-green-700 dark:text-green-400">Survey Created!</h3>
         <p className="text-muted-foreground">{state.message}</p>
-        <a href="/office/surveys" className="text-sm underline text-primary">Back to surveys</a>
+        <Link href="/office/surveys" className="text-sm underline text-primary">Back to surveys</Link>
       </div>
     );
   }

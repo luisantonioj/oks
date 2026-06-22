@@ -1,9 +1,7 @@
 // app/page.tsx
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { Button } from "@/components/ui/button";
 
@@ -94,7 +92,7 @@ export default async function Home({ searchParams }: PageProps) {
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link href="/login">
             <Button size="lg" className="rounded-xl px-8 text-base">
-              I'm a Student / Faculty
+              I&apos;m a Student / Faculty
             </Button>
           </Link>
           <Link href="/login-office">

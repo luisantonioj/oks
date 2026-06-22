@@ -1,8 +1,6 @@
 // app/(auth)/login-office/page.tsx
 import { OfficeLoginForm } from "@/components/office-login-form";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";
 import { Suspense } from "react";

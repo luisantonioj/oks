@@ -57,7 +57,7 @@ export function SignOutButton({ role = "stakeholder" }: SignOutButtonProps) {
 
         <h2 className="text-xl font-bold mb-2">Sign out?</h2>
         <p className="text-sm text-muted-foreground mb-7 leading-relaxed">
-          You'll be returned to the login page. Any unsaved changes will be lost.
+          You&apos;ll be returned to the login page. Any unsaved changes will be lost.
         </p>
 
         <div className="flex gap-3">

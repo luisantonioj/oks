@@ -1,8 +1,6 @@
 // app/(auth)/login/page.tsx
 import { LoginForm } from "@/components/login-form";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -125,7 +123,7 @@ export default async function LoginPage({
             </p>
             <div className="flex gap-2">
               <div className="flex-1 bg-destructive text-white text-xs font-semibold py-2.5 rounded-lg text-center">I Need Help</div>
-              <div className="flex-1 bg-muted text-foreground text-xs font-semibold py-2.5 rounded-lg text-center">I'm Safe</div>
+              <div className="flex-1 bg-muted text-foreground text-xs font-semibold py-2.5 rounded-lg text-center">I&apos;m Safe</div>
             </div>
           </div>
 

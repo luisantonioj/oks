@@ -23,8 +23,7 @@ export function ChatInput({ helpRequestId, senderRole, quickActions }: ChatInput
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function submitMessage() {
     if (!value.trim()) return;
     setError(null);
 
@@ -42,6 +41,11 @@ export function ChatInput({ helpRequestId, senderRole, quickActions }: ChatInput
         formRef.current?.reset();
       }
     });
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    submitMessage();
   }
 
   return (
@@ -70,7 +74,7 @@ export function ChatInput({ helpRequestId, senderRole, quickActions }: ChatInput
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              handleSubmit(e as any);
+              submitMessage();
             }
           }}
           placeholder="Type a message… (Enter to send)"

@@ -64,7 +64,6 @@ export function SurveySubmitForm({
   // Donation derived
   const isDonorWilling = isDonationSurvey && donationQ1 === "Yes";
   const isOnBehalf = isDonorWilling && donationQ2 === "No, on behalf of someone else";
-  const isOwnDonation = isDonorWilling && donationQ2 === "Yes, myself";
   const isMonetary = isDonorWilling && donationQ5 === "Monetary Donation";
   const isInKind = isDonorWilling && donationQ5 === "In-Kind Donation (Goods and supplies)";
 

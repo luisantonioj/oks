@@ -96,7 +96,7 @@ export async function deleteAnnouncement(id: string) {
     revalidatePath('/office/crises', 'layout');
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { error: 'An unexpected error occurred' };
   }
 }

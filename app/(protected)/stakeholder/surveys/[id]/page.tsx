@@ -77,7 +77,7 @@ export default async function StakeholderSurveyDetailPage({ params }: PageProps)
         <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/40 px-4 py-4">
           <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-semibold mb-3">
             <CheckCircle2 className="h-5 w-5" />
-            You've already responded to this survey
+            You&apos;ve already responded to this survey
           </div>
           <div className="space-y-3">
             {questions.map((q, idx) => (
@@ -114,10 +114,10 @@ export default async function StakeholderSurveyDetailPage({ params }: PageProps)
           stakeholderProfile={
             survey.survey_type === 'volunteer' || survey.survey_type === 'donation'
               ? {
-                  name: (profile as any).name ?? '',
+                  name: profile.name ?? '',
                   email: profile.email ?? '',
-                  contact: (profile as any).contact ?? '',
-                  community: (profile as any).community ?? '',
+                  contact: profile.contact ?? '',
+                  community: profile.community ?? '',
                 }
               : undefined
           }

@@ -15,7 +15,7 @@ export default async function OfficeLayout({
     redirect("/login-office");
   }
 
-  const officeName = (profile as any).office_name ?? "Office";
+  const officeName = profile.office_name ?? "Office";
   const name = profile.name ?? "Officer";
   const firstName = name.split(" ")[0];
 

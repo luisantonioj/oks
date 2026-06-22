@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getAllStakeholders, getCurrentUserProfile } from '@/lib/queries/user';
 import { Users, Mail, Calendar, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Stakeholder } from '@/types/database';
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -11,7 +12,7 @@ export default async function AdminStakeholdersPage() {
   const profile = await getCurrentUserProfile();
   if (!profile || profile.role !== 'admin') redirect('/login-portal');
 
-  const stakeholders = await getAllStakeholders();
+  const stakeholders = (await getAllStakeholders()) as Stakeholder[];
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -27,14 +28,14 @@ export default async function AdminStakeholdersPage() {
           { label: 'Total', value: stakeholders.length, color: 'text-foreground' },
           {
             label: 'This Month',
-            value: stakeholders.filter((s: any) => {
+            value: stakeholders.filter((s) => {
               const d = new Date(s.created_at); const n = new Date();
               return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
             }).length,
             color: 'text-blue-600',
           },
-          { label: 'With Contact', value: stakeholders.filter((s: any) => s.contact).length, color: 'text-green-600' },
-          { label: 'With Address', value: stakeholders.filter((s: any) => s.current_address).length, color: 'text-purple-600' },
+          { label: 'With Contact', value: stakeholders.filter((s) => s.contact).length, color: 'text-green-600' },
+          { label: 'With Address', value: stakeholders.filter((s) => s.current_address).length, color: 'text-purple-600' },
         ].map((stat) => (
           <div key={stat.label} className="rounded-lg border bg-card p-4 text-center shadow-sm">
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
@@ -60,7 +61,7 @@ export default async function AdminStakeholdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {stakeholders.map((s: any) => (
+                {stakeholders.map((s) => (
                   <tr key={s.id} className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

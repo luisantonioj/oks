@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Building2, Plus, Mail, User, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Office } from '@/types/database';
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -13,7 +14,7 @@ export default async function AdminOfficesPage() {
   const profile = await getCurrentUserProfile();
   if (!profile || profile.role !== 'admin') redirect('/login-portal');
 
-  const offices = await getAllOffices();
+  const offices = (await getAllOffices()) as Office[];
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -49,7 +50,7 @@ export default async function AdminOfficesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {offices.map((office: any) => (
+                {offices.map((office) => (
                   <tr key={office.id} className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

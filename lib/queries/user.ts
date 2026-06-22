@@ -2,7 +2,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { UserProfile, UserRole } from '@/types/user';
-import { cookies } from 'next/headers';
 
 // Get current authenticated user with role information
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {

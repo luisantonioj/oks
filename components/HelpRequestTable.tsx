@@ -62,7 +62,7 @@ function formatDate(dateStr: string) {
 
 export function HelpRequestTable({ requests, viewMode = "office" }: HelpRequestTableProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   // ... (keep existing handleStatusChange and empty state return)

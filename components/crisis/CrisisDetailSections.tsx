@@ -5,6 +5,7 @@ import { Crisis } from "./crisis.types";
 import { ClipboardList, ShieldAlert, HeartHandshake, Users, Lock, ChevronRight, Plus, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DonationResponseEntry } from "@/lib/queries/survey";
+import { Survey } from "@/types/database";
 
 export interface VolunteerResponseEntry {
   id: string;
@@ -29,7 +30,7 @@ const surveyTypeConfig: Record<string, { label: string; icon: React.ReactNode; c
 };
 
 // ── Survey ──────────────────────────────────────────────────────────────────
-export function CrisisSurveySection({ crisis, surveys = [] }: { crisis: Crisis; surveys?: any[] }) {
+export function CrisisSurveySection({ crisis, surveys = [] }: { crisis: Crisis; surveys?: Survey[] }) {
   return (
     <div className="bg-card rounded-xl border border-border p-5">
       <div className="flex items-center justify-between mb-4">
@@ -270,10 +271,9 @@ export function CrisisDonationsSection({
 
 // ── Volunteer ────────────────────────────────────────────────────────────────
 export function CrisisVolunteerSection({
-  crisis,
   volunteerResponses = [],
 }: {
-  crisis: Crisis;
+  crisis?: Crisis;
   volunteerResponses?: VolunteerResponseEntry[];
 }) {
   const willing = volunteerResponses.filter((r) => {
