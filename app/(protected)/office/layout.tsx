@@ -21,7 +21,7 @@ export default async function OfficeLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <DashboardRealtimeWatcher />
+      <DashboardRealtimeWatcher role="office" userId={profile.id} />
       <OfficeNavbar firstName={firstName} officeName={officeName} />
       <main className="w-full">{children}</main>
     </div>

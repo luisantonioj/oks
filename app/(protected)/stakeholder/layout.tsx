@@ -20,7 +20,7 @@ export default async function StakeholderLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <DashboardRealtimeWatcher />
+      <DashboardRealtimeWatcher role="stakeholder" userId={profile.id} />
       <StakeholderNavbar firstName={firstName} />
       <main className="w-full">{children}</main>
     </div>
