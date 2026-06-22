@@ -168,54 +168,6 @@ export async function getOfficeProfile(userId: string) {
   return data;
 }
 
-// Admin-only: Get all offices
-export async function getAllOffices() {
-  const profile = await getCurrentUserProfile();
-
-  if (!profile || profile.role !== 'admin') {
-    throw new Error('Unauthorized: Admin only');
-  }
-
-  try {
-    const adminSupabase = createAdminClient();
-    
-    const { data, error } = await adminSupabase
-      .from('office')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data ?? [];
-  } catch (error) {
-    console.error("Backend not connected yet. Returning empty offices for UI.", error);
-    return [];
-  }
-}
-
-// Admin-only: Get all stakeholders
-export async function getAllStakeholders() {
-  const profile = await getCurrentUserProfile();
-
-  if (!profile || profile.role !== 'admin') {
-    throw new Error('Unauthorized: Admin only');
-  }
-
-  try {
-    const adminSupabase = createAdminClient();
-    
-    const { data, error } = await adminSupabase
-      .from('stakeholder')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data ?? [];
-  } catch (error) {
-    console.error("Backend not connected yet. Returning empty stakeholders for UI.", error);
-    return [];
-  }
-}
-
 // Delete user (self-delete for office/stakeholder; admin can delete others)
 export async function deleteUser(targetId?: string): Promise<{ success: boolean; error?: string }> {
   const profile = await getCurrentUserProfile();

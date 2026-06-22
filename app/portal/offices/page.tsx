@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
-import { getAllOffices, getCurrentUserProfile } from '@/lib/queries/user';
+import { getCurrentUserProfile } from '@/lib/queries/user';
+import { getAllOfficesForAdmin } from '@/lib/queries/admin-users';
 import Link from 'next/link';
 import { Building2, Plus, Mail, User, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Office } from '@/types/database';
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -14,7 +14,7 @@ export default async function AdminOfficesPage() {
   const profile = await getCurrentUserProfile();
   if (!profile || profile.role !== 'admin') redirect('/login-portal');
 
-  const offices = (await getAllOffices()) as Office[];
+  const offices = await getAllOfficesForAdmin();
 
   return (
     <div className="flex flex-col gap-6 p-6">

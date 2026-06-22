@@ -1,7 +1,8 @@
 // app/portal/dashboard/page.tsx
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getAllOffices, getAllStakeholders, getCurrentUserProfile } from "@/lib/queries/user";
+import { getCurrentUserProfile } from "@/lib/queries/user";
+import { getAllOfficesForAdmin, getAllStakeholdersForAdmin } from "@/lib/queries/admin-users";
 import { getDashboardStats, getCrisisBreakdown } from "@/lib/queries/crisis";
 import { getHelpRequestBreakdown } from "@/lib/queries/help-request";
 import { getRecentAuditLogs } from "@/lib/queries/audit";
@@ -14,8 +15,8 @@ export default async function AdminDashboard() {
   }
 
   const [offices, stakeholders, stats, crisisBreakdown, helpBreakdown, recentLogs] = await Promise.all([
-    getAllOffices(),
-    getAllStakeholders(),
+    getAllOfficesForAdmin(),
+    getAllStakeholdersForAdmin(),
     getDashboardStats(),
     getCrisisBreakdown(),
     getHelpRequestBreakdown(),

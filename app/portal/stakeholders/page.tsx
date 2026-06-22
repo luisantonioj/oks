@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
-import { getAllStakeholders, getCurrentUserProfile } from '@/lib/queries/user';
+import { getCurrentUserProfile } from '@/lib/queries/user';
+import { getAllStakeholdersForAdmin } from '@/lib/queries/admin-users';
 import { Users, Mail, Calendar, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Stakeholder } from '@/types/database';
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -12,7 +12,7 @@ export default async function AdminStakeholdersPage() {
   const profile = await getCurrentUserProfile();
   if (!profile || profile.role !== 'admin') redirect('/login-portal');
 
-  const stakeholders = (await getAllStakeholders()) as Stakeholder[];
+  const stakeholders = await getAllStakeholdersForAdmin();
 
   return (
     <div className="flex flex-col gap-6 p-6">
