@@ -41,7 +41,7 @@ export default async function OfficeDashboard() {
   // Grab the 5 most recent requests for the preview grid
   const topRequests = recentRequests.slice(0, 5);
 
-  const officeName = (profile as any).office_name ?? "Office";
+  const officeName = profile.office_name ?? "Office";
   const name = profile.name ?? "Officer";
   const firstName = name.split(" ")[0];
 

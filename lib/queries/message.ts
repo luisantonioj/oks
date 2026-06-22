@@ -1,5 +1,6 @@
 //lib/queries/message.ts
 import { createClient } from '@/lib/supabase/server';
+import { HelpRequestStatus } from '@/types/database';
 
 export interface Message {
   id: string;
@@ -9,6 +10,24 @@ export interface Message {
   sender_name?: string;
   content: string;
   created_at: string;
+}
+
+export interface InboxMessage {
+  id: string;
+  content: string;
+  created_at: string;
+  sender_role: 'stakeholder' | 'office';
+  sender_id: string;
+}
+
+export interface InboxThread {
+  id: string;
+  stakeholder_id: string;
+  crisis_id: string;
+  location: string;
+  status: HelpRequestStatus;
+  created_at: string;
+  message?: InboxMessage[];
 }
 
 export async function getMessages(helpRequestId: string): Promise<Message[]> {
@@ -28,7 +47,7 @@ export async function getMessages(helpRequestId: string): Promise<Message[]> {
   return data || [];
 }
 
-export async function getInboxThreads(userId: string, role: 'stakeholder' | 'office') {
+export async function getInboxThreads(userId: string, role: 'stakeholder' | 'office'): Promise<InboxThread[]> {
   const supabase = await createClient();
 
   // Start the base query
@@ -49,5 +68,5 @@ export async function getInboxThreads(userId: string, role: 'stakeholder' | 'off
     return [];
   }
 
-  return data || [];
+  return (data || []) as InboxThread[];
 }

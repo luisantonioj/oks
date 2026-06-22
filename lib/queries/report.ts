@@ -1,7 +1,18 @@
 // lib/queries/report.ts
 import { createClient } from '../supabase/server';
 
-export async function getProgressReports() {
+export interface ProgressReportWithDetails {
+  id: string;
+  crisis_id: string;
+  title: string | null;
+  content: string;
+  icon: string | null;
+  created_at: string;
+  crisis?: { name?: string | null } | null;
+  office?: { name?: string | null } | null;
+}
+
+export async function getProgressReports(): Promise<ProgressReportWithDetails[]> {
   const supabase = await createClient();
   
   const { data, error } = await supabase
@@ -18,5 +29,5 @@ export async function getProgressReports() {
     return [];
   }
   
-  return data;
+  return (data || []) as ProgressReportWithDetails[];
 }

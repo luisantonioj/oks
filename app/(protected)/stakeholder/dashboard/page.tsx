@@ -8,6 +8,22 @@ import Link from "next/link";
 import { SOSButton } from "@/components/SOSButton";
 import { createClient } from "@/lib/supabase/server";
 
+interface EmergencyContactCard {
+  label: string;
+  number: string;
+  note: string;
+  icon: string;
+  color: string;
+  numColor: string;
+}
+
+interface EmergencyContactRow {
+  label: string;
+  number: string;
+  note: string;
+  icon: string;
+}
+
 export default async function StakeholderDashboard() {
   const profile = await getCurrentUserProfile();
   if (!profile || profile.role !== "stakeholder") {
@@ -140,7 +156,7 @@ export default async function StakeholderDashboard() {
         <div className="p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {(() => {
-              const DEFAULT_CONTACTS = [
+              const DEFAULT_CONTACTS: EmergencyContactCard[] = [
                 { label: "DLSL Security Office",    number: "109",            note: "On-campus security & emergency dispatch",       icon: "🏫", color: "bg-blue-500/10 border-blue-500/20",      numColor: "text-blue-600 dark:text-blue-400"   },
                 { label: "DLSL Health Services",    number: "110",            note: "Medical assistance & first aid on campus",      icon: "🏥", color: "bg-green-500/10 border-green-500/20",    numColor: "text-green-600 dark:text-green-400" },
                 { label: "ISESSO Hotline",          number: "112",            note: "ISESSO Safety & Emergency Services",            icon: "🛡️", color: "bg-orange-500/10 border-orange-500/20",  numColor: "text-orange-600 dark:text-orange-400" },
@@ -150,7 +166,7 @@ export default async function StakeholderDashboard() {
               ];
 
               const contacts = dbContacts && dbContacts.length > 0
-                ? dbContacts.map((c: any, index: number) => {
+                ? (dbContacts as EmergencyContactRow[]).map((c, index) => {
                     const colors = [
                       { color: "bg-blue-500/10 border-blue-500/20", numColor: "text-blue-600 dark:text-blue-400" },
                       { color: "bg-green-500/10 border-green-500/20", numColor: "text-green-600 dark:text-green-400" },
@@ -171,7 +187,7 @@ export default async function StakeholderDashboard() {
                   })
                 : DEFAULT_CONTACTS;
 
-              return contacts.map((c: any) => (
+              return contacts.map((c) => (
                 <div key={c.label} className={`rounded-xl border p-4 ${c.color}`}>
                   <div className="flex items-start gap-3">
                     <span className="text-xl flex-shrink-0 mt-0.5">{c.icon}</span>

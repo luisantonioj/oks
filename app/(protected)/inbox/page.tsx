@@ -32,7 +32,7 @@ export default async function StakeholderInboxPage() {
             </p>
           </div>
         ) : (
-          threads.map((thread: any) => {
+          threads.map((thread) => {
             const messages = thread.message ?? [];
             const lastMessage = messages.length > 0
               ? messages[messages.length - 1]

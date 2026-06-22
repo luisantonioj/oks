@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SurveyAnswers } from '@/types/database';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -253,13 +254,15 @@ export default async function OfficeSurveyDetailPage({ params }: PageProps) {
                 <p className="text-sm text-muted-foreground p-5 text-center italic">No pledges received yet.</p>
               ) : (
                 responses.map((r) => {
-                  let ans: any = {};
+                  let ans: SurveyAnswers = {};
                   try {
                     ans = typeof r.answers === 'string' ? JSON.parse(r.answers) : (r.answers || {});
                   } catch {}
 
-                  const receiptUrl = ans['__receipt'];
-                  const donorName = ans['__stake_name'] || 'Anonymous Donor';
+                  const receiptAnswer = ans['__receipt'];
+                  const nameAnswer = ans['__stake_name'];
+                  const receiptUrl = typeof receiptAnswer === 'string' ? receiptAnswer : undefined;
+                  const donorName = typeof nameAnswer === 'string' ? nameAnswer : 'Anonymous Donor';
 
                   return (
                     <div key={r.id} className="p-4 flex items-center justify-between gap-4">

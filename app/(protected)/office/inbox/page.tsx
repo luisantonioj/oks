@@ -14,7 +14,7 @@ export default async function OfficeInboxPage() {
 
   const supabase = await createClient();
 
-  const stakeholderIds = [...new Set(threads.map((t: any) => t.stakeholder_id))];
+  const stakeholderIds = [...new Set(threads.map((t) => t.stakeholder_id))];
   const stakeholderNameMap = new Map<string, string>();
   if (stakeholderIds.length > 0) {
     const { data: stakeholders } = await supabase
@@ -24,7 +24,7 @@ export default async function OfficeInboxPage() {
     stakeholders?.forEach((s) => stakeholderNameMap.set(s.id, s.name));
   }
 
-  const threadsWithNames = threads.map((thread: any) => ({
+  const threadsWithNames = threads.map((thread) => ({
     ...thread,
     stakeholderName: stakeholderNameMap.get(thread.stakeholder_id) ?? 'Unknown'
   }));
@@ -51,7 +51,7 @@ export default async function OfficeInboxPage() {
             </p>
           </div>
         ) : (
-          threadsWithNames.map((thread: any) => {
+          threadsWithNames.map((thread) => {
             const messages = thread.message ?? [];
             const lastMessage = messages.length > 0
               ? messages[messages.length - 1]

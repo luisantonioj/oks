@@ -3,12 +3,27 @@ import { createServerClient } from '@supabase/ssr';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import type { CookieOptions } from '@supabase/ssr';
+import type { EmailOtpType, User } from '@supabase/supabase-js';
+import { UserRole } from '@/types/database';
 
 function mockDLSLValidation(email: string): boolean {
   if (process.env.NODE_ENV === 'development') {
     return true; // Loosen restriction for local development testing
   }
   return email.endsWith('@dlsl.edu.ph') || email.includes('dlsl');
+}
+
+function isEmailOtpType(type: string): type is EmailOtpType {
+  return ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'].includes(type);
+}
+
+function isUserRole(role: string | null | undefined): role is UserRole {
+  return role === 'admin' || role === 'office' || role === 'stakeholder';
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Server error';
 }
 
 export async function GET(request: NextRequest) {
@@ -25,7 +40,7 @@ export async function GET(request: NextRequest) {
 
   // ── Build a Supabase client that tracks every cookie it sets ──
   // We'll replay those cookies onto the final redirect response.
-  const pendingCookies: { name: string; value: string; options: any }[] = [];
+  const pendingCookies: { name: string; value: string; options: CookieOptions }[] = [];
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -66,7 +81,7 @@ export async function GET(request: NextRequest) {
   };
 
   // ─── Exchange the code or verify OTP ───
-  let sessionUser: any = null;
+  let sessionUser: User | null = null;
 
   if (code) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
@@ -75,10 +90,10 @@ export async function GET(request: NextRequest) {
       return redirectToLoginWithError('auth_failed', error.message);
     }
     sessionUser = data.user;
-  } else if (token_hash && type) {
+  } else if (token_hash && type && isEmailOtpType(type)) {
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash,
-      type: type as any,
+      type,
     });
     if (error) {
       console.error('OTP verification failed:', error.message);
@@ -96,7 +111,9 @@ export async function GET(request: NextRequest) {
   }
 
   // ─── Determine existing role ───
-  let userRole = sessionUser.app_metadata?.role || null;
+  let userRole = isUserRole(sessionUser.app_metadata?.role)
+    ? sessionUser.app_metadata.role
+    : null;
 
   if (!userRole) {
     // Check both tables for an existing profile
@@ -105,9 +122,9 @@ export async function GET(request: NextRequest) {
       adminClient.from('stakeholder').select('role').eq('id', sessionUser.id).maybeSingle(),
       adminClient.from('office').select('role').eq('id', sessionUser.id).maybeSingle(),
     ]);
-    if (shRes.data?.role) {
+    if (isUserRole(shRes.data?.role)) {
       userRole = shRes.data.role;
-    } else if (officeRes.data?.role) {
+    } else if (isUserRole(officeRes.data?.role)) {
       userRole = officeRes.data.role;
     }
   }
@@ -183,9 +200,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`Stakeholder profile auto-created for: ${email}`);
     return redirectWithCookies(next || '/stakeholder/dashboard');
-  } catch (error: any) {
+  } catch (error) {
     console.error('Unexpected profile provisioning error:', error);
     await supabase.auth.signOut();
-    return redirectToLoginWithError('profile_creation_failed', error.message || 'Server error');
+    return redirectToLoginWithError('profile_creation_failed', errorMessage(error));
   }
 }

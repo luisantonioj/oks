@@ -83,8 +83,8 @@ export function OfficeReportsClient({ initialReports, crises, officeName }: Offi
           closeModal();
           router.refresh(); 
         }, 1500);
-      } catch (error: any) {
-        setFormError(error.message || "Failed to post update.");
+      } catch (error) {
+        setFormError(error instanceof Error ? error.message : "Failed to post update.");
       }
     });
   }

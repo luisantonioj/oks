@@ -23,7 +23,7 @@ export default async function OfficeReportsPage() {
   }));
 
   // Format the reports to match your Report UI type
-  const reports = dbReports.map((r: any) => ({
+  const reports = dbReports.map((r) => ({
     id: r.id,
     crisis: r.crisis?.name || 'Unknown',
     crisis_id: r.crisis_id,

@@ -14,9 +14,9 @@ export default async function StakeholderInboxPage() {
 
   const supabase = await createClient();
   const officeIds = [...new Set(
-    threads.flatMap((t: any) => (t.message ?? []))
-      .filter((m: any) => m.sender_role === 'office' && m.sender_id)
-      .map((m: any) => m.sender_id as string)
+    threads.flatMap((t) => t.message ?? [])
+      .filter((m) => m.sender_role === 'office' && m.sender_id)
+      .map((m) => m.sender_id)
   )];
   const officeNameMap = new Map<string, string>();
   if (officeIds.length > 0) {
@@ -47,7 +47,7 @@ export default async function StakeholderInboxPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {threads.map((thread: any) => {
+          {threads.map((thread) => {
             const messages = thread.message ?? [];
             const lastMessage = messages.at(-1);
             const statusColor =
