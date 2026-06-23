@@ -1,11 +1,8 @@
 // app/(protected)/office/dashboard/page.tsx
-import { getCurrentUserProfile } from "@/lib/queries/user";
-import { getDashboardStats, getCrisisSummary } from "@/lib/queries/crisis";
-import { getAllHelpRequests } from "@/lib/queries/help-request";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { EmergencyContactsEditor } from "@/features/profile/EmergencyContactsEditor";
-import { createClient } from "@/lib/supabase/server";
+import { getOfficeDashboardData } from "@/app/(protected)/office/dashboard/data";
 
 // Helper for displaying "5m ago", "2h ago", etc.
 function getRelativeTime(dateString: string) {
@@ -22,28 +19,22 @@ function getRelativeTime(dateString: string) {
 }
 
 export default async function OfficeDashboard() {
-  const profile = await getCurrentUserProfile();
-  
-  if (!profile || profile.role !== "office") {
+  const dashboardData = await getOfficeDashboardData();
+
+  if (!dashboardData) {
     redirect("/login-office");
   }
 
-  const supabase = await createClient();
-
-  // Fetch all required data concurrently for the dashboard
-  const [stats, activeCrisesList, recentRequests, { data: dbContacts }] = await Promise.all([
-    getDashboardStats(),
-    getCrisisSummary(),
-    getAllHelpRequests(),
-    supabase.from('emergency_contact').select('*').eq('office_id', profile.id).order('created_at', { ascending: true })
-  ]);
-
-  // Grab the 5 most recent requests for the preview grid
-  const topRequests = recentRequests.slice(0, 5);
-
-  const officeName = profile.office_name ?? "Office";
-  const name = profile.name ?? "Officer";
-  const firstName = name.split(" ")[0];
+  const {
+    profile,
+    stats,
+    activeCrisesList,
+    topRequests,
+    dbContacts,
+    officeName,
+    name,
+    firstName,
+  } = dashboardData;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">

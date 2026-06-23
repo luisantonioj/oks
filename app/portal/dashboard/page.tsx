@@ -1,31 +1,26 @@
 // app/portal/dashboard/page.tsx
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCurrentUserProfile } from "@/lib/queries/user";
-import { getAllOfficesForAdmin, getAllStakeholdersForAdmin } from "@/lib/queries/admin-users";
-import { getDashboardStats, getCrisisBreakdown } from "@/lib/queries/crisis";
-import { getHelpRequestBreakdown } from "@/lib/queries/help-request";
-import { getRecentAuditLogs } from "@/lib/queries/audit";
+import { getAdminDashboardData } from "@/app/portal/dashboard/data";
 import { Office } from "@/types/database";
 
 export default async function AdminDashboard() {
-  const profile = await getCurrentUserProfile();
-  if (!profile || profile.role !== "admin") {
+  const dashboardData = await getAdminDashboardData();
+  if (!dashboardData) {
     redirect("/login-portal");
   }
 
-  const [offices, stakeholders, stats, crisisBreakdown, helpBreakdown, recentLogs] = await Promise.all([
-    getAllOfficesForAdmin(),
-    getAllStakeholdersForAdmin(),
-    getDashboardStats(),
-    getCrisisBreakdown(),
-    getHelpRequestBreakdown(),
-    getRecentAuditLogs(10),
-  ]);
-
-  const adminName = process.env.ADMIN_NAME || "Administrator";
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@dlsl.edu.ph";
-  const firstName = adminName.split(" ")[0];
+  const {
+    offices,
+    stakeholders,
+    stats,
+    crisisBreakdown,
+    helpBreakdown,
+    recentLogs,
+    adminName,
+    adminEmail,
+    firstName,
+  } = dashboardData;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">

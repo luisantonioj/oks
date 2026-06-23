@@ -1,12 +1,8 @@
 // app/(protected)/stakeholder/dashboard/page.tsx
-import { getCurrentUserProfile } from "@/lib/queries/user";
-import { getActiveCrises } from "@/lib/queries/crisis";
-import { getAnnouncements } from "@/lib/queries/announcement";
-import { getSurveys, getStakeholderRespondedSurveyIds } from "@/lib/queries/survey";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SOSButton } from "@/features/help-requests/SOSButton";
-import { createClient } from "@/lib/supabase/server";
+import { getStakeholderDashboardData } from "@/app/(protected)/stakeholder/dashboard/data";
 
 interface EmergencyContactCard {
   label: string;
@@ -25,39 +21,21 @@ interface EmergencyContactRow {
 }
 
 export default async function StakeholderDashboard() {
-  const profile = await getCurrentUserProfile();
-  if (!profile || profile.role !== "stakeholder") {
+  const dashboardData = await getStakeholderDashboardData();
+  if (!dashboardData) {
     redirect("/login");
   }
 
-  const supabase = await createClient();
-
-  // Fetch all dashboard data concurrently
-  const [
+  const {
     activeCrises,
     allAnnouncements,
-    allActiveSurveys,
-    respondedSurveyIds,
-    { data: dbContacts }
-  ] = await Promise.all([
-    getActiveCrises(),
-    getAnnouncements(),
-    getSurveys({ status: 'active' }),
-    getStakeholderRespondedSurveyIds(profile.id),
-    supabase.from('emergency_contact').select('*').order('created_at', { ascending: true })
-  ]);
-
-  const name = profile.name ?? "Stakeholder";
-  const firstName = name.split(" ")[0];
-  const email = profile.email ?? "";
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-
-  // Compute stats
-  const pendingSurveysCount = allActiveSurveys.filter(
-    (s) => !respondedSurveyIds.includes(s.id)
-  ).length;
+    dbContacts,
+    name,
+    firstName,
+    email,
+    greeting,
+    pendingSurveysCount,
+  } = dashboardData;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
