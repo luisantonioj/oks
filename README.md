@@ -101,3 +101,15 @@ The PostgreSQL database is fully normalized to handle polymorphic users:
   - `help_request`: Linked to a specific stakeholder and crisis.
   - `announcement`: Official broadcasts linked to an office and crisis.
   - `survey` & `survey_response`: For safety checks.
+
+### Generated Database Types
+
+When Supabase project access is available, generate schema-backed TypeScript types with:
+
+```bash
+npm run db:types
+```
+
+The script derives the project ref from `NEXT_PUBLIC_SUPABASE_URL`, or you can set `SUPABASE_PROJECT_REF` explicitly. It writes the generated output to `types/supabase.ts`.
+
+Supabase CLI access is required through `supabase login` or `SUPABASE_ACCESS_TOKEN`.

@@ -5,7 +5,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --test \"tests/**/*.test.cjs\""
+    "test": "node --test \"tests/**/*.test.cjs\"",
+    "db:types": "node scripts/generate-supabase-types.mjs",
+    "db:types:dry-run": "node scripts/generate-supabase-types.mjs --dry-run"
   },
   "dependencies": {
     "@radix-ui/number": "^1.0.1",
