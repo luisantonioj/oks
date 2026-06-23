@@ -1,4 +1,4 @@
-// components/AffectedAreasMap.tsx
+// features/crisis/AffectedAreasMap.tsx
 "use client";
 
 import { useEffect, useState } from "react";

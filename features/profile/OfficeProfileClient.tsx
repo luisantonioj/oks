@@ -1,17 +1,17 @@
+// features/profile/OfficeProfileClient.tsx
 "use client";
 
-// components/stakeholder-profile-client.tsx
 import { useState, useTransition } from "react";
-import { updateStakeholderProfile } from "@/app/actions/profile";
+import { updateOfficeProfile } from "@/app/actions/profile";
 
 interface ProfileData {
   name: string;
   email: string;
   age: string;
-  community: string;
+  gender: string;
   contact: string;
-  permanent_address: string;
-  current_address: string;
+  office_name: string;
+  role: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,10 +21,11 @@ interface Props {
   userId?: string;
 }
 
-export function StakeholderProfileClient({ initialData }: Props) {
+export function OfficeProfileClient({ initialData }: Props) {
   const [editing, setEditing] = useState(false);
   const [data, setData] = useState<ProfileData>(initialData);
   const [draft, setDraft] = useState<ProfileData>(initialData);
+  
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,20 +44,27 @@ export function StakeholderProfileClient({ initialData }: Props) {
 
   function handleSave() {
     setError(null);
+    
     startTransition(async () => {
-      const result = await updateStakeholderProfile({
+      const result = await updateOfficeProfile({
         name: draft.name,
         age: draft.age ? parseInt(draft.age, 10) : null,
+        gender: draft.gender,
         contact: draft.contact,
-        permanent_address: draft.permanent_address,
-        current_address: draft.current_address,
       });
 
       if (result.error) {
         setError(result.error);
       } else {
+        // Create a fresh timestamp for right now
         const now = new Date().toISOString();
-        setData({ ...draft, updated_at: now });
+        
+        // Update both data and draft with the new fields AND the new timestamp
+        const updatedProfile = { ...draft, updated_at: now };
+        
+        setData(updatedProfile);
+        setDraft(updatedProfile); // Keep draft in sync for future edits
+        
         setEditing(false);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
@@ -78,7 +86,7 @@ export function StakeholderProfileClient({ initialData }: Props) {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">My Profile</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage your personal information and account settings.</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Your office account information and settings.</p>
         </div>
         {!editing ? (
           <button
@@ -91,7 +99,8 @@ export function StakeholderProfileClient({ initialData }: Props) {
           <div className="flex items-center gap-2">
             <button
               onClick={handleCancel}
-              className="text-sm font-medium border border-border px-4 py-2 rounded-xl hover:bg-accent transition-colors"
+              disabled={isPending}
+              className="text-sm font-medium border border-border px-4 py-2 rounded-xl hover:bg-accent transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
@@ -106,15 +115,15 @@ export function StakeholderProfileClient({ initialData }: Props) {
         )}
       </div>
 
-      {saved && (
-        <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3">
-          <span className="text-green-600 dark:text-green-400 text-sm font-medium">✓ Profile updated successfully.</span>
-        </div>
-      )}
-
+      {/* Notifications */}
       {error && (
         <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-3">
-          <span className="text-destructive text-sm font-medium">✗ {error}</span>
+          <span className="text-destructive text-sm font-medium">{error}</span>
+        </div>
+      )}
+      {saved && !error && (
+        <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3">
+          <span className="text-green-600 dark:text-green-400 text-sm font-medium">✓ Profile updated successfully.</span>
         </div>
       )}
 
@@ -122,19 +131,17 @@ export function StakeholderProfileClient({ initialData }: Props) {
 
         {/* Left: Identity card */}
         <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center text-center h-fit">
-          <div className="w-20 h-20 rounded-full bg-muted border-2 border-border flex items-center justify-center text-2xl font-bold text-muted-foreground mb-4">
+          <div className="w-20 h-20 rounded-full bg-blue-500/20 border-2 border-blue-500/30 flex items-center justify-center text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">
             {firstName[0]?.toUpperCase()}
           </div>
           <p className="text-base font-bold">{data.name}</p>
           <p className="text-xs text-muted-foreground mt-0.5 mb-3">{data.email}</p>
-          <span className="text-xs font-medium bg-muted text-muted-foreground border border-border px-2.5 py-1 rounded-full">
-            Stakeholder
+          <span className="text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-full">
+            Office Staff
           </span>
-          {data.community && (
-            <span className="text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-full mt-2 capitalize">
-              {data.community}
-            </span>
-          )}
+          <span className="text-xs font-medium bg-muted text-muted-foreground border border-border px-2.5 py-1 rounded-full mt-2">
+            {data.office_name}
+          </span>
         </div>
 
         {/* Right: Info sections */}
@@ -155,7 +162,8 @@ export function StakeholderProfileClient({ initialData }: Props) {
                     type="text"
                     value={draft.name}
                     onChange={(e) => handleChange("name", e.target.value)}
-                    className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    disabled={isPending}
+                    className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
                   />
                 ) : (
                   <p className="text-sm font-medium">{data.name}</p>
@@ -164,7 +172,7 @@ export function StakeholderProfileClient({ initialData }: Props) {
               {/* Email — read only */}
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Email Address</p>
-                <p className="text-sm font-medium">{data.email}</p>
+                <p className="text-sm font-medium opacity-70 cursor-not-allowed">{data.email}</p>
               </div>
               {/* Age */}
               <div>
@@ -174,16 +182,31 @@ export function StakeholderProfileClient({ initialData }: Props) {
                     type="number"
                     value={draft.age}
                     onChange={(e) => handleChange("age", e.target.value)}
-                    className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    disabled={isPending}
+                    className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
                   />
                 ) : (
                   <p className="text-sm font-medium">{data.age || "—"}</p>
                 )}
               </div>
-              {/* Community */}
+              {/* Gender */}
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Community</p>
-                <p className="text-sm font-medium capitalize">{data.community || "—"}</p>
+                <p className="text-xs text-muted-foreground mb-1">Gender</p>
+                {editing ? (
+                  <select
+                    value={draft.gender}
+                    onChange={(e) => handleChange("gender", e.target.value)}
+                    disabled={isPending}
+                    className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                  >
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                ) : (
+                  <p className="text-sm font-medium">{data.gender || "—"}</p>
+                )}
               </div>
               {/* Contact */}
               <div>
@@ -193,7 +216,8 @@ export function StakeholderProfileClient({ initialData }: Props) {
                     type="text"
                     value={draft.contact}
                     onChange={(e) => handleChange("contact", e.target.value)}
-                    className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    disabled={isPending}
+                    className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
                   />
                 ) : (
                   <p className="text-sm font-medium">{data.contact || "—"}</p>
@@ -202,43 +226,25 @@ export function StakeholderProfileClient({ initialData }: Props) {
               {/* Role */}
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Role</p>
-                <p className="text-sm font-medium">Stakeholder</p>
+                <p className="text-sm font-medium">Office Staff</p>
               </div>
             </div>
           </div>
 
-          {/* Address Information */}
+          {/* Office Information — read only */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-border">
-              <p className="text-sm font-semibold">Address Information</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Used for crisis response and location tracking</p>
+              <p className="text-sm font-semibold">Office Information</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Your assigned office and responsibilities</p>
             </div>
             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Permanent Address</p>
-                {editing ? (
-                  <textarea
-                    value={draft.permanent_address}
-                    onChange={(e) => handleChange("permanent_address", e.target.value)}
-                    rows={2}
-                    className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-                  />
-                ) : (
-                  <p className="text-sm font-medium">{data.permanent_address || "—"}</p>
-                )}
+                <p className="text-xs text-muted-foreground mb-1">Office Name</p>
+                <p className="text-sm font-medium">{data.office_name}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Current Address</p>
-                {editing ? (
-                  <textarea
-                    value={draft.current_address}
-                    onChange={(e) => handleChange("current_address", e.target.value)}
-                    rows={2}
-                    className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-                  />
-                ) : (
-                  <p className="text-sm font-medium">{data.current_address || "—"}</p>
-                )}
+                <p className="text-xs text-muted-foreground mb-1">Office Role</p>
+                <p className="text-sm font-medium capitalize">{data.role}</p>
               </div>
             </div>
           </div>

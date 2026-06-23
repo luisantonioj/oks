@@ -1,7 +1,7 @@
 // app/portal/create/page.tsx
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { CreateOfficeForm } from '@/components/create-office-form';
+import { CreateOfficeForm } from '@/features/admin/CreateOfficeForm';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import { getCurrentUserProfile } from '@/lib/queries/user';
 

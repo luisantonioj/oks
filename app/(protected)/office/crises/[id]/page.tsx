@@ -1,17 +1,17 @@
 // app/(protected)/office/crises/[id]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Crisis } from "@/components/crisis/crisis.types";
-import { AffectedAreasMapLoader } from "@/components/AffectedAreasMapLoader";
+import { Crisis } from "@/features/crisis/crisis.types";
+import { AffectedAreasMapLoader } from "@/features/crisis/AffectedAreasMapLoader";
 import { getCrisisById } from "@/lib/queries/crisis";
 import { getAnnouncements } from "@/lib/queries/announcement";        
 import { getSurveys, getVolunteerResponsesForCrisis, getDonationResponsesForCrisis } from "@/lib/queries/survey";
-import { SeverityBadge, StatusBadge, formatDateTime } from "@/components/crisis/CrisisBadges";
+import { SeverityBadge, StatusBadge, formatDateTime } from "@/features/crisis/CrisisBadges";
 import {
   CrisisSurveySection, CrisisHelpRequestsSection, CrisisAnnouncementsSection,
   CrisisProgressSection, CrisisDonationsSection, CrisisVolunteerSection,
-} from "@/components/crisis/CrisisDetailSections";
-import { CrisisDetailActionsClient } from "@/components/crisis/CrisisDetailActionsClient"; // ← issue 6
+} from "@/features/crisis/CrisisDetailSections";
+import { CrisisDetailActionsClient } from "@/features/crisis/CrisisDetailActionsClient";
 
 export default async function CrisisDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

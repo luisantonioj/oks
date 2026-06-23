@@ -1,4 +1,4 @@
-// components/reports/ReportsFeed.tsx
+// features/reports/ReportsFeed.tsx
 import { Report, ReportCrisis } from "./reports.data";
 
 interface ReportsFeedProps {

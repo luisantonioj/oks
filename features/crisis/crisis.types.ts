@@ -1,4 +1,4 @@
-// components/crisis/crisis.types.ts
+// features/crisis/crisis.types.ts
 
 export type CrisisFeatures = {
   survey: boolean;

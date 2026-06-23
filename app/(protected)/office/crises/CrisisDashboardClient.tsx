@@ -2,9 +2,9 @@
 "use client";
 
 import { useState } from "react";
-import { Crisis, CrisisFeatures } from "@/components/crisis/crisis.types";
-import { ActiveCrisisCard, ResolvedCrisisCard } from "@/components/crisis/CrisisCard";
-import { CrisisModal, CrisisFormState } from "@/components/crisis/CrisisModal";
+import { Crisis, CrisisFeatures } from "@/features/crisis/crisis.types";
+import { ActiveCrisisCard, ResolvedCrisisCard } from "@/features/crisis/CrisisCard";
+import { CrisisModal, CrisisFormState } from "@/features/crisis/CrisisModal";
 
 // Default states
 const defaultFeatures: CrisisFeatures = {

@@ -1,6 +1,6 @@
 "use client";
 
-// components/emergency-contacts-editor.tsx
+// features/profile/EmergencyContactsEditor.tsx
 // Office staff can view and edit emergency contact numbers.
 // The updated numbers are immediately reflected in this component's state.
 

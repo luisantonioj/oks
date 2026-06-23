@@ -1,7 +1,7 @@
 // app/(protected)/stakeholder/profile/page.tsx
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
-import { StakeholderProfileClient } from "@/components/stakeholder-profile-client";
+import { StakeholderProfileClient } from "@/features/profile/StakeholderProfileClient";
 
 export default async function StakeholderProfile() {
   const profile = await getCurrentUserProfile();

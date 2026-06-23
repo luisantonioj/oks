@@ -7,11 +7,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { cookies } from 'next/headers';
 import { logAction } from '@/lib/queries/audit';
-
-// Mock DLSL validation
-function mockDLSLValidation(email: string): boolean {
-  return email.endsWith('@dlsl.edu.ph') || email.includes('dlsl');
-}
+import { ZodError } from 'zod';
+import {
+  createOfficeInputFromFormData,
+  signInInputFromFormData,
+  stakeholderSignupInputFromFormData,
+} from '@/lib/validation/auth';
 
 type FormState = {
   error?: string;
@@ -19,26 +20,23 @@ type FormState = {
   message?: string;
 };
 
+function validationErrorMessage(error: ZodError) {
+  return error.issues[0]?.message ?? 'Invalid form details';
+}
+
 // ── ADMIN LOGIN (Supabase Auth checking role === 'admin') ──
 export async function adminSignIn(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
   try {
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-
-    console.log('[adminSignIn] Login attempt for:', email);
-
-    if (!email || !password) {
-      return { error: 'Email and password required' };
-    }
+    const input = signInInputFromFormData(formData);
 
     const supabase = await createClient();
 
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: input.email,
+      password: input.password,
     });
 
     if (error || !data.user) {
@@ -54,11 +52,13 @@ export async function adminSignIn(
       return { error: 'Unauthorized: Admin access required' };
     }
 
-    console.log('[adminSignIn] ✓ Admin authenticated, redirecting...');
-
     // Redirect to admin dashboard
     redirect('/portal/dashboard');
   } catch (error) {
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
+    }
+
     console.error('[adminSignIn] Error:', error);
     // Re-throw redirect errors (these are expected)
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
@@ -75,20 +75,13 @@ export async function officeSignIn(
   formData: FormData
 ): Promise<FormState> {
   try {
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-
-    console.log('[officeSignIn] Login attempt for:', email);
-
-    if (!email || !password) {
-      return { error: 'Email and password required' };
-    }
+    const input = signInInputFromFormData(formData);
 
     const supabase = await createClient();
 
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: input.email,
+      password: input.password,
     });
 
     if (error || !data.user) {
@@ -96,18 +89,12 @@ export async function officeSignIn(
       return { error: 'Invalid login credentials' };
     }
 
-    console.log('[officeSignIn] Auth successful for user:', data.user.id);
-    console.log('[officeSignIn] User app_metadata:', data.user.app_metadata);
-
     // Check if user exists in office table
     const { data: officeProfile, error: profileError } = await supabase
       .from('office')
       .select('*')
       .eq('id', data.user.id)
       .maybeSingle();
-
-    console.log('[officeSignIn] Office profile query result:', officeProfile);
-    console.log('[officeSignIn] Office profile error:', profileError);
 
     if (profileError) {
       console.error('[officeSignIn] Database error:', profileError);
@@ -121,9 +108,12 @@ export async function officeSignIn(
       return { error: 'Office account not found. Please contact support.' };
     }
 
-    console.log('[officeSignIn] ✓ Office authenticated:', officeProfile.office_name);
     redirect('/office/dashboard');
   } catch (error) {
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
+    }
+
     console.error('[officeSignIn] Error:', error);
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
       throw error;
@@ -137,33 +127,18 @@ export async function signUpStakeholder(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
-  const name = formData.get('name') as string;
-  const age = formData.get('age') ? Number(formData.get('age')) : null;
-  const community = formData.get('community') as string || null;
-  const contact = formData.get('contact') as string || null;
-  const permanentAddress = formData.get('permanent_address') as string || null;
-  const currentAddress = formData.get('current_address') as string || null;
-
-  if (!email || !password || !name) {
-    return { error: 'Required fields missing' };
-  }
-
-  if (!mockDLSLValidation(email)) {
-    return { error: 'Email must be a valid DLSL address' };
-  }
+  const input = stakeholderSignupInputFromFormData(formData);
 
   const supabase = await createClient();
   const adminClient = createAdminClient();
 
   try {
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
+      email: input.email,
+      password: input.password,
       options: {
         emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/callback`,
-        data: { name },
+        data: { name: input.name },
       },
     });
 
@@ -187,14 +162,14 @@ export async function signUpStakeholder(
       .from('stakeholder')
       .insert({
         id: userId,
-        name,
-        email,
+        name: input.name,
+        email: input.email,
         role: 'stakeholder',
-        age,
-        community,
-        contact,
-        permanent_address: permanentAddress,
-        current_address: currentAddress,
+        age: input.age,
+        community: input.community,
+        contact: input.contact,
+        permanent_address: input.permanentAddress,
+        current_address: input.currentAddress,
       });
 
     if (insertError) {
@@ -202,13 +177,17 @@ export async function signUpStakeholder(
       return { error: insertError.message || 'Profile creation failed' };
     }
 
-    void logAction({ actor_id: userId, actor_role: 'stakeholder', actor_name: name, action: 'STAKEHOLDER_SIGNUP', entity_type: 'stakeholder', entity_id: userId });
+    void logAction({ actor_id: userId, actor_role: 'stakeholder', actor_name: input.name, action: 'STAKEHOLDER_SIGNUP', entity_type: 'stakeholder', entity_id: userId });
 
     return {
       success: true,
       message: 'Account created! Please check your email to confirm.',
     };
   } catch (error) {
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
+    }
+
     console.error('Signup error:', error);
     return { error: 'An unexpected error occurred' };
   }
@@ -219,41 +198,49 @@ export async function signIn(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  try {
+    const input = signInInputFromFormData(formData);
 
-  if (!email || !password) {
-    return { error: 'Email and password required' };
-  }
+    const supabase = await createClient();
 
-  const supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: input.email,
+      password: input.password,
+    });
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    if (error || !data.user) {
+      return { error: error?.message || 'Invalid credentials' };
+    }
 
-  if (error || !data.user) {
-    return { error: error?.message || 'Invalid credentials' };
-  }
+    const profile = await getCurrentUserProfile();
 
-  const profile = await getCurrentUserProfile();
-
-  if (!profile) {
-    await supabase.auth.signOut();
-    return { error: 'Profile not found. Please contact support.' };
-  }
-
-  switch (profile.role) {
-    case 'admin':
-      redirect('/portal/dashboard');
-    case 'office':
-      redirect('/office/dashboard');
-    case 'stakeholder':
-      redirect('/stakeholder/dashboard');
-    default:
+    if (!profile) {
       await supabase.auth.signOut();
-      return { error: 'Unknown role' };
+      return { error: 'Profile not found. Please contact support.' };
+    }
+
+    switch (profile.role) {
+      case 'admin':
+        redirect('/portal/dashboard');
+      case 'office':
+        redirect('/office/dashboard');
+      case 'stakeholder':
+        redirect('/stakeholder/dashboard');
+      default:
+        await supabase.auth.signOut();
+        return { error: 'Unknown role' };
+    }
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
+    }
+
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+      throw error;
+    }
+
+    console.error('[signIn] Error:', error);
+    return { error: 'An unexpected error occurred' };
   }
 }
 
@@ -279,7 +266,7 @@ export async function createOffice(
   formData: FormData
 ): Promise<FormState> {
   try {
-    console.log('[createOffice] Starting office creation...');
+    const input = createOfficeInputFromFormData(formData);
 
     // Verify admin session via Supabase profile
     const profile = await getCurrentUserProfile();
@@ -289,40 +276,14 @@ export async function createOffice(
       return { error: 'Unauthorized: Admin only' };
     }
 
-    const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const officeName = formData.get('office_name') as string;
-    const age = formData.get('age') ? Number(formData.get('age')) : null;
-    const gender = formData.get('gender') as string || null;
-    const contact = formData.get('contact') as string || null;
-
-    console.log('[createOffice] Creating office for:', { name, email, officeName });
-
-    // Validate required fields
-    if (!email || !password || !officeName || !name) {
-      return { error: 'All fields are required: Office Name, Full Name, Email, and Password' };
-    }
-
-    // Validate email format
-    if (!email.includes('@')) {
-      return { error: 'Invalid email format' };
-    }
-
-    // Validate password length
-    if (password.length < 6) {
-      return { error: 'Password must be at least 6 characters' };
-    }
-
     const adminClient = createAdminClient();
 
     // Create auth user with email confirmation bypassed
-    console.log('[createOffice] Creating auth user...');
     const { data: authData, error: signUpError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
+      email: input.email,
+      password: input.password,
       email_confirm: true, // Auto-confirm email
-      user_metadata: { name },
+      user_metadata: { name: input.name },
       app_metadata: { role: 'office' },
     });
 
@@ -332,21 +293,19 @@ export async function createOffice(
     }
 
     const userId = authData.user.id;
-    console.log('[createOffice] Auth user created with ID:', userId);
 
     // Insert into office table
-    console.log('[createOffice] Inserting into office table...');
     const { error: insertError } = await adminClient
       .from('office')
       .insert({
         id: userId,
-        name,
-        email,
+        name: input.name,
+        email: input.email,
         role: 'office',
-        office_name: officeName,
-        age,
-        gender,
-        contact,
+        office_name: input.officeName,
+        age: input.age,
+        gender: input.gender,
+        contact: input.contact,
       });
 
     if (insertError) {
@@ -356,12 +315,15 @@ export async function createOffice(
       return { error: insertError.message || 'Failed to create office profile' };
     }
 
-    console.log('[createOffice] ✓ Office account created successfully');
     return { 
       success: true, 
-      message: `Office account created successfully for ${name} (${officeName})` 
+      message: `Office account created successfully for ${input.name} (${input.officeName})` 
     };
   } catch (error) {
+    if (error instanceof ZodError) {
+      return { error: validationErrorMessage(error) };
+    }
+
     console.error('[createOffice] Unexpected error:', error);
     return { error: 'An unexpected error occurred while creating the office account' };
   }

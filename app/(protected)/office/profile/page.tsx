@@ -2,8 +2,8 @@
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { createClient } from "@/lib/supabase/server"; // Import the client
 import { redirect } from "next/navigation";
-import { OfficeProfileClient } from "./OfficeProfileClient"; 
-import { EmergencyContactsEditor } from "@/components/emergency-contacts-editor"; 
+import { OfficeProfileClient } from "@/features/profile/OfficeProfileClient"; 
+import { EmergencyContactsEditor } from "@/features/profile/EmergencyContactsEditor"; 
 
 export default async function OfficeProfile() {
   const profile = await getCurrentUserProfile();

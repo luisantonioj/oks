@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 
 const AffectedAreasMap = dynamic(
-  () => import("@/components/AffectedAreasMap").then((m) => m.AffectedAreasMap),
+  () => import("@/features/crisis/AffectedAreasMap").then((m) => m.AffectedAreasMap),
   { ssr: false }
 );
 

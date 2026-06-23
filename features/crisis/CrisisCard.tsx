@@ -1,4 +1,4 @@
-// components/crisis/CrisisCard.tsx
+// features/crisis/CrisisCard.tsx
 
 import Link from "next/link";
 import { Crisis } from "./crisis.types";

@@ -1,4 +1,4 @@
-// components/reports/reports.data.ts
+// features/reports/reports.data.ts
 
 export type Report = {
   id: string;
