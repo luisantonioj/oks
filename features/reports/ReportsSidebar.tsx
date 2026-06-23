@@ -1,4 +1,4 @@
-// components/reports/ReportsSidebar.tsx
+// features/reports/ReportsSidebar.tsx
 
 import { Report, ReportCrisis } from "./reports.data";
 

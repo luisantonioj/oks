@@ -1,4 +1,4 @@
-// components/reports/ReportsModal.tsx
+// features/reports/ReportsModal.tsx
 "use client";
 
 import { ReportCrisis, iconOptions, officeOptions } from "./reports.data";

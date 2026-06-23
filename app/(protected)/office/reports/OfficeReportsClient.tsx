@@ -3,10 +3,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Report, ReportCrisis } from "@/components/reports/reports.data";
-import { ReportsSidebar } from "@/components/reports/ReportsSidebar";
-import { ReportsFeed } from "@/components/reports/ReportsFeed";
-import { ReportsModal, ReportFormState } from "@/components/reports/ReportsModal";
+import { Report, ReportCrisis } from "@/features/reports/reports.data";
+import { ReportsSidebar } from "@/features/reports/ReportsSidebar";
+import { ReportsFeed } from "@/features/reports/ReportsFeed";
+import { ReportsModal, ReportFormState } from "@/features/reports/ReportsModal";
 import { createProgressReport, updateProgressReport } from "@/app/actions/report";
 
 interface OfficeReportsClientProps {

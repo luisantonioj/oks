@@ -1,4 +1,4 @@
-// components/crisis/DeleteCrisisModal.tsx
+// features/crisis/DeleteCrisisModal.tsx
 "use client";
 
 import { useState } from "react";

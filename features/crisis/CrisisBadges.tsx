@@ -1,4 +1,4 @@
-// components/crisis/CrisisBadges.tsx
+// features/crisis/CrisisBadges.tsx
 
 export function SeverityBadge({ severity }: { severity: string }) {
   const styles: Record<string, string> = {

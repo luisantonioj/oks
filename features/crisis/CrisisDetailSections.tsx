@@ -1,4 +1,4 @@
-// components/crisis/CrisisDetailSections.tsx
+// features/crisis/CrisisDetailSections.tsx
 
 import Link from "next/link";
 import { Crisis } from "./crisis.types";

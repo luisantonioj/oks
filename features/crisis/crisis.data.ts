@@ -1,4 +1,4 @@
-// components/crisis/crisis.data.ts
+// features/crisis/crisis.data.ts
 
 import { Crisis, CrisisFeatures } from "./crisis.types";
 

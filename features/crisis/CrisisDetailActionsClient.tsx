@@ -1,4 +1,4 @@
-//components/crisis/CrisisDetailActionsClient.tsx
+// features/crisis/CrisisDetailActionsClient.tsx
 "use client";
 
 import { useState, useTransition } from "react";

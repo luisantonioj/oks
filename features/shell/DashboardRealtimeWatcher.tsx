@@ -1,4 +1,4 @@
-// components/DashboardRealtimeWatcher.tsx
+// features/shell/DashboardRealtimeWatcher.tsx
 "use client";
 
 import { useEffect } from "react";

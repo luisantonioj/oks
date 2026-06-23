@@ -1,8 +1,8 @@
 // app/(protected)/office/layout.tsx
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
-import { OfficeNavbar } from "@/components/office-navbar";
-import { DashboardRealtimeWatcher } from "@/components/DashboardRealtimeWatcher";
+import { OfficeNavbar } from "@/features/shell/OfficeNavbar";
+import { DashboardRealtimeWatcher } from "@/features/shell/DashboardRealtimeWatcher";
 
 export default async function OfficeLayout({
   children,

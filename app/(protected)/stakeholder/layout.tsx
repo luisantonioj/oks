@@ -1,8 +1,8 @@
 // app/(protected)/stakeholder/layout.tsx
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
-import { StakeholderNavbar } from "@/components/stakeholder-navbar";
-import { DashboardRealtimeWatcher } from "@/components/DashboardRealtimeWatcher";
+import { StakeholderNavbar } from "@/features/shell/StakeholderNavbar";
+import { DashboardRealtimeWatcher } from "@/features/shell/DashboardRealtimeWatcher";
 
 export default async function StakeholderLayout({
   children,
