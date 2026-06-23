@@ -6,13 +6,7 @@ import { NextRequest } from 'next/server';
 import type { CookieOptions } from '@supabase/ssr';
 import type { EmailOtpType, User } from '@supabase/supabase-js';
 import { UserRole } from '@/types/database';
-
-function mockDLSLValidation(email: string): boolean {
-  if (process.env.NODE_ENV === 'development') {
-    return true; // Loosen restriction for local development testing
-  }
-  return email.endsWith('@dlsl.edu.ph') || email.includes('dlsl');
-}
+import { isDlslEmailAllowedForSignup } from '@/lib/validation/email';
 
 function isEmailOtpType(type: string): type is EmailOtpType {
   return ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'].includes(type);
@@ -157,7 +151,7 @@ export async function GET(request: NextRequest) {
 
   // Stakeholder auto-provisioning
   const email = sessionUser.email;
-  if (!email || !mockDLSLValidation(email)) {
+  if (!email || !isDlslEmailAllowedForSignup(email)) {
     console.error(`Invalid email domain for stakeholder signup: ${email}`);
     await supabase.auth.signOut();
     return redirectToLoginWithError('dlsl_email_required');

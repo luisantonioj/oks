@@ -1,21 +1,26 @@
 "use client";
 
-// features/admin/AdminNavbar.tsx
+// components/stakeholder-navbar.tsx
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { SignOutButton } from "@/components/sign-out-modal";
 
-export function AdminNavbar() {
+interface StakeholderNavbarProps {
+  firstName: string;
+}
+
+export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { label: "Dashboard", href: "/portal/dashboard" },
-    { label: "Offices", href: "/portal/offices" },
-    { label: "Stakeholders", href: "/portal/stakeholders" },
-    { label: "Settings", href: "/portal/settings" },
+    { label: "Dashboard",     href: "/stakeholder/dashboard" },
+    { label: "Announcements", href: "/stakeholder/announcements" },
+    { label: "Surveys",       href: "/stakeholder/surveys" },
+    { label: "My Requests",   href: "/stakeholder/help-requests" },
+    { label: "Inbox",         href: "/stakeholder/inbox" },
   ];
 
   return (
@@ -24,13 +29,13 @@ export function AdminNavbar() {
         <div className="w-full px-6 h-14 flex items-center justify-between gap-4">
 
           {/* Left: Logo */}
-          <Link href="/portal/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
+          <Link href="/stakeholder/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
             <div className="w-7 h-7 rounded-md bg-destructive flex items-center justify-center flex-shrink-0">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                 <path d="M8 2L14 13H2L8 2Z" fill="white" />
               </svg>
             </div>
-            <span className="text-sm font-bold tracking-tight hidden sm:block">OKS! Admin</span>
+            <span className="text-sm font-bold tracking-tight">OKS!</span>
           </Link>
 
           {/* Center: Nav links (desktop) */}
@@ -56,10 +61,18 @@ export function AdminNavbar() {
           {/* Right: Actions (desktop) */}
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             <ThemeSwitcher />
-            <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-muted-foreground">
-              A
-            </div>
-            <SignOutButton role="admin" />
+            <Link href="/stakeholder/profile">
+              <div
+                className={`w-8 h-8 rounded-full bg-muted border flex items-center justify-center text-xs font-semibold transition-colors ${
+                  pathname.startsWith("/stakeholder/profile")
+                    ? "border-foreground text-foreground"
+                    : "border-border text-muted-foreground hover:border-muted-foreground/40"
+                }`}
+              >
+                {firstName[0]?.toUpperCase()}
+              </div>
+            </Link>
+            <SignOutButton role="stakeholder" />
           </div>
 
           {/* Burger (mobile) */}
@@ -85,13 +98,18 @@ export function AdminNavbar() {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-30 flex">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <div className="relative z-10 ml-auto w-64 h-full bg-background border-l border-border flex flex-col p-5 shadow-xl">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-7 h-7 rounded-md bg-destructive flex items-center justify-center">
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 2L14 13H2L8 2Z" fill="white" /></svg>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2L14 13H2L8 2Z" fill="white" />
+                </svg>
               </div>
-              <span className="text-sm font-bold">OKS! Admin</span>
+              <span className="text-sm font-bold">OKS!</span>
             </div>
             <nav className="flex flex-col gap-1 flex-1">
               {navLinks.map((n) => {
@@ -102,7 +120,9 @@ export function AdminNavbar() {
                     href={n.href}
                     onClick={() => setMobileOpen(false)}
                     className={`text-sm px-3 py-2.5 rounded-xl transition-colors ${
-                      isActive ? "bg-accent font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                      isActive
+                        ? "bg-accent font-semibold text-foreground"
+                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                     }`}
                   >
                     {n.label}
@@ -111,12 +131,14 @@ export function AdminNavbar() {
               })}
             </nav>
             <div className="flex items-center gap-3 pt-4 border-t border-border">
-              <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-muted-foreground">
-                A
-              </div>
-              <span className="text-xs text-muted-foreground flex-1 truncate">Administrator</span>
+              <Link href="/stakeholder/profile" onClick={() => setMobileOpen(false)}>
+                <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-muted-foreground">
+                  {firstName[0]?.toUpperCase()}
+                </div>
+              </Link>
+              <span className="text-xs text-muted-foreground flex-1 truncate">{firstName}</span>
               <ThemeSwitcher />
-              <SignOutButton role="admin" />
+              <SignOutButton role="stakeholder" />
             </div>
           </div>
         </div>

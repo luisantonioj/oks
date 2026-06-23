@@ -7,11 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { cookies } from 'next/headers';
 import { logAction } from '@/lib/queries/audit';
-
-// Mock DLSL validation
-function mockDLSLValidation(email: string): boolean {
-  return email.endsWith('@dlsl.edu.ph') || email.includes('dlsl');
-}
+import { isDlslEmail } from '@/lib/validation/email';
 
 type FormState = {
   error?: string;
@@ -150,7 +146,7 @@ export async function signUpStakeholder(
     return { error: 'Required fields missing' };
   }
 
-  if (!mockDLSLValidation(email)) {
+  if (!isDlslEmail(email)) {
     return { error: 'Email must be a valid DLSL address' };
   }
 

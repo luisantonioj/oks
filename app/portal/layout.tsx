@@ -1,7 +1,7 @@
 // app/portal/layout.tsx
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
-import { AdminNavbar } from "@/features/admin/AdminNavbar";
+import { AdminNavbar } from "@/components/admin-navbar";
 
 export default async function AdminLayout({
   children,
