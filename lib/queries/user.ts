@@ -15,21 +15,14 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
     }
 
     if (!user) {
-      console.log('[getCurrentUserProfile] No authenticated user');
       return null;
     }
-
-    console.log('[getCurrentUserProfile] User ID:', user.id);
-    console.log('[getCurrentUserProfile] User email:', user.email);
-    console.log('[getCurrentUserProfile] App metadata:', user.app_metadata);
 
     // Try to get role from app_metadata first (fast)
     let role = user.app_metadata?.role as UserRole | undefined;
 
     // Fallback: query from stakeholder table if metadata missing
     if (!role) {
-      console.log('[getCurrentUserProfile] Role missing in metadata, checking tables...');
-      
       const [shRes, officeRes] = await Promise.all([
         supabase.from('stakeholder').select('role').eq('id', user.id).maybeSingle(),
         supabase.from('office').select('role').eq('id', user.id).maybeSingle(),
@@ -37,10 +30,8 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
 
       if (!shRes.error && shRes.data?.role) {
         role = shRes.data.role as UserRole;
-        console.log('[getCurrentUserProfile] Role found in stakeholder table:', role);
       } else if (!officeRes.error && officeRes.data?.role) {
         role = officeRes.data.role as UserRole;
-        console.log('[getCurrentUserProfile] Role found in office table:', role);
       }
     }
 
@@ -52,7 +43,6 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
     // Now proceed with full profile fetch based on role
     switch (role) {
       case 'admin': {
-        console.log('[getCurrentUserProfile] Returning admin profile');
         return {
           id: user.id,
           email: user.email ?? '',
@@ -64,7 +54,6 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
       }
 
       case 'office': {
-        console.log('[getCurrentUserProfile] Fetching office profile');
         const { data, error } = await supabase
           .from('office')
           .select('*')
@@ -81,12 +70,10 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
           return null;
         }
         
-        console.log('[getCurrentUserProfile] Office profile found:', data.office_name);
         return { ...data, role: 'office' } as UserProfile;
       }
 
       case 'stakeholder': {
-        console.log('[getCurrentUserProfile] Fetching stakeholder profile');
         const { data, error } = await supabase
           .from('stakeholder')
           .select('*')
@@ -103,7 +90,6 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
           return null;
         }
         
-        console.log('[getCurrentUserProfile] Stakeholder profile found:', data.name);
         return { ...data, role: 'stakeholder' } as UserProfile;
       }
 

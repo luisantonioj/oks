@@ -192,7 +192,6 @@ export async function GET(request: NextRequest) {
       return redirectToLoginWithError('profile_creation_failed', insertError.message);
     }
 
-    console.log(`Stakeholder profile auto-created for: ${email}`);
     return redirectWithCookies(next || '/stakeholder/dashboard');
   } catch (error) {
     console.error('Unexpected profile provisioning error:', error);

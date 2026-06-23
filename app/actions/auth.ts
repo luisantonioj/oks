@@ -24,8 +24,6 @@ export async function adminSignIn(
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    console.log('[adminSignIn] Login attempt for:', email);
-
     if (!email || !password) {
       return { error: 'Email and password required' };
     }
@@ -50,8 +48,6 @@ export async function adminSignIn(
       return { error: 'Unauthorized: Admin access required' };
     }
 
-    console.log('[adminSignIn] ✓ Admin authenticated, redirecting...');
-
     // Redirect to admin dashboard
     redirect('/portal/dashboard');
   } catch (error) {
@@ -74,8 +70,6 @@ export async function officeSignIn(
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    console.log('[officeSignIn] Login attempt for:', email);
-
     if (!email || !password) {
       return { error: 'Email and password required' };
     }
@@ -92,18 +86,12 @@ export async function officeSignIn(
       return { error: 'Invalid login credentials' };
     }
 
-    console.log('[officeSignIn] Auth successful for user:', data.user.id);
-    console.log('[officeSignIn] User app_metadata:', data.user.app_metadata);
-
     // Check if user exists in office table
     const { data: officeProfile, error: profileError } = await supabase
       .from('office')
       .select('*')
       .eq('id', data.user.id)
       .maybeSingle();
-
-    console.log('[officeSignIn] Office profile query result:', officeProfile);
-    console.log('[officeSignIn] Office profile error:', profileError);
 
     if (profileError) {
       console.error('[officeSignIn] Database error:', profileError);
@@ -117,7 +105,6 @@ export async function officeSignIn(
       return { error: 'Office account not found. Please contact support.' };
     }
 
-    console.log('[officeSignIn] ✓ Office authenticated:', officeProfile.office_name);
     redirect('/office/dashboard');
   } catch (error) {
     console.error('[officeSignIn] Error:', error);
@@ -275,8 +262,6 @@ export async function createOffice(
   formData: FormData
 ): Promise<FormState> {
   try {
-    console.log('[createOffice] Starting office creation...');
-
     // Verify admin session via Supabase profile
     const profile = await getCurrentUserProfile();
 
@@ -292,8 +277,6 @@ export async function createOffice(
     const age = formData.get('age') ? Number(formData.get('age')) : null;
     const gender = formData.get('gender') as string || null;
     const contact = formData.get('contact') as string || null;
-
-    console.log('[createOffice] Creating office for:', { name, email, officeName });
 
     // Validate required fields
     if (!email || !password || !officeName || !name) {
@@ -313,7 +296,6 @@ export async function createOffice(
     const adminClient = createAdminClient();
 
     // Create auth user with email confirmation bypassed
-    console.log('[createOffice] Creating auth user...');
     const { data: authData, error: signUpError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -328,10 +310,8 @@ export async function createOffice(
     }
 
     const userId = authData.user.id;
-    console.log('[createOffice] Auth user created with ID:', userId);
 
     // Insert into office table
-    console.log('[createOffice] Inserting into office table...');
     const { error: insertError } = await adminClient
       .from('office')
       .insert({
@@ -352,7 +332,6 @@ export async function createOffice(
       return { error: insertError.message || 'Failed to create office profile' };
     }
 
-    console.log('[createOffice] ✓ Office account created successfully');
     return { 
       success: true, 
       message: `Office account created successfully for ${name} (${officeName})` 
