@@ -1,6 +1,6 @@
 // app/admin/create-office/page.tsx
 import { redirect } from "next/navigation";
-import { CreateOfficeForm } from "@/components/create-office-form";
+import { CreateOfficeForm } from "@/features/admin/CreateOfficeForm";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 
 export default async function CreateOfficePage() {

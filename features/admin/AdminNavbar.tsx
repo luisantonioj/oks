@@ -1,7 +1,6 @@
 "use client";
 
-// components/admin-navbar.tsx
-// This is what app/portal/layout.tsx imports as <AdminNavbar />
+// features/admin/AdminNavbar.tsx
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

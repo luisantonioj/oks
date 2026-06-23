@@ -4,7 +4,7 @@ import { getDashboardStats, getCrisisSummary } from "@/lib/queries/crisis";
 import { getAllHelpRequests } from "@/lib/queries/help-request";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { EmergencyContactsEditor } from "@/components/emergency-contacts-editor";
+import { EmergencyContactsEditor } from "@/features/profile/EmergencyContactsEditor";
 import { createClient } from "@/lib/supabase/server";
 
 // Helper for displaying "5m ago", "2h ago", etc.
