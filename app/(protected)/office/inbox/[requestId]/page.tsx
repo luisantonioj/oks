@@ -53,7 +53,7 @@ export default async function OfficeChatPage({ params }: PageProps) {
     .eq('id', requestId)
     .single();
 
-  if (!request) redirect('/office/inbox');
+  if (!request || !request.stakeholder_id) redirect('/office/inbox');
 
   const { data: stakeholder } = await supabase
     .from('stakeholder')

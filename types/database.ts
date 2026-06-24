@@ -7,11 +7,11 @@ export type TableRow<T extends TableName> = Tables[T]["Row"];
 export type TableInsert<T extends TableName> = Tables[T]["Insert"];
 export type TableUpdate<T extends TableName> = Tables[T]["Update"];
 
-export type UserRole = "admin" | TableRow<"office">["role"] | TableRow<"stakeholder">["role"];
-export type CrisisStatus = TableRow<"crisis">["status"];
-export type HelpRequestStatus = TableRow<"help_request">["status"];
-export type SurveyStatus = TableRow<"survey">["status"];
-export type SurveyType = TableRow<"survey">["survey_type"];
+export type UserRole = "admin" | "office" | "stakeholder";
+export type CrisisStatus = "active" | "resolved";
+export type HelpRequestStatus = "pending" | "resolved";
+export type SurveyStatus = "active" | "closed";
+export type SurveyType = "safety" | "donation" | "volunteer";
 
 export interface CrisisFeatures {
   survey: boolean;
@@ -34,13 +34,69 @@ export interface SurveyQuestion {
 
 export type SurveyAnswers = Record<string, string | string[]>;
 
-export type Office = TableRow<"office">;
-export type Stakeholder = TableRow<"stakeholder">;
-export type Announcement = TableRow<"announcement">;
-export type Survey = TableRow<"survey">;
-export type SurveyResponse = TableRow<"survey_response">;
-export type HelpRequest = TableRow<"help_request">;
-export type ProgressReport = TableRow<"progress_report">;
+export type Office = Omit<TableRow<"office">, "created_at" | "office_name" | "role" | "updated_at"> & {
+  created_at: string;
+  office_name: string;
+  role: "office";
+  updated_at: string;
+};
+export type Stakeholder = Omit<TableRow<"stakeholder">, "created_at" | "role" | "updated_at"> & {
+  created_at: string;
+  role: "stakeholder";
+  updated_at: string;
+};
+export type Announcement = Omit<
+  TableRow<"announcement">,
+  "created_at" | "crisis_id" | "office_id" | "priority" | "updated_at"
+> & {
+  created_at: string;
+  crisis_id: string;
+  office_id: string;
+  priority: string;
+  updated_at: string;
+};
+export type Survey = Omit<
+  TableRow<"survey">,
+  "created_at" | "crisis_id" | "office_id" | "questions" | "status" | "survey_type" | "updated_at"
+> & {
+  created_at: string;
+  crisis_id: string;
+  office_id: string;
+  questions: string;
+  status: SurveyStatus;
+  survey_type: SurveyType;
+  updated_at: string;
+};
+export type SurveyResponse = Omit<
+  TableRow<"survey_response">,
+  "answers" | "created_at" | "stakeholder_id" | "survey_id"
+> & {
+  answers: string;
+  created_at: string;
+  stakeholder_id: string;
+  survey_id: string;
+};
+export type HelpRequest = Omit<
+  TableRow<"help_request">,
+  "created_at" | "crisis_id" | "location" | "stakeholder_id" | "status" | "updated_at"
+> & {
+  created_at: string;
+  crisis_id: string;
+  location: string;
+  stakeholder_id: string;
+  status: HelpRequestStatus;
+  updated_at: string;
+};
+export type ProgressReport = Omit<
+  TableRow<"progress_report">,
+  "created_at" | "crisis_id" | "icon" | "office_id" | "title"
+> & {
+  created_at: string;
+  crisis_id: string;
+  icon: string;
+  office_id: string;
+  title: string;
+};
 export type AuditLog = Omit<TableRow<"audit_log">, "metadata"> & {
   metadata: Record<string, unknown> | null;
 };
@@ -64,8 +120,18 @@ export type SurveyInsert = TableInsert<"survey">;
 export type SurveyUpdate = TableUpdate<"survey">;
 export type SurveyResponseInsert = TableInsert<"survey_response">;
 
-export type Crisis = Omit<TableRow<"crisis">, "features"> & {
+export type Crisis = Omit<
+  TableRow<"crisis">,
+  "affected_areas" | "created_at" | "features" | "name" | "office_id" | "severity" | "status" | "updated_at"
+> & {
+  affected_areas: string[];
+  created_at: string;
   features?: Partial<CrisisFeatures>;
+  name: string;
+  office_id: string;
+  severity: string;
+  status: CrisisStatus;
+  updated_at: string;
   help_requests?: Array<{
     id: string;
     name?: string;

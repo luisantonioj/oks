@@ -32,6 +32,13 @@ export default async function OfficeProfile() {
     created_at: profile.created_at || "2026-03-02T00:00:00Z",
     updated_at: profile.updated_at || "2026-03-02T00:00:00Z",
   };
+  const contacts = (dbContacts ?? []).map((contact) => ({
+    id: contact.id,
+    label: contact.label,
+    number: contact.number,
+    note: contact.note ?? "",
+    icon: contact.icon ?? "",
+  }));
 
   return (
     <div className="space-y-6"> 
@@ -44,7 +51,7 @@ export default async function OfficeProfile() {
         <EmergencyContactsEditor 
           officeId={profile.id} 
           // Pass the data fetched from the new table
-          initialContacts={dbContacts ?? []} 
+          initialContacts={contacts} 
         />
       </div>
     </div>

@@ -21,7 +21,9 @@ export default async function StakeholderInboxPage() {
   const officeNameMap = new Map<string, string>();
   if (officeIds.length > 0) {
     const { data: offices } = await supabase.from('office').select('id, office_name').in('id', officeIds);
-    offices?.forEach(o => officeNameMap.set(o.id, o.office_name));
+    offices?.forEach((office) => {
+      if (office.office_name) officeNameMap.set(office.id, office.office_name);
+    });
   }
 
   return (
