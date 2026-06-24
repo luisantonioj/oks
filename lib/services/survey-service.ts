@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { CreateSurveyInput, SubmitSurveyResponseInput } from "@/lib/validation/survey";
 import { UserProfile } from "@/types/user";
 
+const RECEIPTS_BUCKET = "receipts";
+
 type ServiceResult =
   | { success: true; error?: never }
   | { success?: never; error: string };
@@ -15,9 +17,7 @@ async function uploadReceipt(stakeholderId: string, receipt: File) {
   const fileExt = receipt.name.split(".").pop() || "png";
   const path = `${stakeholderId}/${Date.now()}_receipt.${fileExt}`;
 
-  await supabase.storage.createBucket("receipts", { public: true });
-
-  const { error } = await supabase.storage.from("receipts").upload(path, buffer, {
+  const { error } = await supabase.storage.from(RECEIPTS_BUCKET).upload(path, buffer, {
     contentType: receipt.type,
     duplex: "half",
   });
@@ -29,7 +29,7 @@ async function uploadReceipt(stakeholderId: string, receipt: File) {
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from("receipts").getPublicUrl(path);
+  } = supabase.storage.from(RECEIPTS_BUCKET).getPublicUrl(path);
 
   return { publicUrl };
 }

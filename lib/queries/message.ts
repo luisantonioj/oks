@@ -7,7 +7,7 @@ export interface Message {
   help_request_id: string;
   sender_id: string;
   sender_role: 'stakeholder' | 'office';
-  sender_name?: string;
+  sender_name?: string | null;
   content: string;
   created_at: string;
 }

@@ -1,6 +1,6 @@
 //lib/queries/survey.ts
 import { createClient } from '@/lib/supabase/server';
-import { Survey, SurveyAnswers, SurveyQuestion, SurveyResponse } from '@/types/database';
+import { Survey, SurveyAnswers, SurveyQuestion, SurveyResponse, SurveyStatus } from '@/types/database';
 
 type SurveyResponseWithContextRow = {
   id: string;
@@ -24,7 +24,7 @@ export interface VolunteerResponseEntry {
 
 export async function getSurveys(filters?: {
   crisis_id?: string;
-  status?: string;
+  status?: SurveyStatus;
   office_id?: string;
 }): Promise<Survey[]> {
   const supabase = await createClient();

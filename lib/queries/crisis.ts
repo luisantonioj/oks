@@ -65,6 +65,7 @@ export async function getCrises(filters?: {
   // Map data and default volunteers/donations to 0 to satisfy TypeScript UI
   return rows.map((row) => ({
     ...row,
+    features: (row.features || undefined) as Crisis['features'],
     help_requests: row.help_requests || [],
     volunteers: 0, 
     donations_count: 0
@@ -99,6 +100,7 @@ export async function getCrisisById(id: string): Promise<Crisis | null> {
   // Map data and default volunteers/donations to 0
   return {
     ...row,
+    features: (row.features || undefined) as Crisis['features'],
     help_requests: (row.help_requests || []).map((req) => ({
       id: req.id,
       name: req.stakeholder?.name || 'Unknown',
@@ -224,6 +226,7 @@ export async function getCrisisSummary() {
   // Map data and default volunteers/donations to 0
   return rows.map((row) => ({
     ...row,
+    features: (row.features || undefined) as Crisis['features'],
     help_requests: row.help_requests || [],
     volunteers: 0,
     donations_count: 0

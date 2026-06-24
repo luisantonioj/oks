@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Json } from "@/types/supabase";
 
 interface LogActionParams {
   actor_id: string;
@@ -7,7 +8,7 @@ interface LogActionParams {
   action: string;
   entity_type: string;
   entity_id?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Json;
 }
 
 export async function logAction(params: LogActionParams): Promise<void> {
