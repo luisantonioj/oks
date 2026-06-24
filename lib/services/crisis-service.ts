@@ -1,4 +1,4 @@
-import { logAction } from "@/lib/queries/audit";
+import { logAction } from "@/lib/services/audit-service";
 import { createClient } from "@/lib/supabase/server";
 import { CrisisInput, CrisisStatus, CrisisUpdateInput } from "@/lib/validation/crisis";
 import { UserProfile } from "@/types/user";

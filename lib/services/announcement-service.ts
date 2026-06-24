@@ -1,5 +1,5 @@
 import { assertCanManageAnnouncement } from "@/lib/auth/policies";
-import { logAction } from "@/lib/queries/audit";
+import { logAction } from "@/lib/services/audit-service";
 import { createClient } from "@/lib/supabase/server";
 import {
   CreateAnnouncementInput,

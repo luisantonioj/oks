@@ -1,4 +1,4 @@
-import { logAction } from "@/lib/queries/audit";
+import { logAction } from "@/lib/services/audit-service";
 import { assertCanManageSurvey } from "@/lib/auth/policies";
 import { createClient } from "@/lib/supabase/server";
 import { CreateSurveyInput, SubmitSurveyResponseInput } from "@/lib/validation/survey";

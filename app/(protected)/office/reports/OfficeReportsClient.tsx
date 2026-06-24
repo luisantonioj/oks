@@ -71,11 +71,13 @@ export function OfficeReportsClient({ initialReports, crises, officeName }: Offi
           icon: selectedIcon,
         };
 
-        // <-- Smart Routing (Update vs Create)
-        if (editId) {
-          await updateProgressReport(editId, payload);
-        } else {
-          await createProgressReport(payload);
+        const result = editId
+          ? await updateProgressReport(editId, payload)
+          : await createProgressReport(payload);
+
+        if (result.error) {
+          setFormError(result.error);
+          return;
         }
         
         setFormSuccess(true);
