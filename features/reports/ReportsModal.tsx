@@ -1,6 +1,7 @@
 // features/reports/ReportsModal.tsx
 "use client";
 
+import { ModalShell } from "@/components/ui/modal-shell";
 import { ReportCrisis, iconOptions, officeOptions } from "./reports.data";
 
 export type ReportFormState = {
@@ -28,23 +29,26 @@ export function ReportsModal({
   onClose, onSubmit, onFormChange, onIconChange,
 }: ReportsModalProps) {
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-border">
+    <ModalShell contentClassName="max-w-lg">
+      <div className="flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card rounded-t-2xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-border bg-card px-6 py-4">
           <h2 className="font-bold text-foreground text-lg">
             {isEditing ? "Edit Progress Update" : "Add Progress Update"}
           </h2>
           <button
-            type="submit"
-            className="flex-1 text-sm font-semibold py-2.5 rounded-lg bg-[#00C48C] hover:bg-[#00a876] text-white transition-colors"
+            type="button"
+            onClick={onClose}
+            className="text-xl leading-none text-muted-foreground hover:text-foreground"
+            aria-label="Close"
           >
-            {isEditing ? "Save Changes" : "Post Update"}
+            x
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="p-6 space-y-4">
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
 
           {/* Crisis */}
           <div>
@@ -134,8 +138,10 @@ export function ReportsModal({
             </p>
           )}
 
+          </div>
+
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex shrink-0 gap-3 border-t border-border bg-card p-4 sm:px-6">
             <button
               type="button"
               onClick={onClose}
@@ -147,11 +153,11 @@ export function ReportsModal({
               type="submit"
               className="flex-1 text-sm font-semibold py-2.5 rounded-lg bg-[#00C48C] hover:bg-[#00a876] text-white transition-colors"
             >
-              Post Update
+              {isEditing ? "Save Changes" : "Post Update"}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </ModalShell>
   );
 }

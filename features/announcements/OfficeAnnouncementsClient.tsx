@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Announcement, Crisis } from "@/types/database";
 import { createAnnouncement, deleteAnnouncement, updateAnnouncement } from "@/app/actions/announcements";
+import { ModalShell } from "@/components/ui/modal-shell";
 
 function PriorityBadge({ priority }: { priority: string }) {
   return (
@@ -215,9 +216,9 @@ export default function OfficeAnnouncementsClient({ initialAnnouncements, crises
 
       {/* Compose/Edit Modal */}
       {showCompose && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card rounded-2xl shadow-2xl w-full max-w-lg border border-border">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <ModalShell contentClassName="max-w-lg">
+          <div className="flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
               <h2 className="font-bold text-foreground text-lg">
                 {editId ? "Edit Announcement" : "Compose Announcement"}
               </h2>
@@ -229,7 +230,8 @@ export default function OfficeAnnouncementsClient({ initialAnnouncements, crises
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
               {/* Crisis */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
@@ -311,7 +313,9 @@ export default function OfficeAnnouncementsClient({ initialAnnouncements, crises
                 </p>
               )}
 
-              <div className="flex gap-3 pt-2">
+              </div>
+
+              <div className="flex shrink-0 gap-3 border-t border-border bg-card p-4 sm:px-6">
                 <button
                   type="button"
                   onClick={closeAndResetModal}
@@ -330,12 +334,12 @@ export default function OfficeAnnouncementsClient({ initialAnnouncements, crises
               </div>
             </form>
           </div>
-        </div>
+        </ModalShell>
       )}
 
       {/* Delete Confirmation Modal */}
       {deleteId && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <ModalShell contentClassName="max-w-sm">
           <div className="bg-card rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-border">
             <h2 className="font-bold text-foreground text-lg mb-2">Delete Announcement?</h2>
             <p className="text-sm text-muted-foreground mb-6">
@@ -358,7 +362,7 @@ export default function OfficeAnnouncementsClient({ initialAnnouncements, crises
               </button>
             </div>
           </div>
-        </div>
+        </ModalShell>
       )}
     </div>
   );
