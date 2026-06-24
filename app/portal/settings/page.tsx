@@ -3,10 +3,11 @@ import { Settings, Shield, Database, Bell, Key, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { adminSignOut } from '@/app/actions/auth';
 import { getCurrentUserProfile } from '@/lib/queries/user';
+import { routes } from '@/lib/routes';
 
 export default async function AdminSettingsPage() {
   const profile = await getCurrentUserProfile();
-  if (!profile || profile.role !== 'admin') redirect('/login-portal');
+  if (!profile || profile.role !== 'admin') redirect(routes.auth.login.admin);
 
   const adminName = process.env.ADMIN_NAME || 'Administrator';
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@dlsl.edu.ph';

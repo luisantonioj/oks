@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { Button } from "@/components/ui/button";
+import { dashboardRouteForRole, routes } from "@/lib/routes";
 
 interface PageProps {
   searchParams: Promise<{ code?: string; error?: string; error_description?: string }>;
@@ -12,18 +13,16 @@ interface PageProps {
 export default async function Home({ searchParams }: PageProps) {
   const params = await searchParams;
   if (params.code) {
-    redirect(`/callback?code=${params.code}`);
+    redirect(`${routes.auth.callback}?code=${params.code}`);
   }
   if (params.error) {
-    redirect(`/login?error=auth_failed&message=${encodeURIComponent(params.error_description || params.error)}`);
+    redirect(`${routes.auth.login.stakeholder}?error=auth_failed&message=${encodeURIComponent(params.error_description || params.error)}`);
   }
 
   // Redirect if any user is already logged in
   const profile = await getCurrentUserProfile();
   if (profile) {
-    if (profile.role === "admin") redirect("/portal/dashboard");
-    if (profile.role === "office") redirect("/office/dashboard");
-    if (profile.role === "stakeholder") redirect("/stakeholder/dashboard");
+    redirect(dashboardRouteForRole(profile.role));
   }
 
   // 3. Render Public Landing Page
@@ -49,12 +48,12 @@ export default async function Home({ searchParams }: PageProps) {
           {/* Nav right */}
           <div className="flex items-center gap-2">
             <Link
-              href="/login"
+              href={routes.auth.login.stakeholder}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-md hover:bg-accent"
             >
               Login
             </Link>
-            <Link href="/sign-up">
+            <Link href={routes.auth.signUp}>
               <Button size="sm" className="rounded-lg text-sm">
                 Sign Up
               </Button>
@@ -90,12 +89,12 @@ export default async function Home({ searchParams }: PageProps) {
 
         {/* CTAs */}
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link href="/login">
+          <Link href={routes.auth.login.stakeholder}>
             <Button size="lg" className="rounded-xl px-8 text-base">
               I&apos;m a Student / Faculty
             </Button>
           </Link>
-          <Link href="/login-office">
+          <Link href={routes.auth.login.office}>
             <Button
               variant="outline"
               size="lg"
@@ -195,7 +194,7 @@ export default async function Home({ searchParams }: PageProps) {
                 badge: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
                 desc: "Report your safety status, view crisis information, request help, take surveys, and stay informed throughout any emergency.",
                 cta: "Sign In as Stakeholder",
-                href: "/login",
+                href: routes.auth.login.stakeholder,
               },
               {
                 role: "Office Staff",
@@ -205,7 +204,7 @@ export default async function Home({ searchParams }: PageProps) {
                 badge: "bg-destructive/10 text-destructive border-destructive/20",
                 desc: "Manage crises, deploy announcements, triage SOS requests, coordinate volunteers and donations, and post progress reports.",
                 cta: "Office Staff Portal",
-                href: "/login-office",
+                href: routes.auth.login.office,
               },
             ].map((r) => (
               <div

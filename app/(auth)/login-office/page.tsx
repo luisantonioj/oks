@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";
 import { Suspense } from "react";
+import { dashboardRouteForRole, routes } from "@/lib/routes";
 
 export default async function LoginOfficePage({
   searchParams,
@@ -12,14 +13,12 @@ export default async function LoginOfficePage({
 }) {
   const params = await searchParams;
   if (params.code) {
-    redirect(`/callback?code=${params.code}`);
+    redirect(`${routes.auth.callback}?code=${params.code}`);
   }
 
   const profile = await getCurrentUserProfile();
   if (profile) {
-    if (profile.role === "admin") redirect("/portal/dashboard");
-    if (profile.role === "office") redirect("/office/dashboard");
-    if (profile.role === "stakeholder") redirect("/stakeholder/dashboard");
+    redirect(dashboardRouteForRole(profile.role));
   }
 
   return (
@@ -93,7 +92,7 @@ export default async function LoginOfficePage({
             {/* Switch link */}
             <div className="pt-4 border-t border-border">
               <Link
-                href="/login"
+                href={routes.auth.login.stakeholder}
                 className="flex items-center justify-between w-full text-sm px-4 py-3 rounded-xl border border-border hover:bg-accent transition-all group"
               >
                 <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">

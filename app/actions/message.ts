@@ -2,7 +2,7 @@
 
 import { requireAnyRole } from '@/lib/auth/guards';
 import { sendMessageForProfile } from '@/lib/services/message-service';
-import { revalidatePath } from 'next/cache';
+import { revalidateInboxViews } from '@/lib/revalidation';
 
 export async function sendMessage(formData: FormData) {
   const auth = await requireAnyRole(['office', 'stakeholder']);
@@ -17,10 +17,7 @@ export async function sendMessage(formData: FormData) {
   const result = await sendMessageForProfile(auth.profile, input);
   if (result.error) return { error: result.error };
 
-  revalidatePath(`/office/inbox/${input.help_request_id}`);
-  revalidatePath(`/stakeholder/inbox/${input.help_request_id}`);
-  revalidatePath('/office/inbox');
-  revalidatePath('/stakeholder/inbox');
+  revalidateInboxViews(input.help_request_id);
 
   return { success: true };
 }

@@ -3,13 +3,12 @@ import { AdminLoginForm } from "@/components/admin-login-form";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUserProfile } from "@/lib/queries/user";
+import { dashboardRouteForRole, routes } from "@/lib/routes";
 
 export default async function LoginPortalPage() {
   const profile = await getCurrentUserProfile();
   if (profile) {
-    if (profile.role === "admin") redirect("/portal/dashboard");
-    if (profile.role === "office") redirect("/office/dashboard");
-    if (profile.role === "stakeholder") redirect("/stakeholder/dashboard");
+    redirect(dashboardRouteForRole(profile.role));
   }
 
   return (
@@ -83,10 +82,10 @@ export default async function LoginPortalPage() {
 
             {/* Footer links */}
             <div className="pt-4 border-t border-border flex items-center justify-between">
-              <Link href="/login" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <Link href={routes.auth.login.stakeholder} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                 Stakeholder Login
               </Link>
-              <Link href="/login-office" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <Link href={routes.auth.login.office} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                 Office Login
               </Link>
             </div>

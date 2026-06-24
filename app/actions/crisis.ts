@@ -1,7 +1,6 @@
 // app/actions/crisis.ts
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { ZodError } from 'zod';
 import { requireAnyRole } from '@/lib/auth/guards';
@@ -16,6 +15,8 @@ import {
   crisisStatusSchema,
   crisisUpdateInputFromFormData,
 } from '@/lib/validation/crisis';
+import { revalidateCrisisViews } from '@/lib/revalidation';
+import { routes } from '@/lib/routes';
 
 export type CrisisActionState = {
   error?: string;
@@ -43,13 +44,9 @@ export async function createCrisis(
     if (result.error) return { error: result.error };
     if (!result.data) return { error: 'Failed to create crisis' };
 
-    revalidatePath('/office/crises');
-    revalidatePath('/office/dashboard');
-    revalidatePath('/portal/dashboard');
-    revalidatePath('/stakeholder/dashboard');
-    revalidatePath('/stakeholder/help-requests/new');
+    revalidateCrisisViews();
 
-    redirect(`/office/crises/${result.data.id}`);
+    redirect(routes.office.crisis(result.data.id));
 
   } catch (error) {
     console.error('Unexpected error in createCrisis:', error);
@@ -75,9 +72,7 @@ export async function updateCrisis(
     const result = await updateCrisisForProfile(auth.profile, input);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/office/crises');
-    revalidatePath(`/office/crises/${input.id}`);
-    revalidatePath('/office/dashboard');
+    revalidateCrisisViews(input.id);
 
     return { success: true };
   } catch (error) {
@@ -97,9 +92,7 @@ export async function updateCrisisStatus(id: string, status: string, resolution_
     const result = await updateCrisisStatusForProfile(auth.profile, id, parsedStatus, resolution_notes);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/office/crises');
-    revalidatePath(`/office/crises/${id}`);
-    revalidatePath('/office/dashboard');
+    revalidateCrisisViews(id);
     return { success: true };
   } catch (error) {
     if (error instanceof ZodError) {
@@ -117,8 +110,7 @@ export async function deleteCrisis(id: string) {
     const result = await deleteCrisisForProfile(auth.profile, id);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/office/crises');
-    revalidatePath('/office/dashboard');
+    revalidateCrisisViews(id);
 
     return { success: true };
   } catch {

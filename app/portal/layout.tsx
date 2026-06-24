@@ -2,6 +2,7 @@
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
 import { AdminNavbar } from "@/components/admin-navbar";
+import { routes } from "@/lib/routes";
 
 export default async function AdminLayout({
   children,
@@ -11,7 +12,7 @@ export default async function AdminLayout({
   const profile = await getCurrentUserProfile();
 
   if (!profile || profile.role !== "admin") {
-    redirect("/login-portal");
+    redirect(routes.auth.login.admin);
   }
 
   return (

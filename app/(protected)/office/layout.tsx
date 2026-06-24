@@ -3,6 +3,7 @@ import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
 import { OfficeNavbar } from "@/components/office-navbar";
 import { DashboardRealtimeWatcher } from "@/components/DashboardRealtimeWatcher";
+import { routes } from "@/lib/routes";
 
 export default async function OfficeLayout({
   children,
@@ -12,7 +13,7 @@ export default async function OfficeLayout({
   const profile = await getCurrentUserProfile();
 
   if (!profile || profile.role !== "office") {
-    redirect("/login-office");
+    redirect(routes.auth.login.office);
   }
 
   const officeName = profile.office_name ?? "Office";

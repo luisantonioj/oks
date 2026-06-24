@@ -6,6 +6,7 @@ import {
   EmergencyContactInput,
   updateEmergencyContactsForProfile,
 } from '@/lib/services/emergency-contact-service';
+import { routes } from '@/lib/routes';
 
 export async function updateEmergencyContacts(officeId: string, contacts: EmergencyContactInput[]) {
   const profile = await getCurrentUserProfile();
@@ -16,8 +17,8 @@ export async function updateEmergencyContacts(officeId: string, contacts: Emerge
   const result = await updateEmergencyContactsForProfile(profile, officeId, contacts);
   if (result.error) return { error: result.error };
 
-  revalidatePath('/office', 'layout'); 
-  revalidatePath('/stakeholder', 'layout'); 
+  revalidatePath(routes.office.root, 'layout'); 
+  revalidatePath(routes.stakeholder.root, 'layout'); 
   
   return { success: true };
 }

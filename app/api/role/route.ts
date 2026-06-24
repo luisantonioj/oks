@@ -1,6 +1,7 @@
 // app/api/role/route.ts
 import { NextResponse } from 'next/server';
 import { getCurrentUserProfile } from '@/lib/queries/user';
+import { dashboardRoutes, loginRouteForRole } from '@/lib/routes';
 
 /**
  * GET /api/role
@@ -12,21 +13,14 @@ export async function GET() {
 
     if (!profile) {
       return NextResponse.json(
-        { error: 'Unauthorized', redirect: '/login' },
+        { error: 'Unauthorized', redirect: loginRouteForRole('stakeholder') },
         { status: 401 }
       );
     }
 
-    // Return role and appropriate redirect path
-    const redirectPaths = {
-      admin: '/portal/dashboard',
-      office: '/office/dashboard',
-      stakeholder: '/stakeholder/dashboard',
-    };
-
     return NextResponse.json({
       role: profile.role,
-      redirect: redirectPaths[profile.role],
+      redirect: dashboardRoutes[profile.role],
       user: {
         id: profile.id,
         email: profile.email,

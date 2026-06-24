@@ -8,6 +8,7 @@ import {
   ProgressReportInput,
   updateProgressReportForProfile,
 } from '@/lib/services/report-service';
+import { routes } from '@/lib/routes';
 
 type ReportActionResult =
   | { error: string; success?: never }
@@ -22,7 +23,7 @@ export async function createProgressReport(data: ProgressReportInput): Promise<R
   const result = await createProgressReportForProfile(auth.profile, data);
   if (result.error) return { error: result.error };
 
-  revalidatePath('/office/reports');
+  revalidatePath(routes.office.reports);
   return { success: true };
 }
 
@@ -38,6 +39,6 @@ export async function updateProgressReport(
   const result = await updateProgressReportForProfile(auth.profile, reportId, data);
   if (result.error) return { error: result.error };
 
-  revalidatePath('/office/reports');
+  revalidatePath(routes.office.reports);
   return { success: true };
 }

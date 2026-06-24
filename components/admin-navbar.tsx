@@ -6,16 +6,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { SignOutButton } from "@/components/sign-out-modal";
+import { routes } from "@/lib/routes";
 
 export function AdminNavbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { label: "Dashboard", href: "/portal/dashboard" },
-    { label: "Offices", href: "/portal/offices" },
-    { label: "Stakeholders", href: "/portal/stakeholders" },
-    { label: "Settings", href: "/portal/settings" },
+    { label: "Dashboard", href: routes.admin.dashboard },
+    { label: "Offices", href: routes.admin.offices },
+    { label: "Stakeholders", href: routes.admin.stakeholders },
+    { label: "Settings", href: routes.admin.settings },
   ];
 
   return (
@@ -24,7 +25,7 @@ export function AdminNavbar() {
         <div className="w-full px-6 h-14 flex items-center justify-between gap-4">
 
           {/* Left: Logo */}
-          <Link href="/portal/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
+          <Link href={routes.admin.dashboard} className="flex items-center gap-2.5 flex-shrink-0">
             <div className="w-7 h-7 rounded-md bg-destructive flex items-center justify-center flex-shrink-0">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                 <path d="M8 2L14 13H2L8 2Z" fill="white" />

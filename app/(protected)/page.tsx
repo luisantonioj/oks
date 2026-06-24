@@ -5,13 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { InfoIcon } from "lucide-react";
 import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
 import { Suspense } from "react";
+import { routes } from "@/lib/routes";
 
 async function UserDetails() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
 
   if (error || !data?.claims) {
-    redirect("/login");
+    redirect(routes.auth.login.stakeholder);
   }
 
   return JSON.stringify(data.claims, null, 2);

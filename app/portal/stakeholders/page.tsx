@@ -3,6 +3,7 @@ import { getCurrentUserProfile } from '@/lib/queries/user';
 import { getAllStakeholdersForAdmin } from '@/lib/queries/admin-users';
 import { Users, Mail, Calendar, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { routes } from '@/lib/routes';
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -10,7 +11,7 @@ function formatDate(dateStr: string) {
 
 export default async function AdminStakeholdersPage() {
   const profile = await getCurrentUserProfile();
-  if (!profile || profile.role !== 'admin') redirect('/login-portal');
+  if (!profile || profile.role !== 'admin') redirect(routes.auth.login.admin);
 
   const stakeholders = await getAllStakeholdersForAdmin();
 

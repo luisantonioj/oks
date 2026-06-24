@@ -7,6 +7,7 @@ import {
   updateStakeholderProfileForProfile,
 } from '@/lib/services/profile-service';
 import { revalidatePath } from 'next/cache';
+import { routes } from '@/lib/routes';
 
 export async function updateOfficeProfile(formData: {
   name: string;
@@ -21,7 +22,7 @@ export async function updateOfficeProfile(formData: {
     const result = await updateOfficeProfileForProfile(auth.profile, formData);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/office/profile');
+    revalidatePath(routes.office.profile);
     return { success: true };
   } catch (error) {
     console.error('Unexpected error in updateOfficeProfile:', error);
@@ -43,7 +44,7 @@ export async function updateStakeholderProfile(formData: {
     const result = await updateStakeholderProfileForProfile(auth.profile, formData);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/stakeholder/profile');
+    revalidatePath(routes.stakeholder.profile);
     return { success: true };
   } catch (error) {
     console.error('Unexpected error in updateStakeholderProfile:', error);

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { SignOutButton } from "@/components/sign-out-modal";
+import { routes } from "@/lib/routes";
 
 interface StakeholderNavbarProps {
   firstName: string;
@@ -16,11 +17,11 @@ export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { label: "Dashboard",     href: "/stakeholder/dashboard" },
-    { label: "Announcements", href: "/stakeholder/announcements" },
-    { label: "Surveys",       href: "/stakeholder/surveys" },
-    { label: "My Requests",   href: "/stakeholder/help-requests" },
-    { label: "Inbox",         href: "/stakeholder/inbox" },
+    { label: "Dashboard",     href: routes.stakeholder.dashboard },
+    { label: "Announcements", href: routes.stakeholder.announcements },
+    { label: "Surveys",       href: routes.stakeholder.surveys },
+    { label: "My Requests",   href: routes.stakeholder.helpRequests },
+    { label: "Inbox",         href: routes.stakeholder.inbox },
   ];
 
   return (
@@ -29,7 +30,7 @@ export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
         <div className="w-full px-6 h-14 flex items-center justify-between gap-4">
 
           {/* Left: Logo */}
-          <Link href="/stakeholder/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
+          <Link href={routes.stakeholder.dashboard} className="flex items-center gap-2.5 flex-shrink-0">
             <div className="w-7 h-7 rounded-md bg-destructive flex items-center justify-center flex-shrink-0">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                 <path d="M8 2L14 13H2L8 2Z" fill="white" />
@@ -61,10 +62,10 @@ export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
           {/* Right: Actions (desktop) */}
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             <ThemeSwitcher />
-            <Link href="/stakeholder/profile">
+            <Link href={routes.stakeholder.profile}>
               <div
                 className={`w-8 h-8 rounded-full bg-muted border flex items-center justify-center text-xs font-semibold transition-colors ${
-                  pathname.startsWith("/stakeholder/profile")
+                  pathname.startsWith(routes.stakeholder.profile)
                     ? "border-foreground text-foreground"
                     : "border-border text-muted-foreground hover:border-muted-foreground/40"
                 }`}
@@ -131,7 +132,7 @@ export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
               })}
             </nav>
             <div className="flex items-center gap-3 pt-4 border-t border-border">
-              <Link href="/stakeholder/profile" onClick={() => setMobileOpen(false)}>
+              <Link href={routes.stakeholder.profile} onClick={() => setMobileOpen(false)}>
                 <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-muted-foreground">
                   {firstName[0]?.toUpperCase()}
                 </div>

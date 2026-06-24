@@ -12,6 +12,7 @@ import {
   stakeholderSignupInputFromFormData,
 } from '@/lib/validation/auth';
 import { createOfficeAccountForAdmin, createStakeholderAccount } from '@/lib/services/user-service';
+import { dashboardRouteForRole, loginRouteForRole } from '@/lib/routes';
 
 type FormState = {
   error?: string;
@@ -52,7 +53,7 @@ export async function adminSignIn(
     }
 
     // Redirect to admin dashboard
-    redirect('/portal/dashboard');
+    redirect(dashboardRouteForRole('admin'));
   } catch (error) {
     if (error instanceof ZodError) {
       return { error: validationErrorMessage(error) };
@@ -107,7 +108,7 @@ export async function officeSignIn(
       return { error: 'Office account not found. Please contact support.' };
     }
 
-    redirect('/office/dashboard');
+    redirect(dashboardRouteForRole('office'));
   } catch (error) {
     if (error instanceof ZodError) {
       return { error: validationErrorMessage(error) };
@@ -167,11 +168,11 @@ export async function signIn(
 
     switch (profile.role) {
       case 'admin':
-        redirect('/portal/dashboard');
+        redirect(dashboardRouteForRole('admin'));
       case 'office':
-        redirect('/office/dashboard');
+        redirect(dashboardRouteForRole('office'));
       case 'stakeholder':
-        redirect('/stakeholder/dashboard');
+        redirect(dashboardRouteForRole('stakeholder'));
       default:
         await supabase.auth.signOut();
         return { error: 'Unknown role' };
@@ -194,7 +195,7 @@ export async function signIn(
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect('/login');
+  redirect(loginRouteForRole('stakeholder'));
 }
 
 // ── ADMIN SIGN OUT ──
@@ -203,7 +204,7 @@ export async function adminSignOut() {
   await supabase.auth.signOut();
   const cookieStore = await cookies();
   cookieStore.delete('oks_admin_session');
-  redirect('/login-portal');
+  redirect(loginRouteForRole('admin'));
 }
 
 // ── CREATE OFFICE (Admin-only) ──
