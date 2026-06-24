@@ -1,8 +1,13 @@
 // app/actions/profile.ts
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { requireRole } from '@/lib/auth/guards';
+import {
+  updateOfficeProfileForProfile,
+  updateStakeholderProfileForProfile,
+} from '@/lib/services/profile-service';
 import { revalidatePath } from 'next/cache';
+import { routes } from '@/lib/routes';
 
 export async function updateOfficeProfile(formData: {
   name: string;
@@ -11,29 +16,13 @@ export async function updateOfficeProfile(formData: {
   contact: string;
 }) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const auth = await requireRole('office');
+    if (!auth.ok) return { error: auth.error };
 
-    if (authError || !user) return { error: 'Unauthorized' };
+    const result = await updateOfficeProfileForProfile(auth.profile, formData);
+    if (result.error) return { error: result.error };
 
-    const { error } = await supabase
-      .from('office')
-      .update({
-        name: formData.name,
-        age: formData.age,
-        gender: formData.gender,
-        contact: formData.contact,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
-
-    if (error) {
-      console.error('Failed to update profile:', error);
-      return { error: error.message || 'Failed to update profile' };
-    }
-
-    // Refresh the profile page so the new data shows instantly
-    revalidatePath('/office/profile');
+    revalidatePath(routes.office.profile);
     return { success: true };
   } catch (error) {
     console.error('Unexpected error in updateOfficeProfile:', error);
@@ -49,29 +38,13 @@ export async function updateStakeholderProfile(formData: {
   current_address: string;
 }) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const auth = await requireRole('stakeholder');
+    if (!auth.ok) return { error: auth.error };
 
-    if (authError || !user) return { error: 'Unauthorized' };
+    const result = await updateStakeholderProfileForProfile(auth.profile, formData);
+    if (result.error) return { error: result.error };
 
-    const { error } = await supabase
-      .from('stakeholder')
-      .update({
-        name: formData.name,
-        age: formData.age,
-        contact: formData.contact,
-        permanent_address: formData.permanent_address,
-        current_address: formData.current_address,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
-
-    if (error) {
-      console.error('Failed to update stakeholder profile:', error);
-      return { error: error.message || 'Failed to update profile' };
-    }
-
-    revalidatePath('/stakeholder/profile');
+    revalidatePath(routes.stakeholder.profile);
     return { success: true };
   } catch (error) {
     console.error('Unexpected error in updateStakeholderProfile:', error);

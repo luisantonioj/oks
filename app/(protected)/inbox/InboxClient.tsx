@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { NotificationItem, NotificationEmptyState, Notification, NotificationType } from "@/components/NotificationItem";
+import { NotificationItem, NotificationEmptyState, Notification, NotificationType } from "@/features/notifications/NotificationItem";
 import { Announcement } from "@/types/database";
 import { Crisis } from "@/types/database";
 import { Bell, CheckCheck } from "lucide-react";

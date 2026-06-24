@@ -3,11 +3,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getAdminDashboardData } from "@/app/portal/dashboard/data";
 import { Office } from "@/types/database";
+import { routes } from "@/lib/routes";
 
 export default async function AdminDashboard() {
   const dashboardData = await getAdminDashboardData();
   if (!dashboardData) {
-    redirect("/login-portal");
+    redirect(routes.auth.login.admin);
   }
 
   const {
@@ -207,7 +208,7 @@ export default async function AdminDashboard() {
               <p className="text-sm font-semibold">Office Accounts</p>
               <p className="text-xs text-muted-foreground mt-0.5">Recently registered office staff</p>
             </div>
-            <Link href="/portal/offices" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <Link href={routes.admin.offices} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               View all →
             </Link>
           </div>
@@ -237,7 +238,7 @@ export default async function AdminDashboard() {
                   <span className={`text-[10px] font-semibold px-2 py-1 rounded-full w-fit bg-green-500/15 text-green-700 dark:text-green-400`}>
                     Active
                   </span>
-                  <Link href="/portal/offices" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href={routes.admin.offices} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
                     View →
                   </Link>
                 </div>

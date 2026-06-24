@@ -2,7 +2,6 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
 import { ZodError } from 'zod';
 import { requireAnyRole } from '@/lib/auth/guards';
 import {
@@ -13,6 +12,7 @@ import {
   helpRequestInputFromFormData,
   helpRequestStatusSchema,
 } from '@/lib/validation/help-request';
+import { revalidateHelpRequestViews, revalidateInboxViews } from '@/lib/revalidation';
 
 type HelpRequestState = { error?: string; success?: boolean; message?: string } | null;
 
@@ -38,11 +38,7 @@ export async function createHelpRequest(
     const result = await createHelpRequestForStakeholder(user.id, input);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/stakeholder/help-requests');
-    revalidatePath('/stakeholder/inbox');
-    revalidatePath('/office/inbox');
-    revalidatePath('/office/dashboard');
-    revalidatePath('/office/help-requests');
+    revalidateHelpRequestViews();
     return { success: true, message: 'Help request submitted successfully' };
   } catch (error) {
     console.error('Unexpected error in createHelpRequest:', error);
@@ -62,9 +58,8 @@ export async function updateHelpRequestStatus(id: string, status: 'pending' | 'r
     const result = await updateHelpRequestStatusForProfile(auth.profile, id, parsedStatus, office_id);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/office/dashboard');
-    revalidatePath('/office/inbox');
-    revalidatePath('/stakeholder/inbox');
+    revalidateHelpRequestViews();
+    revalidateInboxViews();
     return { success: true };
   } catch (error) {
     if (error instanceof ZodError) {

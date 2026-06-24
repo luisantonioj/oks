@@ -1,4 +1,12 @@
 // types/database.ts
+import type { Database } from "@/types/supabase";
+
+export type Tables = Database["public"]["Tables"];
+export type TableName = keyof Tables;
+export type TableRow<T extends TableName> = Tables[T]["Row"];
+export type TableInsert<T extends TableName> = Tables[T]["Insert"];
+export type TableUpdate<T extends TableName> = Tables[T]["Update"];
+
 export type UserRole = "admin" | "office" | "stakeholder";
 export type CrisisStatus = "active" | "resolved";
 export type HelpRequestStatus = "pending" | "resolved";
@@ -26,142 +34,117 @@ export interface SurveyQuestion {
 
 export type SurveyAnswers = Record<string, string | string[]>;
 
-export interface Office {
-  id: string;
-  name: string;
-  email: string;
-  role: "office";
+export type Office = Omit<TableRow<"office">, "created_at" | "office_name" | "role" | "updated_at"> & {
+  created_at: string;
   office_name: string;
-  age: number | null;
-  gender: string | null;
-  contact: string | null;
-  created_at: string;
+  role: "office";
   updated_at: string;
-}
-
-export interface Stakeholder {
-  id: string;
-  name: string;
-  email: string;
+};
+export type Stakeholder = Omit<TableRow<"stakeholder">, "created_at" | "role" | "updated_at"> & {
+  created_at: string;
   role: "stakeholder";
-  age: number | null;
-  community: string | null;
-  contact: string | null;
-  permanent_address: string | null;
-  current_address: string | null;
-  created_at: string;
   updated_at: string;
-}
+};
+export type Announcement = Omit<
+  TableRow<"announcement">,
+  "created_at" | "crisis_id" | "office_id" | "priority" | "updated_at"
+> & {
+  created_at: string;
+  crisis_id: string;
+  office_id: string;
+  priority: string;
+  updated_at: string;
+};
+export type Survey = Omit<
+  TableRow<"survey">,
+  "created_at" | "crisis_id" | "office_id" | "questions" | "status" | "survey_type" | "updated_at"
+> & {
+  created_at: string;
+  crisis_id: string;
+  office_id: string;
+  questions: string;
+  status: SurveyStatus;
+  survey_type: SurveyType;
+  updated_at: string;
+};
+export type SurveyResponse = Omit<
+  TableRow<"survey_response">,
+  "answers" | "created_at" | "stakeholder_id" | "survey_id"
+> & {
+  answers: string;
+  created_at: string;
+  stakeholder_id: string;
+  survey_id: string;
+};
+export type HelpRequest = Omit<
+  TableRow<"help_request">,
+  "created_at" | "crisis_id" | "location" | "stakeholder_id" | "status" | "updated_at"
+> & {
+  created_at: string;
+  crisis_id: string;
+  location: string;
+  stakeholder_id: string;
+  status: HelpRequestStatus;
+  updated_at: string;
+};
+export type ProgressReport = Omit<
+  TableRow<"progress_report">,
+  "created_at" | "crisis_id" | "icon" | "office_id" | "title"
+> & {
+  created_at: string;
+  crisis_id: string;
+  icon: string;
+  office_id: string;
+  title: string;
+};
+export type AuditLog = Omit<TableRow<"audit_log">, "metadata"> & {
+  metadata: Record<string, unknown> | null;
+};
 
-export interface Crisis {
-  id: string;
-  name: string;
-  type: string;
-  summary: string | null;
+export type AnnouncementInsert = TableInsert<"announcement">;
+export type AnnouncementUpdate = TableUpdate<"announcement">;
+export type CrisisInsert = Omit<TableInsert<"crisis">, "features"> & {
+  features?: Partial<CrisisFeatures> | null;
+};
+export type CrisisUpdate = Omit<TableUpdate<"crisis">, "features"> & {
+  features?: Partial<CrisisFeatures> | null;
+};
+export type HelpRequestInsert = TableInsert<"help_request">;
+export type HelpRequestUpdate = TableUpdate<"help_request">;
+export type MessageInsert = TableInsert<"message">;
+export type OfficeUpdate = TableUpdate<"office">;
+export type ProgressReportInsert = TableInsert<"progress_report">;
+export type ProgressReportUpdate = TableUpdate<"progress_report">;
+export type StakeholderUpdate = TableUpdate<"stakeholder">;
+export type SurveyInsert = TableInsert<"survey">;
+export type SurveyUpdate = TableUpdate<"survey">;
+export type SurveyResponseInsert = TableInsert<"survey_response">;
+
+export type Crisis = Omit<
+  TableRow<"crisis">,
+  "affected_areas" | "created_at" | "features" | "name" | "office_id" | "severity" | "status" | "updated_at"
+> & {
   affected_areas: string[];
+  created_at: string;
+  features?: Partial<CrisisFeatures>;
+  name: string;
+  office_id: string;
   severity: string;
   status: CrisisStatus;
-  office_id: string;
-  created_at: string;
   updated_at: string;
-  required_actions?: string | null;
-  resolution_notes?: string | null;
-  features?: Partial<CrisisFeatures>;
-  help_requests?: Array<{ id: string; name?: string; location?: string; status?: HelpRequestStatus; time?: string }>;
+  help_requests?: Array<{
+    id: string;
+    name?: string;
+    location?: string;
+    status?: HelpRequestStatus;
+    time?: string;
+  }>;
   announcements?: Announcement[];
   progress_updates?: ProgressReport[];
   volunteers?: number;
   donations_count?: number;
-}
+};
 
-export interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  priority: string;
-  crisis_id: string;
-  office_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Survey {
-  id: string;
-  title: string;
-  survey_type: SurveyType;
-  questions: string; 
-  crisis_id: string;
-  office_id: string;
-  status: SurveyStatus;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface SurveyResponse {
-  id: string;
-  survey_id: string;
-  stakeholder_id: string;
-  answers: string;
-  created_at: string;
-}
-
-export interface HelpRequest {
-  id: string;
-  stakeholder_id: string;
-  location: string;
-  status: HelpRequestStatus;
-  notes: string | null;
-  crisis_id: string;
-  office_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProgressReport {
-  id: string;
-  crisis_id: string;
-  content: string;
-  office_id: string;
-  created_at: string;
-}
-
-// Inferred from features; not in provided schema snippet, but mentioned in docs
-export interface Donation {
-  id: string;
-  stakeholder_id: string;
-  crisis_id: string;
-  amount: number | null;
-  items: string | null;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Inferred from features; not in provided schema snippet, but mentioned in docs
-export interface Volunteer {
-  id: string;
-  stakeholder_id: string;
-  crisis_id: string;
-  skills: string;
-  availability: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AuditLog {
-  id: string;
-  actor_id: string;
-  actor_role: string;
-  actor_name: string | null;
-  action: string;
-  entity_type: string;
-  entity_id: string | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-}
-
-// Generic UserData, adaptable for Office or Stakeholder
 export type UserData = {
   id?: string;
   name?: string;
@@ -173,7 +156,6 @@ export type UserData = {
   updated_at?: string;
 };
 
-// Example composite type, e.g., Crisis with Announcements
 export interface CrisisWithAnnouncements extends Crisis {
   announcements: Announcement[];
 }

@@ -1,4 +1,4 @@
-import { logAction } from "@/lib/queries/audit";
+import { logAction } from "@/lib/services/audit-service";
 import { createClient } from "@/lib/supabase/server";
 import { CreateHelpRequestInput, HelpRequestStatus } from "@/lib/validation/help-request";
 import { UserProfile } from "@/types/user";

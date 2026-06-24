@@ -1,6 +1,6 @@
 // lib/queries/help-request.ts
 import { createClient } from '@/lib/supabase/server';
-import { HelpRequest } from '@/types/database';
+import { HelpRequest, HelpRequestStatus } from '@/types/database';
 
 export interface HelpRequestWithDetails extends HelpRequest {
   crisis?: { id: string; name: string; type: string; severity: string } | null;
@@ -46,7 +46,7 @@ export async function getStakeholderHelpRequests(stakeholderId: string): Promise
  * Allows optional filtering by status or specific crisis
  */
 export async function getAllHelpRequests(filters?: {
-  status?: string;
+  status?: HelpRequestStatus;
   crisis_id?: string;
 }): Promise<HelpRequestWithDetails[]> {
   const supabase = await createClient();

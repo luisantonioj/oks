@@ -1,5 +1,5 @@
 // app/(auth)/sign-up/page.tsx
-import { SignUpFormEnhanced } from "@/components/sign-up-form-enhanced";
+import { SignUpFormEnhanced } from "@/features/auth/SignUpFormEnhanced";
 import Link from "next/link";
 import { Suspense } from "react";
 

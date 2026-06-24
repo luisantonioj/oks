@@ -35,6 +35,13 @@ export default async function OfficeDashboard() {
     name,
     firstName,
   } = dashboardData;
+  const contacts = (dbContacts ?? []).map((contact) => ({
+    id: contact.id,
+    label: contact.label,
+    number: contact.number,
+    note: contact.note ?? "",
+    icon: contact.icon ?? "",
+  }));
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
@@ -66,7 +73,7 @@ export default async function OfficeDashboard() {
       </div>
 
       {/* ── Emergency Contacts — editable by office staff ── */}
-      <EmergencyContactsEditor officeId={profile.id} initialContacts={dbContacts ?? []} />
+      <EmergencyContactsEditor officeId={profile.id} initialContacts={contacts} />
 
       {/* ── Main Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">

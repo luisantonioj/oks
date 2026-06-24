@@ -1,8 +1,9 @@
 // app/(protected)/stakeholder/layout.tsx
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import { redirect } from "next/navigation";
-import { StakeholderNavbar } from "@/components/stakeholder-navbar";
-import { DashboardRealtimeWatcher } from "@/components/DashboardRealtimeWatcher";
+import { StakeholderNavbar } from "@/features/navigation/StakeholderNavbar";
+import { DashboardRealtimeWatcher } from "@/features/navigation/DashboardRealtimeWatcher";
+import { routes } from "@/lib/routes";
 
 export default async function StakeholderLayout({
   children,
@@ -12,7 +13,7 @@ export default async function StakeholderLayout({
   const profile = await getCurrentUserProfile();
 
   if (!profile || profile.role !== "stakeholder") {
-    redirect("/login");
+    redirect(routes.auth.login.stakeholder);
   }
 
   const name = profile.name ?? "Stakeholder";

@@ -7,7 +7,7 @@ export interface Message {
   help_request_id: string;
   sender_id: string;
   sender_role: 'stakeholder' | 'office';
-  sender_name?: string;
+  sender_name?: string | null;
   content: string;
   created_at: string;
 }
@@ -44,7 +44,11 @@ export async function getMessages(helpRequestId: string): Promise<Message[]> {
     return [];
   }
 
-  return data || [];
+  return (data || []).map((message) => ({
+    ...message,
+    created_at: message.created_at ?? new Date().toISOString(),
+    sender_role: message.sender_role === 'office' ? 'office' : 'stakeholder',
+  }));
 }
 
 export async function getInboxThreads(userId: string, role: 'stakeholder' | 'office'): Promise<InboxThread[]> {
@@ -68,5 +72,17 @@ export async function getInboxThreads(userId: string, role: 'stakeholder' | 'off
     return [];
   }
 
-  return (data || []) as InboxThread[];
+  return (data || []).map((thread) => ({
+    ...thread,
+    stakeholder_id: thread.stakeholder_id ?? '',
+    crisis_id: thread.crisis_id ?? '',
+    location: thread.location ?? '',
+    status: thread.status === 'resolved' ? 'resolved' : 'pending',
+    created_at: thread.created_at ?? new Date().toISOString(),
+    message: thread.message?.map((message) => ({
+      ...message,
+      created_at: message.created_at ?? new Date().toISOString(),
+      sender_role: message.sender_role === 'office' ? 'office' : 'stakeholder',
+    })),
+  }));
 }

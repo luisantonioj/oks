@@ -6,6 +6,7 @@ import { createCrisis, updateCrisis } from "@/app/actions/crisis";
 import { CrisisFeatures } from "./crisis.types";
 import { crisisTypes, optionalFeatures } from "./crisis.data";
 import { DeleteCrisisModal } from "./DeleteCrisisModal"; // <-- Import the new modal
+import { ModalShell } from "@/components/ui/modal-shell";
 
 export type CrisisFormState = {
   id?: string;
@@ -53,8 +54,8 @@ export function CrisisModal({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-border">
+      <ModalShell contentClassName="max-w-lg">
+        <div className="relative flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
 
           {/* Success overlay */}
           {state?.success && !isCreate && (
@@ -66,12 +67,13 @@ export function CrisisModal({
           )}
 
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card rounded-t-2xl z-10">
+          <div className="flex shrink-0 items-center justify-between border-b border-border bg-card px-6 py-4">
             <h2 className="font-bold text-foreground text-lg">{titleText}</h2>
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl leading-none">×</button>
+            <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl leading-none" aria-label="Close">x</button>
           </div>
 
-          <form action={formAction} className="p-6 space-y-4">
+          <form action={formAction} className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
             
             {/* HIDDEN INPUTS */}
             <input type="hidden" name="severity" value={form.severity} />
@@ -208,7 +210,9 @@ export function CrisisModal({
               <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{state.error}</p>
             )}
 
-            <div className="flex gap-3 pt-2">
+            </div>
+
+            <div className="flex shrink-0 gap-3 border-t border-border bg-card p-4 sm:px-6">
               {/* NEW: Delete Button (Only shows when editing) */}
               {!isCreate && (
                 <button 
@@ -233,7 +237,7 @@ export function CrisisModal({
             </div>
           </form>
         </div>
-      </div>
+      </ModalShell>
 
       {/* NEW: Mount the delete confirmation modal on top if triggered */}
       {showDeleteConfirm && form.id && (

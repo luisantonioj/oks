@@ -2,7 +2,6 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
 import { ZodError } from 'zod';
 import { requireAnyRole } from '@/lib/auth/guards';
 import {
@@ -14,6 +13,7 @@ import {
   createSurveyInputFromFormData,
   surveyResponseInputFromFormData,
 } from '@/lib/validation/survey';
+import { revalidateSurveyViews } from '@/lib/revalidation';
 
 type SurveyActionState = { error?: string; success?: boolean; message?: string } | null;
 
@@ -41,8 +41,7 @@ export async function createSurvey(
     const result = await createSurveyForProfile(auth.profile, input);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/office/surveys');
-    revalidatePath('/stakeholder/surveys');
+    revalidateSurveyViews();
     return { success: true, message: 'Survey created and published successfully' };
   } catch (error) {
     if (error instanceof ZodError || error instanceof Error) {
@@ -67,8 +66,7 @@ export async function submitSurveyResponse(
     const result = await submitSurveyResponseForStakeholder(user.id, input);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/stakeholder/surveys');
-    revalidatePath(`/stakeholder/surveys/${input.survey_id}`);
+    revalidateSurveyViews(input.survey_id);
     return { success: true };
   } catch (error) {
     if (error instanceof ZodError || error instanceof Error) {
@@ -86,8 +84,7 @@ export async function closeSurvey(surveyId: string) {
     const result = await closeSurveyForProfile(auth.profile, surveyId);
     if (result.error) return { error: result.error };
 
-    revalidatePath('/office/surveys');
-    revalidatePath(`/office/surveys/${surveyId}`);
+    revalidateSurveyViews(surveyId);
     return { success: true };
   } catch {
     return { error: 'An unexpected error occurred' };

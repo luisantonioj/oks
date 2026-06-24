@@ -3,16 +3,16 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUserProfile } from '@/lib/queries/user';
 import { cookies } from 'next/headers';
-import { logAction } from '@/lib/queries/audit';
 import { ZodError } from 'zod';
 import {
   createOfficeInputFromFormData,
   signInInputFromFormData,
   stakeholderSignupInputFromFormData,
 } from '@/lib/validation/auth';
+import { createOfficeAccountForAdmin, createStakeholderAccount } from '@/lib/services/user-service';
+import { dashboardRouteForRole, loginRouteForRole } from '@/lib/routes';
 
 type FormState = {
   error?: string;
@@ -53,7 +53,7 @@ export async function adminSignIn(
     }
 
     // Redirect to admin dashboard
-    redirect('/portal/dashboard');
+    redirect(dashboardRouteForRole('admin'));
   } catch (error) {
     if (error instanceof ZodError) {
       return { error: validationErrorMessage(error) };
@@ -108,7 +108,7 @@ export async function officeSignIn(
       return { error: 'Office account not found. Please contact support.' };
     }
 
-    redirect('/office/dashboard');
+    redirect(dashboardRouteForRole('office'));
   } catch (error) {
     if (error instanceof ZodError) {
       return { error: validationErrorMessage(error) };
@@ -127,62 +127,9 @@ export async function signUpStakeholder(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const input = stakeholderSignupInputFromFormData(formData);
-
-  const supabase = await createClient();
-  const adminClient = createAdminClient();
-
   try {
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email: input.email,
-      password: input.password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/callback`,
-        data: { name: input.name },
-      },
-    });
-
-    if (signUpError || !authData.user) {
-      return { error: signUpError?.message || 'Signup failed' };
-    }
-
-    const userId = authData.user.id;
-
-    const { error: metadataError } = await adminClient.auth.admin.updateUserById(
-      userId,
-      { app_metadata: { role: 'stakeholder' } }
-    );
-
-    if (metadataError) {
-      await adminClient.auth.admin.deleteUser(userId);
-      return { error: 'Failed to set user role' };
-    }
-
-    const { error: insertError } = await adminClient
-      .from('stakeholder')
-      .insert({
-        id: userId,
-        name: input.name,
-        email: input.email,
-        role: 'stakeholder',
-        age: input.age,
-        community: input.community,
-        contact: input.contact,
-        permanent_address: input.permanentAddress,
-        current_address: input.currentAddress,
-      });
-
-    if (insertError) {
-      await adminClient.auth.admin.deleteUser(userId);
-      return { error: insertError.message || 'Profile creation failed' };
-    }
-
-    void logAction({ actor_id: userId, actor_role: 'stakeholder', actor_name: input.name, action: 'STAKEHOLDER_SIGNUP', entity_type: 'stakeholder', entity_id: userId });
-
-    return {
-      success: true,
-      message: 'Account created! Please check your email to confirm.',
-    };
+    const input = stakeholderSignupInputFromFormData(formData);
+    return await createStakeholderAccount(input);
   } catch (error) {
     if (error instanceof ZodError) {
       return { error: validationErrorMessage(error) };
@@ -221,11 +168,11 @@ export async function signIn(
 
     switch (profile.role) {
       case 'admin':
-        redirect('/portal/dashboard');
+        redirect(dashboardRouteForRole('admin'));
       case 'office':
-        redirect('/office/dashboard');
+        redirect(dashboardRouteForRole('office'));
       case 'stakeholder':
-        redirect('/stakeholder/dashboard');
+        redirect(dashboardRouteForRole('stakeholder'));
       default:
         await supabase.auth.signOut();
         return { error: 'Unknown role' };
@@ -248,7 +195,7 @@ export async function signIn(
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect('/login');
+  redirect(loginRouteForRole('stakeholder'));
 }
 
 // ── ADMIN SIGN OUT ──
@@ -257,7 +204,7 @@ export async function adminSignOut() {
   await supabase.auth.signOut();
   const cookieStore = await cookies();
   cookieStore.delete('oks_admin_session');
-  redirect('/login-portal');
+  redirect(loginRouteForRole('admin'));
 }
 
 // ── CREATE OFFICE (Admin-only) ──
@@ -276,49 +223,7 @@ export async function createOffice(
       return { error: 'Unauthorized: Admin only' };
     }
 
-    const adminClient = createAdminClient();
-
-    // Create auth user with email confirmation bypassed
-    const { data: authData, error: signUpError } = await adminClient.auth.admin.createUser({
-      email: input.email,
-      password: input.password,
-      email_confirm: true, // Auto-confirm email
-      user_metadata: { name: input.name },
-      app_metadata: { role: 'office' },
-    });
-
-    if (signUpError || !authData.user) {
-      console.error('[createOffice] Auth creation error:', signUpError);
-      return { error: signUpError?.message || 'Failed to create user account' };
-    }
-
-    const userId = authData.user.id;
-
-    // Insert into office table
-    const { error: insertError } = await adminClient
-      .from('office')
-      .insert({
-        id: userId,
-        name: input.name,
-        email: input.email,
-        role: 'office',
-        office_name: input.officeName,
-        age: input.age,
-        gender: input.gender,
-        contact: input.contact,
-      });
-
-    if (insertError) {
-      console.error('[createOffice] Profile insert error:', insertError);
-      // Rollback: delete auth user
-      await adminClient.auth.admin.deleteUser(userId);
-      return { error: insertError.message || 'Failed to create office profile' };
-    }
-
-    return { 
-      success: true, 
-      message: `Office account created successfully for ${input.name} (${input.officeName})` 
-    };
+    return await createOfficeAccountForAdmin(profile, input);
   } catch (error) {
     if (error instanceof ZodError) {
       return { error: validationErrorMessage(error) };

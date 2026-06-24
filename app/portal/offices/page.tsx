@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Building2, Plus, Mail, User, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { routes } from '@/lib/routes';
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -12,7 +13,7 @@ function formatDate(dateStr: string) {
 
 export default async function AdminOfficesPage() {
   const profile = await getCurrentUserProfile();
-  if (!profile || profile.role !== 'admin') redirect('/login-portal');
+  if (!profile || profile.role !== 'admin') redirect(routes.auth.login.admin);
 
   const offices = await getAllOfficesForAdmin();
 
@@ -25,7 +26,7 @@ export default async function AdminOfficesPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{offices.length} office account{offices.length !== 1 ? 's' : ''} registered</p>
         </div>
-        <Link href="/portal/offices/create">
+        <Link href={routes.admin.createOffice}>
           <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" />Add Office</Button>
         </Link>
       </div>
@@ -34,7 +35,7 @@ export default async function AdminOfficesPage() {
         <div className="flex flex-col items-center gap-4 py-16 text-center border-2 border-dashed rounded-lg">
           <Building2 className="h-10 w-10 text-muted-foreground/40" />
           <p className="font-medium text-muted-foreground">No office accounts yet</p>
-          <Link href="/portal/offices/create">
+          <Link href={routes.admin.createOffice}>
             <Button variant="outline" size="sm" className="gap-1.5"><Plus className="h-4 w-4" />Create first office account</Button>
           </Link>
         </div>

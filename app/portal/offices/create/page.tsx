@@ -4,16 +4,17 @@ import Link from 'next/link';
 import { CreateOfficeForm } from '@/features/admin/CreateOfficeForm';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import { getCurrentUserProfile } from '@/lib/queries/user';
+import { routes } from '@/lib/routes';
 
 export default async function AdminCreateOfficePage() {
   const profile = await getCurrentUserProfile();
   if (!profile || profile.role !== 'admin') {
-    redirect('/login-portal');
+    redirect(routes.auth.login.admin);
   }
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-2xl mx-auto">
-      <Link href="/portal/offices" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+      <Link href={routes.admin.offices} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
         <ArrowLeft className="h-4 w-4" /> Back to Offices
       </Link>
       <div>

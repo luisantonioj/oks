@@ -1,37 +1,23 @@
-// types/user.ts  (place at project root or src/types/)
+import type { Office, Stakeholder, UserRole } from "@/types/database";
 
-export type UserRole = 'admin' | 'office' | 'stakeholder';
+export type { UserRole };
 
 export interface BaseUser {
   id: string;
   name: string;
   email: string;
   role: UserRole;
-  age?: number;
-  contact?: string;
+  age?: number | null;
+  contact?: string | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface AdminProfile extends BaseUser {
-  role: 'admin';
-  // Minimal/fixed — no extra fields
+  role: "admin";
 }
 
-export interface OfficeProfile extends BaseUser {
-  role: 'office';
-  office_name: string;
-  gender?: string;
-}
+export type OfficeProfile = Office;
+export type StakeholderProfile = Stakeholder;
 
-export interface StakeholderProfile extends BaseUser {
-  role: 'stakeholder';
-  community?: string;
-  permanent_address?: string;
-  current_address?: string;
-}
-
-export type UserProfile =
-  | AdminProfile
-  | OfficeProfile
-  | StakeholderProfile;
+export type UserProfile = AdminProfile | OfficeProfile | StakeholderProfile;

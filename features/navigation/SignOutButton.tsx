@@ -1,6 +1,5 @@
 "use client";
 
-// components/sign-out-modal.tsx
 // Uses createPortal so the modal renders at document.body level,
 // completely outside the navbar DOM tree — prevents any z-index / overflow clipping.
 

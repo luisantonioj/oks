@@ -1,6 +1,5 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { ZodError } from 'zod';
 import { requireAnyRole } from '@/lib/auth/guards';
 import {
@@ -12,6 +11,7 @@ import {
   announcementInputFromFormData,
   announcementUpdateInputFromFormData,
 } from '@/lib/validation/announcement';
+import { revalidateAnnouncementViews } from '@/lib/revalidation';
 
 type AnnouncementActionResult =
   | { error: string; success?: never; message?: never }
@@ -35,11 +35,7 @@ export async function createAnnouncement(formData: FormData): Promise<Announceme
     const result = await createAnnouncementForProfile(profile, input);
     if (result.error) return result;
 
-    revalidatePath('/office/dashboard');
-    revalidatePath('/portal/dashboard');
-    revalidatePath('/stakeholder/dashboard');
-    revalidatePath(`/office/crises/${input.crisis_id}`);
-    revalidatePath('/office/crises');
+    revalidateAnnouncementViews(input.crisis_id);
     
     return { success: true, message: 'Announcement posted successfully' };
   } catch (error) {
@@ -61,9 +57,7 @@ export async function deleteAnnouncement(id: string): Promise<DeleteAnnouncement
     const result = await deleteAnnouncementForProfile(profile, id);
     if (result.error) return result;
 
-    revalidatePath('/office/dashboard');
-    revalidatePath('/portal/dashboard');
-    revalidatePath('/office/crises', 'layout');
+    revalidateAnnouncementViews();
 
     return { success: true };
   } catch (error) {
@@ -82,12 +76,7 @@ export async function updateAnnouncement(formData: FormData): Promise<Announceme
     const result = await updateAnnouncementForProfile(profile, input);
     if (result.error) return result;
 
-    revalidatePath('/office/announcements');
-    revalidatePath('/office/dashboard');
-    revalidatePath('/portal/dashboard');
-    revalidatePath('/stakeholder/dashboard');
-    revalidatePath(`/office/crises/${input.crisis_id}`);
-    revalidatePath('/office/crises');
+    revalidateAnnouncementViews(input.crisis_id);
     
     return { success: true, message: 'Announcement updated successfully' };
   } catch (error) {

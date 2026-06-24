@@ -2,6 +2,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
+import { dashboardRouteForRole, loginRouteForRole, routes, type AppRole } from "@/lib/routes";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -50,69 +51,65 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthPage =
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/login-office") ||
-    pathname.startsWith("/login-portal") ||
-    pathname.startsWith("/sign-up") ||
-    pathname.startsWith("/callback") ||
-    pathname.startsWith("/confirm") ||
-    pathname.startsWith("/error") ||
-    pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/update-password") ||
-    pathname === "/";
+    pathname.startsWith(routes.auth.login.stakeholder) ||
+    pathname.startsWith(routes.auth.login.office) ||
+    pathname.startsWith(routes.auth.login.admin) ||
+    pathname.startsWith(routes.auth.signUp) ||
+    pathname.startsWith(routes.auth.callback) ||
+    pathname.startsWith(routes.auth.confirm) ||
+    pathname.startsWith(routes.auth.error) ||
+    pathname.startsWith(routes.auth.forgotPassword) ||
+    pathname.startsWith(routes.auth.updatePassword) ||
+    pathname === routes.home;
 
   // 1. If not logged in and trying to access protected paths:
   if (!user && !isAuthPage) {
     const url = request.nextUrl.clone();
-    if (pathname.startsWith("/portal")) {
-      url.pathname = "/login-portal";
-    } else if (pathname.startsWith("/office")) {
-      url.pathname = "/login-office";
+    if (pathname.startsWith(routes.admin.root)) {
+      url.pathname = loginRouteForRole("admin");
+    } else if (pathname.startsWith(routes.office.root)) {
+      url.pathname = loginRouteForRole("office");
     } else {
-      url.pathname = "/login";
+      url.pathname = loginRouteForRole("stakeholder");
     }
     return NextResponse.redirect(url);
   }
 
   // 2. If logged in, enforce RBAC
   if (user) {
-    const role = user.app_metadata?.role;
+    const role = user.app_metadata?.role as AppRole | undefined;
 
     // Admin routing
-    if (pathname.startsWith("/portal") && role !== "admin") {
+    if (pathname.startsWith(routes.admin.root) && role !== "admin") {
       const url = request.nextUrl.clone();
-      url.pathname = "/login-portal";
+      url.pathname = loginRouteForRole("admin");
       url.searchParams.set("error", "unauthorized");
       return NextResponse.redirect(url);
     }
 
     // Office routing
-    if (pathname.startsWith("/office") && role !== "office") {
+    if (pathname.startsWith(routes.office.root) && role !== "office") {
       const url = request.nextUrl.clone();
-      url.pathname = "/login-office";
+      url.pathname = loginRouteForRole("office");
       url.searchParams.set("error", "unauthorized");
       return NextResponse.redirect(url);
     }
 
     // Stakeholder routing
-    if (pathname.startsWith("/stakeholder") && role !== "stakeholder") {
+    if (pathname.startsWith(routes.stakeholder.root) && role !== "stakeholder") {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
+      url.pathname = loginRouteForRole("stakeholder");
       url.searchParams.set("error", "unauthorized");
       return NextResponse.redirect(url);
     }
 
     // If they are on an auth page, redirect them to their dashboard
-    if (isAuthPage && pathname !== "/callback" && pathname !== "/confirm") {
+    if (isAuthPage && pathname !== routes.auth.callback && pathname !== routes.auth.confirm) {
       const url = request.nextUrl.clone();
-      if (role === "admin") {
-        url.pathname = "/portal/dashboard";
-      } else if (role === "office") {
-        url.pathname = "/office/dashboard";
-      } else if (role === "stakeholder") {
-        url.pathname = "/stakeholder/dashboard";
+      if (role === "admin" || role === "office" || role === "stakeholder") {
+        url.pathname = dashboardRouteForRole(role);
       } else {
-        url.pathname = "/login";
+        url.pathname = loginRouteForRole("stakeholder");
       }
       return NextResponse.redirect(url);
     }
@@ -120,4 +117,3 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse;
 }
-

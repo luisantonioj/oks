@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { deleteCrisis } from "@/app/actions/crisis";
 import { useRouter } from "next/navigation";
+import { ModalShell } from "@/components/ui/modal-shell";
 
 interface DeleteCrisisModalProps {
   crisisId: string;
@@ -37,7 +38,7 @@ export function DeleteCrisisModal({ crisisId, crisisName, onClose, onSuccess }: 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <ModalShell contentClassName="max-w-md" zIndexClassName="z-[60]">
       <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md border border-border p-6 relative">
         <h2 className="text-xl font-bold text-foreground mb-2">Delete Crisis?</h2>
         <p className="text-sm text-muted-foreground mb-6">
@@ -67,6 +68,6 @@ export function DeleteCrisisModal({ crisisId, crisisName, onClose, onSuccess }: 
           </button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }

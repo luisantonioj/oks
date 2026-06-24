@@ -1,11 +1,11 @@
 "use client";
 
-// components/office-navbar.tsx
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { SignOutButton } from "@/components/sign-out-modal";
+import { ThemeSwitcher } from "@/features/navigation/ThemeSwitcher";
+import { SignOutButton } from "@/features/navigation/SignOutButton";
+import { routes } from "@/lib/routes";
 
 interface OfficeNavbarProps {
   firstName: string;
@@ -17,13 +17,13 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { label: "Dashboard",     href: "/office/dashboard" },
-    { label: "Crises",        href: "/office/crises" },
-    { label: "Help Requests", href: "/office/help-requests" },
-    { label: "Announcements", href: "/office/announcements" },
-    { label: "Surveys",       href: "/office/surveys" },
-    { label: "Reports",       href: "/office/reports" },
-    { label: "Inbox",         href: "/office/inbox" },
+    { label: "Dashboard",     href: routes.office.dashboard },
+    { label: "Crises",        href: routes.office.crises },
+    { label: "Help Requests", href: routes.office.helpRequests },
+    { label: "Announcements", href: routes.office.announcements },
+    { label: "Surveys",       href: routes.office.surveys },
+    { label: "Reports",       href: routes.office.reports },
+    { label: "Inbox",         href: routes.office.inbox },
   ];
 
   return (
@@ -32,7 +32,7 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
         <div className="w-full px-6 h-14 flex items-center justify-between gap-4">
 
           {/* Left: Logo + office badge */}
-          <Link href="/office/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
+          <Link href={routes.office.dashboard} className="flex items-center gap-2.5 flex-shrink-0">
             <div className="w-7 h-7 rounded-md bg-destructive flex items-center justify-center flex-shrink-0">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                 <path d="M8 2L14 13H2L8 2Z" fill="white" />
@@ -67,10 +67,10 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
           {/* Right: Actions (desktop) */}
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             <ThemeSwitcher />
-            <Link href="/office/profile">
+            <Link href={routes.office.profile}>
               <div
                 className={`w-8 h-8 rounded-full bg-blue-500/15 border flex items-center justify-center text-xs font-semibold text-blue-600 dark:text-blue-400 transition-colors ${
-                  pathname.startsWith("/office/profile")
+                  pathname.startsWith(routes.office.profile)
                     ? "border-blue-500/50"
                     : "border-blue-500/20 hover:border-blue-500/40"
                 }`}
@@ -141,7 +141,7 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
               })}
             </nav>
             <div className="flex items-center gap-3 pt-4 border-t border-border">
-              <Link href="/office/profile" onClick={() => setMobileOpen(false)}>
+              <Link href={routes.office.profile} onClick={() => setMobileOpen(false)}>
                 <div className="w-8 h-8 rounded-full bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-xs font-semibold text-blue-600 dark:text-blue-400">
                   {firstName[0]?.toUpperCase()}
                 </div>

@@ -7,6 +7,7 @@ import type { CookieOptions } from '@supabase/ssr';
 import type { EmailOtpType, User } from '@supabase/supabase-js';
 import { UserRole } from '@/types/database';
 import { isDlslEmailAllowedForSignup } from '@/lib/validation/email';
+import { dashboardRouteForRole, loginRouteForRole } from '@/lib/routes';
 
 function isEmailOtpType(type: string): type is EmailOtpType {
   return ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'].includes(type);
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
 
   // Helper: redirect to login page with error
   const redirectToLoginWithError = (errorKey: string, message?: string) => {
-    const loginPath = role === 'office' ? '/login-office' : '/login';
+    const loginPath = role === 'office' ? loginRouteForRole('office') : loginRouteForRole('stakeholder');
     const url = new URL(loginPath, requestUrl.origin);
     url.searchParams.set('error', errorKey);
     if (message) url.searchParams.set('message', message);
@@ -125,19 +126,7 @@ export async function GET(request: NextRequest) {
 
   // ─── Existing user — redirect to dashboard ───
   if (userRole) {
-    let redirectPath = '/stakeholder/dashboard';
-    switch (userRole) {
-      case 'admin':
-        redirectPath = '/portal/dashboard';
-        break;
-      case 'office':
-        redirectPath = '/office/dashboard';
-        break;
-      case 'stakeholder':
-        redirectPath = '/stakeholder/dashboard';
-        break;
-    }
-    return redirectWithCookies(next || redirectPath);
+    return redirectWithCookies(next || dashboardRouteForRole(userRole));
   }
 
   // ─── New Google OAuth user without a database profile ───
@@ -192,7 +181,7 @@ export async function GET(request: NextRequest) {
       return redirectToLoginWithError('profile_creation_failed', insertError.message);
     }
 
-    return redirectWithCookies(next || '/stakeholder/dashboard');
+    return redirectWithCookies(next || dashboardRouteForRole('stakeholder'));
   } catch (error) {
     console.error('Unexpected profile provisioning error:', error);
     await supabase.auth.signOut();

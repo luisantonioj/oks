@@ -1,67 +1,44 @@
 // app/actions/report.ts
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { getCurrentUserProfile } from '@/lib/queries/user';
+import { requireAnyRole } from '@/lib/auth/guards';
+import {
+  createProgressReportForProfile,
+  ProgressReportInput,
+  updateProgressReportForProfile,
+} from '@/lib/services/report-service';
+import { routes } from '@/lib/routes';
 
-export async function createProgressReport(data: {
-  crisis_id: string;
-  title: string;
-  content: string;
-  icon: string;
-}) {
-  const profile = await getCurrentUserProfile();
-  if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-    throw new Error('Unauthorized');
+type ReportActionResult =
+  | { error: string; success?: never }
+  | { error?: never; success: true };
+
+export async function createProgressReport(data: ProgressReportInput): Promise<ReportActionResult> {
+  const auth = await requireAnyRole(['office', 'admin']);
+  if (!auth.ok) {
+    return { error: auth.error };
   }
 
-  const supabase = await createClient();
-  
-  const { error } = await supabase
-    .from('progress_report')
-    .insert({
-      crisis_id: data.crisis_id,
-      title: data.title,
-      content: data.content,
-      icon: data.icon,
-      office_id: profile.id
-    });
+  const result = await createProgressReportForProfile(auth.profile, data);
+  if (result.error) return { error: result.error };
 
-  if (error) throw new Error(error.message);
-
-  // Automatically refresh the reports page to show the new data
-  revalidatePath('/office/reports');
+  revalidatePath(routes.office.reports);
+  return { success: true };
 }
 
 export async function updateProgressReport(
   reportId: string,
-  data: {
-    crisis_id: string;
-    title: string;
-    content: string;
-    icon: string;
-  }
-) {
-  const profile = await getCurrentUserProfile();
-  if (!profile || (profile.role !== 'office' && profile.role !== 'admin')) {
-    throw new Error('Unauthorized');
+  data: ProgressReportInput,
+): Promise<ReportActionResult> {
+  const auth = await requireAnyRole(['office', 'admin']);
+  if (!auth.ok) {
+    return { error: auth.error };
   }
 
-  const supabase = await createClient();
+  const result = await updateProgressReportForProfile(auth.profile, reportId, data);
+  if (result.error) return { error: result.error };
 
-  const { error } = await supabase
-    .from('progress_report')
-    .update({
-      crisis_id: data.crisis_id,
-      title: data.title,
-      content: data.content,
-      icon: data.icon,
-    })
-    .eq('id', reportId)
-    .eq('office_id', profile.id); // Extra security: ensure they own it
-
-  if (error) throw new Error(error.message);
-
-  revalidatePath('/office/reports');
+  revalidatePath(routes.office.reports);
+  return { success: true };
 }

@@ -1,6 +1,28 @@
 import { createClient } from '@/lib/supabase/server';
 import { Announcement } from '@/types/database';
 
+function normalizeAnnouncement(row: {
+  content: string;
+  created_at: string | null;
+  crisis_id: string | null;
+  id: string;
+  office_id: string | null;
+  priority: string | null;
+  title: string;
+  updated_at: string | null;
+}): Announcement {
+  const createdAt = row.created_at ?? new Date().toISOString();
+
+  return {
+    ...row,
+    created_at: createdAt,
+    crisis_id: row.crisis_id ?? "",
+    office_id: row.office_id ?? "",
+    priority: row.priority ?? "normal",
+    updated_at: row.updated_at ?? createdAt,
+  };
+}
+
 /**
  * Fetch all announcements, optionally filtered by a specific crisis
  */
@@ -23,7 +45,7 @@ export async function getAnnouncements(crisisId?: string): Promise<Announcement[
     return [];
   }
 
-  return data || [];
+  return (data || []).map(normalizeAnnouncement);
 }
 
 /**
@@ -43,5 +65,5 @@ export async function getAnnouncementById(id: string): Promise<Announcement | nu
     return null;
   }
 
-  return data;
+  return normalizeAnnouncement(data);
 }

@@ -23,6 +23,7 @@ import {
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { routes } from "@/lib/routes";
 
 export function CreateOfficeForm({
   className,
@@ -34,7 +35,7 @@ export function CreateOfficeForm({
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
-        router.push("/portal/dashboard");
+        router.push(routes.admin.dashboard);
       }, 2000);
       return () => clearTimeout(timer);
     }
