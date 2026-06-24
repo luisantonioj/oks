@@ -1,5 +1,5 @@
 // app/(auth)/login-portal/page.tsx
-import { AdminLoginForm } from "@/components/admin-login-form";
+import { AdminLoginForm } from "@/features/auth/AdminLoginForm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUserProfile } from "@/lib/queries/user";

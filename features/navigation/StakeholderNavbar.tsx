@@ -1,30 +1,26 @@
 "use client";
 
-// components/office-navbar.tsx
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { SignOutButton } from "@/components/sign-out-modal";
+import { ThemeSwitcher } from "@/features/navigation/ThemeSwitcher";
+import { SignOutButton } from "@/features/navigation/SignOutButton";
 import { routes } from "@/lib/routes";
 
-interface OfficeNavbarProps {
+interface StakeholderNavbarProps {
   firstName: string;
-  officeName: string;
 }
 
-export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
+export function StakeholderNavbar({ firstName }: StakeholderNavbarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { label: "Dashboard",     href: routes.office.dashboard },
-    { label: "Crises",        href: routes.office.crises },
-    { label: "Help Requests", href: routes.office.helpRequests },
-    { label: "Announcements", href: routes.office.announcements },
-    { label: "Surveys",       href: routes.office.surveys },
-    { label: "Reports",       href: routes.office.reports },
-    { label: "Inbox",         href: routes.office.inbox },
+    { label: "Dashboard",     href: routes.stakeholder.dashboard },
+    { label: "Announcements", href: routes.stakeholder.announcements },
+    { label: "Surveys",       href: routes.stakeholder.surveys },
+    { label: "My Requests",   href: routes.stakeholder.helpRequests },
+    { label: "Inbox",         href: routes.stakeholder.inbox },
   ];
 
   return (
@@ -32,8 +28,8 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
         <div className="w-full px-6 h-14 flex items-center justify-between gap-4">
 
-          {/* Left: Logo + office badge */}
-          <Link href={routes.office.dashboard} className="flex items-center gap-2.5 flex-shrink-0">
+          {/* Left: Logo */}
+          <Link href={routes.stakeholder.dashboard} className="flex items-center gap-2.5 flex-shrink-0">
             <div className="w-7 h-7 rounded-md bg-destructive flex items-center justify-center flex-shrink-0">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                 <path d="M8 2L14 13H2L8 2Z" fill="white" />
@@ -41,19 +37,16 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
             </div>
             <span className="text-sm font-bold tracking-tight">OKS!</span>
           </Link>
-          <span className="hidden sm:block text-xs font-medium text-muted-foreground border border-border bg-muted/50 px-2 py-0.5 rounded-full flex-shrink-0">
-            {officeName}
-          </span>
 
           {/* Center: Nav links (desktop) */}
-          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
+          <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((n) => {
               const isActive = pathname === n.href || pathname.startsWith(n.href + "/");
               return (
                 <Link
                   key={n.label}
                   href={n.href}
-                  className={`text-sm px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                  className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
                     isActive
                       ? "bg-accent font-semibold text-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
@@ -68,24 +61,23 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
           {/* Right: Actions (desktop) */}
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             <ThemeSwitcher />
-            <Link href={routes.office.profile}>
+            <Link href={routes.stakeholder.profile}>
               <div
-                className={`w-8 h-8 rounded-full bg-blue-500/15 border flex items-center justify-center text-xs font-semibold text-blue-600 dark:text-blue-400 transition-colors ${
-                  pathname.startsWith(routes.office.profile)
-                    ? "border-blue-500/50"
-                    : "border-blue-500/20 hover:border-blue-500/40"
+                className={`w-8 h-8 rounded-full bg-muted border flex items-center justify-center text-xs font-semibold transition-colors ${
+                  pathname.startsWith(routes.stakeholder.profile)
+                    ? "border-foreground text-foreground"
+                    : "border-border text-muted-foreground hover:border-muted-foreground/40"
                 }`}
               >
                 {firstName[0]?.toUpperCase()}
               </div>
             </Link>
-            <span className="text-xs text-muted-foreground hidden xl:block">{officeName}</span>
-            <SignOutButton role="office" />
+            <SignOutButton role="stakeholder" />
           </div>
 
-          {/* Burger (mobile/tablet) */}
+          {/* Burger (mobile) */}
           <button
-            className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-accent transition-colors"
+            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-accent transition-colors"
             onClick={() => setMobileOpen((p) => !p)}
             aria-label="Toggle menu"
           >
@@ -105,12 +97,12 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-30 flex">
+        <div className="md:hidden fixed inset-0 z-30 flex">
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative z-10 ml-auto w-72 h-full bg-background border-l border-border flex flex-col p-5 shadow-xl">
+          <div className="relative z-10 ml-auto w-64 h-full bg-background border-l border-border flex flex-col p-5 shadow-xl">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-7 h-7 rounded-md bg-destructive flex items-center justify-center">
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
@@ -118,9 +110,6 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
                 </svg>
               </div>
               <span className="text-sm font-bold">OKS!</span>
-              <span className="ml-auto text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                {officeName}
-              </span>
             </div>
             <nav className="flex flex-col gap-1 flex-1">
               {navLinks.map((n) => {
@@ -142,14 +131,14 @@ export function OfficeNavbar({ firstName, officeName }: OfficeNavbarProps) {
               })}
             </nav>
             <div className="flex items-center gap-3 pt-4 border-t border-border">
-              <Link href={routes.office.profile} onClick={() => setMobileOpen(false)}>
-                <div className="w-8 h-8 rounded-full bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-xs font-semibold text-blue-600 dark:text-blue-400">
+              <Link href={routes.stakeholder.profile} onClick={() => setMobileOpen(false)}>
+                <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-muted-foreground">
                   {firstName[0]?.toUpperCase()}
                 </div>
               </Link>
               <span className="text-xs text-muted-foreground flex-1 truncate">{firstName}</span>
               <ThemeSwitcher />
-              <SignOutButton role="office" />
+              <SignOutButton role="stakeholder" />
             </div>
           </div>
         </div>

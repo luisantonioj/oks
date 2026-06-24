@@ -1,4 +1,3 @@
-// components/sign-up-form-enhanced.tsx
 "use client";
 
 import { cn } from "@/lib/utils";

@@ -1,5 +1,5 @@
 // app/(auth)/login-office/page.tsx
-import { OfficeLoginForm } from "@/components/office-login-form";
+import { OfficeLoginForm } from "@/features/auth/OfficeLoginForm";
 import { redirect } from "next/navigation";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";

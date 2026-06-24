@@ -1,11 +1,10 @@
 "use client";
 
-// components/admin-navbar.tsx
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { SignOutButton } from "@/components/sign-out-modal";
+import { ThemeSwitcher } from "@/features/navigation/ThemeSwitcher";
+import { SignOutButton } from "@/features/navigation/SignOutButton";
 import { routes } from "@/lib/routes";
 
 export function AdminNavbar() {

@@ -1,5 +1,5 @@
 // app/page.tsx
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { ThemeSwitcher } from "@/features/navigation/ThemeSwitcher";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserProfile } from "@/lib/queries/user";

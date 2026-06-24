@@ -1,10 +1,10 @@
 // app/(auth)/login/page.tsx
-import { LoginForm } from "@/components/login-form";
+import { LoginForm } from "@/features/auth/LoginForm";
 import { redirect } from "next/navigation";
 import { getCurrentUserProfile } from "@/lib/queries/user";
 import Link from "next/link";
 import { Suspense } from "react";
-import { EnvVarWarning } from "@/components/env-var-warning";
+import { EnvVarWarning } from "@/features/auth/EnvVarWarning";
 import { hasEnvVars } from "@/lib/utils";
 import { dashboardRouteForRole, routes } from "@/lib/routes";
 
